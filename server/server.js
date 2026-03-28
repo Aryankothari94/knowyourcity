@@ -1,5 +1,6 @@
-const cors = require('cors');
+
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -43,15 +44,26 @@ app.listen(PORT, () => {
 
 
 
-const corsOptions = {
-  // Replace this link with your ACTUAL Vercel URL from your browser address bar
-  origin: 'https://knowyourcity.vercel.app', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
+// const newLocal = 'https://knowyourcity-19qg.vercel.app';
+// const corsOptions = {
+//   // Replace this link with your ACTUAL Vercel URL from your browser address bar
+//   origin: newLocal, 
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true,
+//   optionsSuccessStatus: 200
+// };
 
-app.use(cors(corsOptions));
-// Very Important: Handle preflight requests
-app.options('*', cors(corsOptions));
+// app.use(cors(corsOptions));
+// // Very Important: Handle preflight requests
+// app.options('*', cors(corsOptions));
+
+
+
+
+
+app.use(cors({
+    origin: ['https://knowyourcity-19qg.vercel.app', 'https://knowyourcity.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true
+}));

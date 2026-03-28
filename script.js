@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastTitle = document.getElementById('toastTitle');
 
   // Database and State
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = 'https://knowyourcity-backend.onrender.com/api';
   let isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
   let usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
   let crimeMap;
@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dangerZone.textContent = "Please wait.";
 
       try {
-          const res = await fetch(`http://localhost:5000/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
+          const res = await fetch(`https://knowyourcity-backend.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
           if(!res.ok) throw new Error("Backend timeout");
           const data = await res.json();
           
