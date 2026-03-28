@@ -269,7 +269,7 @@
 
     async function fetchSafetyData(map, lat, lng, city) {
       try {
-        const res = await fetch(`http://localhost:5000/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
+        const res = await fetch(`https://knowyourcity-backend.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
         const data = await res.json();
         
         if (!res.ok) throw new Error(data.message || 'Error fetching data');
