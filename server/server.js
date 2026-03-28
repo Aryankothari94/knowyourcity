@@ -35,7 +35,7 @@ app.use(cors({
 }));
 
 // FIX FOR NODE v22: Changed '*' to '(.*)' to avoid the PathError
-app.options('(.*)', cors());
+app.options('*', cors()); // Or whatever your line 38 is doing
 
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
