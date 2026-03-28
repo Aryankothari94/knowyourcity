@@ -333,60 +333,43 @@
   <script>
     document.getElementById('contactForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      
       const btn = document.getElementById('submitBtn');
       const form = document.getElementById('contactForm');
       const msg = document.getElementById('successMsg');
       const originalBtnText = btn.textContent;
 
       const formData = {
-        name: document.getElementById('name').value.trim(),
-        email: document.getElementById('email').value.trim(),
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
         subject: document.getElementById('subject').value,
-        message: document.getElementById('message').value.trim()
+        message: document.getElementById('message').value
       };
 
-      // 1. Loading UI State
-      btn.textContent = 'Sending Query...';
+      btn.textContent = 'Sending...';
       btn.disabled = true;
 
       try {
         const response = await fetch('https://knowyourcity.onrender.com/api/contact', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
         });
 
         const result = await response.json();
 
         if (response.ok) {
-          // Success Path
           form.style.display = 'none';
           msg.style.display = 'block';
-          if (result.message) {
-            msg.querySelector('p').textContent = result.message;
-          }
         } else {
-          // Backend Error Path
-          throw new Error(result.message || 'Server encountered an issue.');
+          throw new Error(result.message || 'Failed to send');
         }
       } catch (err) {
-        // Error Path (Network issues or Server errors)
-        console.error('Submission error:', err);
-        
-        let errorMessage = `Error: ${err.message}`;
-        if (err.message.includes('Failed to fetch')) {
-          errorMessage = "The server is taking a moment to wake up. Please wait 10 seconds and try again.";
-        }
-        
-        alert(errorMessage);
+        alert("Error: " + err.message);
       } finally {
-        // ALWAYS Reset UI State (Safety fix for "stuck" button)
+        // This is the "Finally" block that un-sticks the button
         if (form.style.display !== 'none') {
-          btn.textContent = originalBtnText;
-          btn.disabled = false;
+            btn.textContent = originalBtnText;
+            btn.disabled = false;
         }
       }
     });
