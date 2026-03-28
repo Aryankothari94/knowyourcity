@@ -52,6 +52,17 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Know Your City API is running!' });
 });
 
+// Root route so users don't see an error when visiting the backend URL
+app.get('/', (req, res) => {
+    res.send(`
+        <div style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+            <h2>✅ Know Your City Backend API is Running!</h2>
+            <p>This is the server-side application.</p>
+            <p>To view the actual website, please visit: <a href="https://knowyourcity.vercel.app">knowyourcity.vercel.app</a></p>
+        </div>
+    `);
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/safety', mapRoutes);
 app.use('/api/contact', contactRoutes);
