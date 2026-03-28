@@ -18,7 +18,7 @@ export default function SafetyMap({ userLocation }) {
         if (userLocation) {
             setLoading(true);
             // Fetch mock data from our new Node backend
-            axios.get(`https://knowyourcity-backend.onrender.com/api/safety/insights?lat=${userLocation.lat}&lng=${userLocation.lng}`)
+            axios.get(`https://knowyourcity.onrender.com/api/safety/insights?lat=${userLocation.lat}&lng=${userLocation.lng}`)
                 .then(res => {
                     setInsights(res.data);
                     setLoading(false);
