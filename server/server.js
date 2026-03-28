@@ -1,6 +1,6 @@
+const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
@@ -41,9 +41,17 @@ app.listen(PORT, () => {
 
 
 
-// Replace the link below with your actual Vercel frontend URL!
-app.use(cors({
-    origin: 'https://knowyourcity.vercel.app', 
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
-}));
+
+
+const corsOptions = {
+  // Replace this link with your ACTUAL Vercel URL from your browser address bar
+  origin: 'https://knowyourcity.vercel.app', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+// Very Important: Handle preflight requests
+app.options('*', cors(corsOptions));
