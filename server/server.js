@@ -39,7 +39,7 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
-const cors = require('cors');
+
 
 // Replace the link below with your actual Vercel frontend URL!
 app.use(cors({
