@@ -38,3 +38,12 @@ app.use('/api/contact', contactRoutes);
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+const cors = require('cors');
+
+// Replace the link below with your actual Vercel frontend URL!
+app.use(cors({
+    origin: 'https://knowyourcity.vercel.app', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
