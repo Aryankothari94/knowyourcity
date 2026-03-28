@@ -13,10 +13,9 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ MongoDB connected successfully'))
     .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// 2. MIDDLEWARE (Order is critical!)
+// 2. MIDDLEWARE
 app.use(express.json());
 
-// Set up CORS to allow your Vercel site
 const allowedOrigins = [
     'https://knowyourcity-19qg.vercel.app', 
     'https://knowyourcity.vercel.app'
@@ -24,10 +23,9 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
-            return callback(new Error('CORS policy: This origin is not allowed'), false);
+            return callback(new Error('CORS policy error'), false);
         }
         return callback(null, true);
     },
@@ -36,16 +34,15 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Important: Handle preflight (OPTIONS) requests
-app.options('*', cors());
+// FIX FOR NODE v22: Changed '*' to '(.*)' to avoid the PathError
+app.options('(.*)', cors());
 
-// Logging Middleware
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// 3. ROUTES (Defined AFTER middleware)
+// 3. ROUTES
 const authRoutes = require('./routes/auth');
 const mapRoutes = require('./routes/map');
 const contactRoutes = require('./routes/contact');
