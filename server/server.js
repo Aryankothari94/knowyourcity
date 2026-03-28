@@ -35,8 +35,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// The modern wildcard fix for Node v22
-app.options('*', cors()); 
+// The modern wildcard fix for Express v5
+app.options(/.*$/, cors()); 
 
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
