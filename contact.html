@@ -323,9 +323,16 @@
         </form>
         <div id="successMsg" class="success-msg">
           <div style="font-size: 3rem; margin-bottom: 15px;">✅</div>
-          <h3>Response Sent Successfully!</h3>
-          <p>Your query has been received. Please check your inbox (and spam folder) for our automated analysis response.</p>
+          <h3>Message Sent Successfully!</h3>
+          <p>We've received your query and saved it to our system.</p>
+          <br>
+          <div style="background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius: 12px; padding: 16px; margin-top: 8px;">
+            <p style="color: #00e5ff; font-weight: 600; margin-bottom: 6px;">📧 Check Your Inbox!</p>
+            <p style="font-size: 0.9rem;">A personalised response has been sent to<br><strong id="successEmail" style="color: #00e676;"></strong></p>
+            <p style="font-size: 0.85rem; color: #8899aa; margin-top: 8px;">Don't see it? Check your spam/junk folder.</p>
+          </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -344,6 +351,9 @@
         subject: document.getElementById('subject').value,
         message: document.getElementById('message').value
       };
+
+      // Update success message personalised to the user
+      document.getElementById('successEmail').textContent = formData.email;
 
       btn.textContent = 'Sending...';
       btn.disabled = true;
