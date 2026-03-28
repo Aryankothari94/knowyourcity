@@ -228,9 +228,13 @@
       transition: all 0.3s;
       margin-top: 10px;
     }
-    .submit-btn:hover {
+    .submit-btn:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 10px 20px rgba(0, 229, 255, 0.3);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .success-msg {
@@ -274,7 +278,6 @@
       <div class="contact-info">
         <div class="info-card">
           <h3><span class="icon">📧</span> Email Support</h3>
-          <!-- <p>Direct inquiries: support@knowyourcity.in</p> -->
           <p style="margin-top: 8px;">Business: knowyourcity000@gmail.com</p>
         </div>
         <div class="info-card">
@@ -330,18 +333,20 @@
   <script>
     document.getElementById('contactForm').addEventListener('submit', async function(e) {
       e.preventDefault();
+      
       const btn = document.getElementById('submitBtn');
       const form = document.getElementById('contactForm');
       const msg = document.getElementById('successMsg');
       const originalBtnText = btn.textContent;
 
       const formData = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
         subject: document.getElementById('subject').value,
-        message: document.getElementById('message').value
+        message: document.getElementById('message').value.trim()
       };
 
+      // 1. Loading UI State
       btn.textContent = 'Sending Query...';
       btn.disabled = true;
 
@@ -357,20 +362,34 @@
         const result = await response.json();
 
         if (response.ok) {
+          // Success Path
           form.style.display = 'none';
-          msg.querySelector('p').textContent = result.message || "Your query has been sent successfully. Please check your email for an automated response.";
           msg.style.display = 'block';
+          if (result.message) {
+            msg.querySelector('p').textContent = result.message;
+          }
         } else {
-          throw new Error(result.message || 'Failed to send message');
+          // Backend Error Path
+          throw new Error(result.message || 'Server encountered an issue.');
         }
       } catch (err) {
+        // Error Path (Network issues or Server errors)
         console.error('Submission error:', err);
-        alert('Error: ' + err.message + '\nPlease ensure the server is running on https://knowyourcity.onrender.com');
-        btn.textContent = originalBtnText;
-        btn.disabled = false;
+        
+        let errorMessage = `Error: ${err.message}`;
+        if (err.message.includes('Failed to fetch')) {
+          errorMessage = "The server is taking a moment to wake up. Please wait 10 seconds and try again.";
+        }
+        
+        alert(errorMessage);
+      } finally {
+        // ALWAYS Reset UI State (Safety fix for "stuck" button)
+        if (form.style.display !== 'none') {
+          btn.textContent = originalBtnText;
+          btn.disabled = false;
+        }
       }
     });
   </script>
 </body>
-
 </html>
