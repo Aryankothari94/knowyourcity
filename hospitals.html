@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hospitals Nearby — KnowYourCity</title>
+  <meta name="description" content="Find nearest hospitals and clinics with contact, specialities, emergency services, and ambulance availability." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">🏥</div>
+        <h1>Hospitals Near <span class="gradient-text" id="cityName">Your Area</span></h1>
+        <p>Find hospitals, clinics, and healthcare centers within 15km with contact info, specialities, emergency status, and directions. Data from OpenStreetMap.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="results-header">
+        <h2 id="resultsCount">Searching for hospitals...</h2>
+        <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+      </div>
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Fetching hospitals and clinics near your location...</p>
+      </div>
+      <div class="results-grid" id="resultsGrid" style="display:none;"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>No Hospitals Found Nearby</h3>
+        <p>Try a different location.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+          <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
+          <a href="index.html" class="btn-primary">Go Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel glass-card">
+      <button class="detail-close" id="detailClose">✕</button>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = localStorage.getItem('kyc_userCity') || 'Your Area';
+      document.getElementById('cityName').textContent = city;
+
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
+      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
+      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+
+      fetchHospitals(lat, lng);
+
+      async function fetchHospitals(lat, lng) {
+        const query = `
+          [out:json][timeout:30];
+          (
+            node["amenity"="hospital"](around:15000,${lat},${lng});
+            way["amenity"="hospital"](around:15000,${lat},${lng});
+            node["amenity"="clinic"](around:10000,${lat},${lng});
+            way["amenity"="clinic"](around:10000,${lat},${lng});
+          );
+          out center tags 100;
+        `;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          document.getElementById('loadingSpinner').style.display = 'none';
+
+          const hospitals = data.elements.map(el => {
+            const elLat = el.lat || el.center?.lat;
+            const elLng = el.lon || el.center?.lon;
+            return {
+              name: el.tags?.name || el.tags?.['name:en'] || '',
+              type: el.tags?.amenity === 'clinic' ? 'Clinic' : 'Hospital',
+              phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+              website: el.tags?.website || el.tags?.['contact:website'] || '',
+              emergency: el.tags?.emergency || '',
+              operator: el.tags?.operator || '',
+              speciality: el.tags?.['healthcare:speciality'] || el.tags?.speciality || '',
+              beds: el.tags?.beds || '',
+              wheelchair: el.tags?.wheelchair || '',
+              opening: el.tags?.opening_hours || '',
+              address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              ambulance: el.tags?.['emergency'] === 'yes' || el.tags?.['ambulance'] === 'yes' ? 'Available' : '',
+              lat: elLat, lng: elLng,
+              distance: getDistance(lat, lng, elLat, elLng)
+            };
+          }).filter(h => h.name).sort((a, b) => a.distance - b.distance);
+
+          // Dedup
+          const seen = new Set();
+          const unique = hospitals.filter(h => { if (seen.has(h.name)) return false; seen.add(h.name); return true; });
+
+          if (unique.length === 0) {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsCount').textContent = 'No hospitals found';
+            return;
+          }
+
+          document.getElementById('resultsCount').textContent = `${unique.length} Hospitals & Clinics Found`;
+          document.getElementById('resultsMeta').textContent = `Within 15km of ${city} • Sorted by distance`;
+          document.getElementById('resultsGrid').style.display = 'grid';
+
+          const grid = document.getElementById('resultsGrid');
+          unique.forEach((hosp, i) => {
+            const rating = calcRating(hosp);
+            const card = document.createElement('div');
+            card.className = 'result-card glass-card clickable-card';
+            card.style.animationDelay = `${i * 0.05}s`;
+            const emergColor = hosp.emergency === 'yes' ? '#00e676' : '#ffab40';
+            const emergLabel = hosp.emergency === 'yes' ? '24/7 Emergency ✅' : hosp.type;
+
+            card.innerHTML = `
+              <div class="card-image-wrapper">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23101828' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>🏥</text></svg>"
+                     alt="${hosp.name}" class="card-image" id="hospImg${i}">
+                <div class="card-image-overlay">
+                  <span class="result-badge result-badge-green">${hosp.distance.toFixed(1)} km</span>
+                  <span class="result-type-badge">${hosp.type}</span>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="result-title">🏥 ${hosp.name}</h3>
+                <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
+                <div class="safety-indicator" style="color:${emergColor}">● ${emergLabel}</div>
+                <div class="result-details">
+                  ${hosp.phone ? `<div class="result-detail"><span class="detail-icon">📞</span>${hosp.phone}</div>` : ''}
+                  ${hosp.speciality ? `<div class="result-detail"><span class="detail-icon">⚕️</span>${hosp.speciality}</div>` : ''}
+                  ${hosp.operator ? `<div class="result-detail"><span class="detail-icon">🏛️</span>${hosp.operator}</div>` : ''}
+                  ${hosp.beds ? `<div class="result-detail"><span class="detail-icon">🛏️</span>${hosp.beds} beds</div>` : ''}
+                </div>
+                <div class="card-actions">
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${hosp.lat},${hosp.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
+                </div>
+              </div>
+            `;
+            card.addEventListener('click', () => openDetail(hosp, rating));
+            grid.appendChild(card);
+
+            if (hosp.wikidata) fetchWikiImage(hosp.wikidata, `hospImg${i}`);
+            else if (hosp.wikipedia) fetchWikiPageImage(hosp.wikipedia.split(':').pop(), `hospImg${i}`);
+            else fetchUniversalImage(hosp.name, city, 'hospital', `hospImg${i}`);
+          });
+
+        } catch (err) {
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+        }
+      }
+
+      function calcRating(item) {
+        let r = 3.0;
+        if (item.website) r += 0.3;
+        if (item.phone) r += 0.3;
+        if (item.wikipedia || item.wikidata) r += 0.4;
+        if (item.emergency === 'yes') r += 0.4;
+        if (item.wheelchair === 'yes') r += 0.2;
+        if (item.beds) r += 0.2;
+        if (item.speciality) r += 0.2;
+        return Math.min(r, 5.0);
+      }
+
+      function renderStars(rating) {
+        let s = '';
+        for (let i = 1; i <= 5; i++) {
+          if (rating >= i) s += '<span class="star full">★</span>';
+          else if (rating >= i - 0.5) s += '<span class="star half">★</span>';
+          else s += '<span class="star empty">★</span>';
+        }
+        return s;
+      }
+
+      async function fetchWikiImage(wid, imgId) {
+        try { const r = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wid}&property=P18&format=json&origin=*`);
+        const d = await r.json(); const fn = d?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        if (fn) { const img = document.getElementById(imgId); if (img) img.src = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fn.replace(/ /g,'_'))}?width=400`; } } catch {}
+      }
+
+      async function fetchWikiPageImage(title, imgId) {
+        try { const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+        if (r.ok) { const d = await r.json(); if (d.thumbnail?.source) { const img = document.getElementById(imgId); if (img) img.src = d.thumbnail.source; } } } catch {}
+      }
+
+      async function fetchWikiSummary(name) {
+        try { const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+        if (r.ok) { const d = await r.json(); return { summary: d.extract||'', image: d.thumbnail?.source||'' }; } } catch {}
+        return { summary: '', image: '' };
+      }
+
+      async function openDetail(hosp, rating) {
+        detailOverlay.classList.add('active');
+        detailBody.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading details...</p></div>`;
+        const wiki = hosp.wikipedia ? await fetchWikiSummary(hosp.wikipedia.split(':').pop()) : { summary: '', image: '' };
+
+        detailBody.innerHTML = `
+          ${wiki.image ? `<img src="${wiki.image}" alt="${hosp.name}" class="detail-hero-image">` : ''}
+          <h2>🏥 ${hosp.name}</h2>
+          <div class="detail-type-badge">${hosp.type}</div>
+          <div class="detail-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}/5.0</span> <span class="rating-label">Community Rating</span></div>
+          ${wiki.summary ? `<div class="detail-section"><h4>📖 About</h4><p>${wiki.summary}</p></div>` : ''}
+          <div class="detail-section">
+            <h4>🏥 Hospital Details</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${hosp.distance.toFixed(2)} km</span></div>
+              ${hosp.emergency ? `<div class="detail-info-item"><span class="detail-label">🚨 Emergency</span><span style="color:#00e676; font-weight:600;">${hosp.emergency === 'yes' ? '24/7 Available' : hosp.emergency}</span></div>` : ''}
+              ${hosp.ambulance ? `<div class="detail-info-item"><span class="detail-label">🚑 Ambulance</span><span style="color:#00e676;">${hosp.ambulance}</span></div>` : ''}
+              ${hosp.phone ? `<div class="detail-info-item"><span class="detail-label">📞 Phone</span><span>${hosp.phone}</span></div>` : ''}
+              ${hosp.speciality ? `<div class="detail-info-item"><span class="detail-label">⚕️ Speciality</span><span>${hosp.speciality}</span></div>` : ''}
+              ${hosp.beds ? `<div class="detail-info-item"><span class="detail-label">🛏️ Beds</span><span>${hosp.beds}</span></div>` : ''}
+              ${hosp.operator ? `<div class="detail-info-item"><span class="detail-label">🏛️ Operator</span><span>${hosp.operator}</span></div>` : ''}
+              ${hosp.wheelchair ? `<div class="detail-info-item"><span class="detail-label">♿ Wheelchair</span><span>${hosp.wheelchair}</span></div>` : ''}
+              ${hosp.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>${hosp.opening}</span></div>` : ''}
+              ${hosp.address ? `<div class="detail-info-item"><span class="detail-label">🏠 Address</span><span>${hosp.address}</span></div>` : ''}
+            </div>
+          </div>
+          <div class="detail-actions">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${hosp.lat},${hosp.lng}" target="_blank" class="btn-direction">📍 Get Directions</a>
+            ${hosp.phone ? `<a href="tel:${hosp.phone}" class="btn-direction btn-secondary-action">📞 Call Now</a>` : ''}
+            ${hosp.website ? `<a href="${hosp.website}" target="_blank" class="btn-direction btn-secondary-action">🌐 Website</a>` : ''}
+          </div>
+        `;
+      }
+
+      async function fetchUniversalImage(name, city, category, imgId) {
+        try { let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
+          let d = await r.json();
+          if (d.query && d.query.pages) { const pageId = Object.keys(d.query.pages)[0]; const img = document.getElementById(imgId); if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; } }
+
+
+        } catch(e) {}
+      }
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      }
+    });
+  </script>
+</body>
+</html>

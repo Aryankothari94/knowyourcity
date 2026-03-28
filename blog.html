@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>City Stories Blog — Know Your City</title>
+  <meta name="description" content="Expert relocation tips, safety guides, and real newcomer stories from every corner of India." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="logo.png" type="image/png" />
+  <style>
+    :root {
+      --bg-primary: #0a0b1a;
+      --bg-secondary: #12132a;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8899aa;
+      --accent-cyan: #00e5ff;
+      --accent-green: #00e676;
+      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Background orbs */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+    }
+    .orb-1 { width: 500px; height: 500px; background: #00e5ff; top: -100px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
+    .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    /* Back button */
+    .back-nav {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .back-nav:hover {
+      background: var(--accent-cyan);
+      color: #0a0b1a;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Main content */
+    .blog-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+    }
+
+    .blog-header {
+      text-align: center;
+      margin-bottom: 60px;
+      animation: fadeInUp 0.6s ease;
+    }
+    .blog-header h1 {
+      font-family: var(--font-heading);
+      font-size: 3.2rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .blog-header p {
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+    }
+
+    /* Blog Grid */
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      animation: fadeInUp 0.7s ease;
+    }
+    .blog-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      padding: 35px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .blog-card:hover {
+      border-color: rgba(0, 229, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-5px);
+    }
+    .blog-card .date { font-size: 0.8rem; color: var(--accent-cyan); font-weight: 600; letter-spacing: 1px; }
+    .blog-card h3 { font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary); }
+    .blog-card p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
+    .blog-card .read-more {
+      margin-top: auto;
+      color: var(--text-primary);
+      font-weight: 700;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      transition: gap 0.3s;
+    }
+    .blog-card .read-more:hover { gap: 12px; color: var(--accent-cyan); }
+
+    /* Tags */
+    .blog-tags {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .tag-btn {
+      padding: 8px 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.3s;
+    }
+    .tag-btn:hover, .tag-btn.active {
+      background: rgba(0, 229, 255, 0.1);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 868px) {
+      .blog-grid { grid-template-columns: 1fr; }
+      .blog-header h1 { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <a href="index.html" class="back-nav">← Back to Home</a>
+
+  <div class="blog-container">
+    <div class="blog-header">
+      <h1>City <span class="gradient-text">Stories</span></h1>
+      <p>Expert insights, data-driven safety guides, and real relocation journeys to help you master your new urban life.</p>
+    </div>
+
+    <div class="blog-tags">
+      <a href="#" class="tag-btn active">All Articles</a>
+      <a href="#" class="tag-btn">Safety Guides</a>
+      <a href="#" class="tag-btn">Relocation Tips</a>
+      <a href="#" class="tag-btn">Newcomer Stories</a>
+      <a href="#" class="tag-btn">Data Lab</a>
+    </div>
+
+    <div class="blog-grid">
+      <div class="blog-card">
+        <span class="date">MARCH 22, 2026</span>
+        <h3>Safety First: 5 Things Every Newcomer Should Check</h3>
+        <p>From streetlighting uptime to localized emergency hubs, here are the non-negotiables for your new neighborhood.</p>
+        <a href="#" class="read-more">Read Article →</a>
+      </div>
+      <div class="blog-card">
+        <span class="date">MARCH 15, 2026</span>
+        <h3>Moving to Mumbai? The Ultimate BKC vs Powai Guide</h3>
+        <p>A data-backed comparison of Mumbai's most popular professional hubs based on safety and amenity scores.</p>
+        <a href="#" class="read-more">Read Article →</a>
+      </div>
+      <div class="blog-card">
+        <span class="date">MARCH 08, 2026</span>
+        <h3>Understanding the 'Dark Spot' Index</h3>
+        <p>A deep dive into how Know Your City maps street lighting coverage to improve nighttime transit safety.</p>
+        <a href="#" class="read-more">Read Article →</a>
+      </div>
+      <div class="blog-card">
+        <span class="date">MARCH 01, 2026</span>
+        <h3>Real Story: How Data Helped Me Find a Home in Pune</h3>
+        <p>Siddharth shares his experience using infrastructure density reports to choose the right ward for his family.</p>
+        <a href="#" class="read-more">Read Article →</a>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 60px;">
+      <a href="contact.html" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px;">
+        Subscribe to our newsletter for weekly city insights 📧
+      </a>
+    </div>
+  </div>
+</body>
+
+</html>

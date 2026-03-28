@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Top Schools Near You — KnowYourCity</title>
+  <meta name="description" content="Discover top-rated schools near your location with ratings, directions, and detailed information." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">🏫</div>
+        <h1>Top Schools Near <span class="gradient-text" id="cityName">Your Area</span></h1>
+        <p>Discover schools within 15km of your location with detailed info, images, and directions. Data from OpenStreetMap & Wikipedia.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="results-header">
+        <h2 id="resultsCount">Searching for schools...</h2>
+        <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+      </div>
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Fetching schools near your location...</p>
+      </div>
+      <div class="results-grid" id="resultsGrid" style="display:none;"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>No Schools Found Nearby</h3>
+        <p>Try a different location from the home page.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+          <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
+          <a href="index.html" class="btn-primary">Go Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detail Panel -->
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel glass-card">
+      <button class="detail-close" id="detailClose">✕</button>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      document.getElementById('cityName').textContent = city;
+
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
+      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
+      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+
+      fetchSchools(lat, lng);
+
+      async function fetchSchools(lat, lng) {
+        const query = `
+          [out:json][timeout:30];
+          (
+            node["amenity"="school"](around:15000,${lat},${lng});
+            way["amenity"="school"](around:15000,${lat},${lng});
+            node["amenity"="college"](around:15000,${lat},${lng});
+            way["amenity"="college"](around:15000,${lat},${lng});
+          );
+          out center tags 100;
+        `;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          document.getElementById('loadingSpinner').style.display = 'none';
+
+          const schools = data.elements.map(el => {
+            const elLat = el.lat || el.center?.lat;
+            const elLng = el.lon || el.center?.lon;
+            return {
+              name: el.tags?.name || el.tags?.['name:en'] || '',
+              address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
+              operator: el.tags?.operator || '',
+              website: el.tags?.website || el.tags?.['contact:website'] || '',
+              phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+              email: el.tags?.email || el.tags?.['contact:email'] || '',
+              type: el.tags?.amenity === 'college' ? 'College' : (el.tags?.['school:type'] || el.tags?.['isced:level'] || 'School'),
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              opening: el.tags?.opening_hours || '',
+              capacity: el.tags?.capacity || '',
+              wheelchair: el.tags?.wheelchair || '',
+              denomination: el.tags?.denomination || el.tags?.religion || '',
+              lat: elLat, lng: elLng,
+              distance: getDistance(lat, lng, elLat, elLng)
+            };
+          }).filter(s => s.name).sort((a, b) => a.distance - b.distance);
+
+          if (schools.length === 0) {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsCount').textContent = 'No schools found';
+            return;
+          }
+
+          document.getElementById('resultsCount').textContent = `${schools.length} Schools & Colleges Found`;
+          document.getElementById('resultsMeta').textContent = `Within 15km of ${city} • Sorted by distance`;
+          document.getElementById('resultsGrid').style.display = 'grid';
+
+          const grid = document.getElementById('resultsGrid');
+          schools.forEach((school, i) => {
+            const rating = calcRating(school);
+            const card = document.createElement('div');
+            card.className = 'result-card glass-card clickable-card';
+            card.style.animationDelay = `${i * 0.05}s`;
+
+            card.innerHTML = `
+              <div class="card-image-wrapper">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23131829' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>🏫</text></svg>"
+                     alt="${school.name}" class="card-image" id="schImg${i}">
+                <div class="card-image-overlay">
+                  <span class="result-badge">${school.distance.toFixed(1)} km</span>
+                  <span class="result-type-badge">${school.type}</span>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="result-title">${school.name}</h3>
+                <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
+                <div class="result-details">
+                  ${school.address ? `<div class="result-detail"><span class="detail-icon">📍</span>${school.address}</div>` : ''}
+                  ${school.operator ? `<div class="result-detail"><span class="detail-icon">🏛️</span>${school.operator}</div>` : ''}
+                  ${school.phone ? `<div class="result-detail"><span class="detail-icon">📞</span>${school.phone}</div>` : ''}
+                </div>
+                <div class="card-actions">
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${school.lat},${school.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
+                </div>
+              </div>
+            `;
+
+            card.addEventListener('click', () => openDetail(school, rating));
+            grid.appendChild(card);
+
+            if (school.wikidata) fetchWikiImage(school.wikidata, `schImg${i}`);
+            else if (school.wikipedia) fetchWikiPageImage(school.wikipedia.split(':').pop(), `schImg${i}`);
+            else fetchUniversalImage(school.name, city, 'school', `schImg${i}`);
+          });
+
+        } catch (err) {
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+          document.getElementById('resultsCount').textContent = 'Error fetching data';
+        }
+      }
+
+      function calcRating(item) {
+        let r = 3.0;
+        if (item.website) r += 0.4;
+        if (item.phone) r += 0.3;
+        if (item.wikipedia || item.wikidata) r += 0.5;
+        if (item.wheelchair === 'yes') r += 0.2;
+        if (item.opening) r += 0.1;
+        if (item.operator) r += 0.2;
+        if (item.capacity) r += 0.2;
+        if (item.email) r += 0.1;
+        return Math.min(r, 5.0);
+      }
+
+      function renderStars(rating) {
+        let s = '';
+        for (let i = 1; i <= 5; i++) {
+          if (rating >= i) s += '<span class="star full">★</span>';
+          else if (rating >= i - 0.5) s += '<span class="star half">★</span>';
+          else s += '<span class="star empty">★</span>';
+        }
+        return s;
+      }
+
+      async function fetchWikiImage(wid, imgId) {
+        try { const r = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wid}&property=P18&format=json&origin=*`);
+        const d = await r.json(); const fn = d?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        if (fn) { const img = document.getElementById(imgId); if (img) img.src = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fn.replace(/ /g,'_'))}?width=400`; } } catch {}
+      }
+
+      async function fetchWikiPageImage(title, imgId) {
+        try { const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+        if (r.ok) { const d = await r.json(); if (d.thumbnail?.source) { const img = document.getElementById(imgId); if (img) img.src = d.thumbnail.source; } } } catch {}
+      }
+
+      async function fetchWikiSummary(name) {
+        try {
+          const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+          if (res.ok) {
+            const data = await res.json();
+            return { summary: data.extract || '', image: data.thumbnail?.source || '' };
+          }
+        } catch {}
+        return { summary: '', image: '' };
+      }
+
+      async function openDetail(school, rating) {
+        detailOverlay.classList.add('active');
+        detailBody.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading details...</p></div>`;
+
+        const wiki = school.wikipedia ? await fetchWikiSummary(school.wikipedia.split(':').pop()) : { summary: '', image: '' };
+
+        detailBody.innerHTML = `
+          ${wiki.image ? `<img src="${wiki.image}" alt="${school.name}" class="detail-hero-image">` : ''}
+          <h2>${school.name}</h2>
+          <div class="detail-type-badge">${school.type}</div>
+          <div class="detail-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}/5.0</span> <span class="rating-label">Community Rating</span></div>
+          
+          ${wiki.summary ? `<div class="detail-section"><h4>📖 About</h4><p>${wiki.summary}</p></div>` : ''}
+
+          <div class="detail-section">
+            <h4>📋 Details</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${school.distance.toFixed(2)} km from you</span></div>
+              ${school.address ? `<div class="detail-info-item"><span class="detail-label">🏠 Address</span><span>${school.address}</span></div>` : ''}
+              ${school.operator ? `<div class="detail-info-item"><span class="detail-label">🏛️ Operator</span><span>${school.operator}</span></div>` : ''}
+              ${school.phone ? `<div class="detail-info-item"><span class="detail-label">📞 Phone</span><span>${school.phone}</span></div>` : ''}
+              ${school.email ? `<div class="detail-info-item"><span class="detail-label">📧 Email</span><span>${school.email}</span></div>` : ''}
+              ${school.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>${school.opening}</span></div>` : ''}
+              ${school.capacity ? `<div class="detail-info-item"><span class="detail-label">👥 Capacity</span><span>${school.capacity} students</span></div>` : ''}
+              ${school.wheelchair ? `<div class="detail-info-item"><span class="detail-label">♿ Wheelchair</span><span>${school.wheelchair}</span></div>` : ''}
+              ${school.denomination ? `<div class="detail-info-item"><span class="detail-label">🙏 Denomination</span><span>${school.denomination}</span></div>` : ''}
+            </div>
+          </div>
+
+          <div class="detail-actions">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${school.lat},${school.lng}" target="_blank" class="btn-direction">📍 Get Directions</a>
+            ${school.website ? `<a href="${school.website}" target="_blank" class="btn-direction btn-secondary-action">🌐 Visit Website</a>` : ''}
+            ${school.wikipedia ? `<a href="https://en.wikipedia.org/wiki/${school.wikipedia.split(':').pop()}" target="_blank" class="btn-direction btn-secondary-action">📖 Wikipedia</a>` : ''}
+          </div>
+        `;
+      }
+
+      async function fetchUniversalImage(name, city, category, imgId) {
+        try {
+          let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
+          let d = await r.json();
+          if (d.query && d.query.pages) {
+            const pageId = Object.keys(d.query.pages)[0];
+            const img = document.getElementById(imgId);
+            if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; }
+          }
+
+
+        } catch(e) {}
+      }
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      }
+    });
+  </script>
+</body>
+</html>

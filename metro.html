@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metro & Transit — KnowYourCity</title>
+  <meta name="description" content="Find metro stations, rail services, bus stops, and transit info near your location." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">🚇</div>
+        <h1>Metro & Transit in <span class="gradient-text" id="cityName">Your Area</span></h1>
+        <p>Metro stations, railway stops, bus stations & bus stops within 15km. If metro isn't available, we show the best nearby alternatives. Data from OpenStreetMap & Wikipedia.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-info-banner" id="transitBanner" style="display:none;">
+    <div class="container">
+      <div class="info-banner glass-card">
+        <div class="info-banner-icon" id="bannerIcon">ℹ️</div>
+        <div class="info-banner-text">
+          <h3 id="transitTitle">Transit Information</h3>
+          <p id="transitDesc">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="results-header">
+        <h2 id="resultsCount">Searching for stations...</h2>
+        <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+      </div>
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Fetching transit stations, bus stops & railway info...</p>
+      </div>
+      <div class="results-grid" id="resultsGrid" style="display:none;"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">🚫</div>
+        <h3>No Transit Found</h3>
+        <p>This area may not have transit service mapped nearby.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+          <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
+          <a href="index.html" class="btn-primary">Go Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel glass-card">
+      <button class="detail-close" id="detailClose">✕</button>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      document.getElementById('cityName').textContent = city;
+
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
+      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
+      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+
+      fetchTransit(lat, lng);
+
+      async function fetchTransit(lat, lng) {
+        const query = `
+          [out:json][timeout:30];
+          (
+            node["station"="subway"](around:15000,${lat},${lng});
+            node["station"="light_rail"](around:15000,${lat},${lng});
+            node["railway"="station"](around:15000,${lat},${lng});
+            way["railway"="station"](around:15000,${lat},${lng});
+            node["railway"="halt"](around:15000,${lat},${lng});
+            node["amenity"="bus_station"](around:10000,${lat},${lng});
+            way["amenity"="bus_station"](around:10000,${lat},${lng});
+            node["highway"="bus_stop"](around:5000,${lat},${lng});
+          );
+          out center tags 120;
+        `;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          document.getElementById('loadingSpinner').style.display = 'none';
+
+          const stations = data.elements.map(el => {
+            const elLat = el.lat || el.center?.lat;
+            const elLng = el.lon || el.center?.lon;
+            const sType = el.tags?.station==='subway' ? 'Metro' :
+                          el.tags?.station==='light_rail' ? 'Light Rail' :
+                          el.tags?.railway==='station' ? 'Railway Station' :
+                          el.tags?.railway==='halt' ? 'Rail Halt' :
+                          el.tags?.amenity==='bus_station' ? 'Bus Station' :
+                          el.tags?.highway==='bus_stop' ? 'Bus Stop' : 'Transit';
+            const icon = sType==='Metro' ? '🚇' : sType==='Light Rail' ? '🚈' :
+                         sType.includes('Railway') ? '🚆' : sType==='Rail Halt' ? '🛤️' :
+                         sType==='Bus Station' ? '🚌' : sType==='Bus Stop' ? '🚏' : '🚉';
+            return {
+              name: el.tags?.name || el.tags?.['name:en'] || '',
+              type: sType, icon,
+              network: el.tags?.network || '',
+              operator: el.tags?.operator || '',
+              line: el.tags?.line || el.tags?.ref || el.tags?.route_ref || '',
+              platforms: el.tags?.platforms || '',
+              wheelchair: el.tags?.wheelchair || '',
+              shelter: el.tags?.shelter || '',
+              bench: el.tags?.bench || '',
+              lit: el.tags?.lit || '',
+              website: el.tags?.website || '',
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              phone: el.tags?.phone || '',
+              opening: el.tags?.opening_hours || '',
+              electrified: el.tags?.electrified || '',
+              usage: el.tags?.usage || '',
+              surface: el.tags?.surface || '',
+              image: el.tags?.image || '',
+              lat: elLat, lng: elLng,
+              distance: getDistance(lat, lng, elLat, elLng)
+            };
+          }).filter(s => s.name).sort((a, b) => a.distance - b.distance);
+
+          // Dedup
+          const seen = new Set();
+          const unique = stations.filter(s => { if (seen.has(s.name)) return false; seen.add(s.name); return true; });
+
+          // Banner info
+          const banner = document.getElementById('transitBanner');
+          banner.style.display = 'block';
+          const hasMetro = unique.some(s => s.type==='Metro'||s.type==='Light Rail');
+          const hasRailway = unique.some(s => s.type==='Railway Station'||s.type==='Rail Halt');
+          const busCnt = unique.filter(s => s.type==='Bus Station'||s.type==='Bus Stop').length;
+          const railCnt = unique.filter(s => s.type==='Railway Station'||s.type==='Rail Halt').length;
+
+          if (hasMetro) {
+            document.getElementById('bannerIcon').textContent = '✅';
+            document.getElementById('transitTitle').textContent = `Metro/Rail Service Available in ${city}`;
+            document.getElementById('transitDesc').textContent = `Found ${unique.filter(s=>s.type==='Metro'||s.type==='Light Rail').length} metro station(s), ${railCnt} railway station(s), and ${busCnt} bus stop(s)/station(s).`;
+          } else if (hasRailway) {
+            document.getElementById('bannerIcon').textContent = '🚆';
+            document.getElementById('transitTitle').textContent = `No Metro — Railway & Bus Transit Available in ${city}`;
+            document.getElementById('transitDesc').textContent = `Metro not available. Showing ${railCnt} railway station(s) and ${busCnt} bus stop(s)/station(s) near you.`;
+          } else {
+            document.getElementById('bannerIcon').textContent = '🚌';
+            document.getElementById('transitTitle').textContent = `Bus Transit Only in ${city}`;
+            document.getElementById('transitDesc').textContent = `No metro or railway nearby. Showing ${busCnt} bus stop(s)/station(s) within range.`;
+          }
+
+          if (unique.length === 0) {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsCount').textContent = 'No transit found';
+            return;
+          }
+
+          document.getElementById('resultsCount').textContent = `${unique.length} Transit Points Found`;
+          document.getElementById('resultsMeta').textContent = `Metro, Railway, Bus — within 15km of ${city}`;
+          document.getElementById('resultsGrid').style.display = 'grid';
+
+          const grid = document.getElementById('resultsGrid');
+          unique.forEach((station, i) => {
+            const rating = calcRating(station);
+            const card = document.createElement('div');
+            card.className = 'result-card glass-card clickable-card';
+            card.style.animationDelay = `${i * 0.04}s`;
+
+            card.innerHTML = `
+              <div class="card-image-wrapper">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23101830' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>${encodeURIComponent(station.icon)}</text></svg>"
+                     alt="${station.name}" class="card-image" id="stImg${i}">
+                <div class="card-image-overlay">
+                  <span class="result-badge">${station.distance.toFixed(1)} km</span>
+                  <span class="result-type-badge">${station.type}</span>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="result-title">${station.icon} ${station.name}</h3>
+                <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
+                <div class="result-details">
+                  ${station.network ? `<div class="result-detail"><span class="detail-icon">🌐</span>${station.network}</div>` : ''}
+                  ${station.operator ? `<div class="result-detail"><span class="detail-icon">🏛️</span>${station.operator}</div>` : ''}
+                  ${station.line ? `<div class="result-detail"><span class="detail-icon">🔀</span>Line: ${station.line}</div>` : ''}
+                  ${station.shelter==='yes' ? `<div class="result-detail"><span class="detail-icon">🏠</span>Shelter available</div>` : ''}
+                  ${station.lit==='yes' ? `<div class="result-detail"><span class="detail-icon">💡</span>Well lit</div>` : ''}
+                </div>
+                <div class="card-actions">
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
+                </div>
+              </div>
+            `;
+            card.addEventListener('click', () => openDetail(station, rating));
+            grid.appendChild(card);
+
+            if (station.image) document.getElementById(`stImg${i}`).src = station.image;
+            else if (station.wikidata) fetchWikiImage(station.wikidata, `stImg${i}`);
+            else if (station.wikipedia) fetchWikiPageImage(station.wikipedia.split(':').pop(), `stImg${i}`);
+            else fetchUniversalImage(station.name, city, 'train station', `stImg${i}`);
+          });
+
+        } catch (err) {
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+        }
+      }
+
+      function calcRating(item) {
+        let r = 3.0;
+        if (item.website) r += 0.4;
+        if (item.phone) r += 0.2;
+        if (item.wikipedia || item.wikidata) r += 0.5;
+        if (item.wheelchair === 'yes') r += 0.3;
+        if (item.lit === 'yes') r += 0.2;
+        if (item.shelter === 'yes') r += 0.2;
+        if (item.opening) r += 0.1;
+        if (item.operator) r += 0.1;
+        if (item.type === 'Metro' || item.type === 'Light Rail') r += 0.3;
+        else if (item.type === 'Railway Station') r += 0.2;
+        return Math.min(r, 5.0);
+      }
+
+      function renderStars(rating) {
+        let s = '';
+        for (let i = 1; i <= 5; i++) {
+          if (rating >= i) s += '<span class="star full">★</span>';
+          else if (rating >= i - 0.5) s += '<span class="star half">★</span>';
+          else s += '<span class="star empty">★</span>';
+        }
+        return s;
+      }
+
+      async function fetchWikiImage(wid, imgId) {
+        try { const r = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wid}&property=P18&format=json&origin=*`);
+        const d = await r.json(); const fn = d?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        if (fn) { const img = document.getElementById(imgId); if (img) img.src = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fn.replace(/ /g,'_'))}?width=400`; } } catch {}
+      }
+
+      async function fetchWikiPageImage(title, imgId) {
+        try { const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+        if (r.ok) { const d = await r.json(); if (d.thumbnail?.source) { const img = document.getElementById(imgId); if (img) img.src = d.thumbnail.source; } } } catch {}
+      }
+
+      async function fetchWikiSummary(name) {
+        try { const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+        if (r.ok) { const d = await r.json(); return { summary: d.extract||'', image: d.thumbnail?.source||'', full: d.content_urls?.desktop?.page||'' }; } } catch {}
+        return { summary:'', image:'', full:'' };
+      }
+
+      async function openDetail(station, rating) {
+        detailOverlay.classList.add('active');
+        detailBody.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading details...</p></div>`;
+        const wiki = station.wikipedia ? await fetchWikiSummary(station.wikipedia.split(':').pop()) : { summary:'', image:'', full:'' };
+
+        detailBody.innerHTML = `
+          ${wiki.image ? `<img src="${wiki.image}" alt="${station.name}" class="detail-hero-image">` : station.image ? `<img src="${station.image}" alt="${station.name}" class="detail-hero-image">` : ''}
+          <h2>${station.icon} ${station.name}</h2>
+          <div class="detail-type-badge">${station.type}</div>
+          <div class="detail-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}/5.0</span> <span class="rating-label">Community Rating</span></div>
+
+          ${wiki.summary ? `<div class="detail-section"><h4>📖 About</h4><p>${wiki.summary}</p></div>` : ''}
+
+          <div class="detail-section">
+            <h4>🚉 Station Details</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${station.distance.toFixed(2)} km</span></div>
+              <div class="detail-info-item"><span class="detail-label">🏷️ Type</span><span>${station.type}</span></div>
+              ${station.network ? `<div class="detail-info-item"><span class="detail-label">🌐 Network</span><span>${station.network}</span></div>` : ''}
+              ${station.operator ? `<div class="detail-info-item"><span class="detail-label">🏛️ Operator</span><span>${station.operator}</span></div>` : ''}
+              ${station.line ? `<div class="detail-info-item"><span class="detail-label">🔀 Line/Route</span><span>${station.line}</span></div>` : ''}
+              ${station.platforms ? `<div class="detail-info-item"><span class="detail-label">🚏 Platforms</span><span>${station.platforms}</span></div>` : ''}
+              ${station.electrified ? `<div class="detail-info-item"><span class="detail-label">⚡ Electrified</span><span>${station.electrified}</span></div>` : ''}
+              ${station.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>${station.opening}</span></div>` : ''}
+              ${station.phone ? `<div class="detail-info-item"><span class="detail-label">📞 Phone</span><span>${station.phone}</span></div>` : ''}
+              ${station.usage ? `<div class="detail-info-item"><span class="detail-label">📊 Usage</span><span>${station.usage}</span></div>` : ''}
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>♿ Facilities & Accessibility</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">♿ Wheelchair</span><span>${station.wheelchair || 'Not specified'}</span></div>
+              <div class="detail-info-item"><span class="detail-label">🏠 Shelter</span><span>${station.shelter || 'Not specified'}</span></div>
+              <div class="detail-info-item"><span class="detail-label">🪑 Bench</span><span>${station.bench || 'Not specified'}</span></div>
+              <div class="detail-info-item"><span class="detail-label">💡 Lighting</span><span>${station.lit || 'Not specified'}</span></div>
+            </div>
+          </div>
+
+          <div class="detail-actions">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}" target="_blank" class="btn-direction">📍 Get Directions</a>
+            ${station.website ? `<a href="${station.website}" target="_blank" class="btn-direction btn-secondary-action">🌐 Official Website</a>` : ''}
+            ${wiki.full ? `<a href="${wiki.full}" target="_blank" class="btn-direction btn-secondary-action">📖 Wikipedia</a>` : ''}
+          </div>
+        `;
+      }
+
+      async function fetchUniversalImage(name, city, category, imgId) {
+        try { let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
+          let d = await r.json();
+          if (d.query && d.query.pages) { const pageId = Object.keys(d.query.pages)[0]; const img = document.getElementById(imgId); if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; } }
+
+
+        } catch(e) {}
+      }
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
+        const a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+        return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      }
+    });
+  </script>
+</body>
+</html>

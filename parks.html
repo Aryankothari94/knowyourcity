@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parks Nearby — KnowYourCity</title>
+  <meta name="description" content="Find family-friendly parks near your location with photos, directions, and detailed information." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">🌳</div>
+        <h1>Parks Near <span class="gradient-text" id="cityName">Your Area</span></h1>
+        <p>Discover family-friendly parks and gardens within 15km with photos, details, and directions. Data from OpenStreetMap & Wikipedia.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="results-header">
+        <h2 id="resultsCount">Searching for parks...</h2>
+        <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+      </div>
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Fetching parks near your location...</p>
+      </div>
+      <div class="results-grid" id="resultsGrid" style="display:none;"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>No Parks Found Nearby</h3>
+        <p>Try a different location.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+          <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
+          <a href="index.html" class="btn-primary">Go Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel glass-card">
+      <button class="detail-close" id="detailClose">✕</button>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      document.getElementById('cityName').textContent = city;
+
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
+      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
+      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+
+      fetchParks(lat, lng);
+
+      async function fetchParks(lat, lng) {
+        const query = `
+          [out:json][timeout:30];
+          (
+            node["leisure"="park"](around:15000,${lat},${lng});
+            way["leisure"="park"](around:15000,${lat},${lng});
+            node["leisure"="garden"](around:15000,${lat},${lng});
+            way["leisure"="garden"](around:15000,${lat},${lng});
+            node["leisure"="nature_reserve"](around:15000,${lat},${lng});
+            way["leisure"="nature_reserve"](around:15000,${lat},${lng});
+            node["leisure"="playground"](around:10000,${lat},${lng});
+            way["leisure"="playground"](around:10000,${lat},${lng});
+          );
+          out center tags 100;
+        `;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          document.getElementById('loadingSpinner').style.display = 'none';
+
+          const parks = data.elements.map(el => {
+            const elLat = el.lat || el.center?.lat;
+            const elLng = el.lon || el.center?.lon;
+            const typeMap = { park: 'Park', garden: 'Garden', nature_reserve: 'Nature Reserve', playground: 'Playground' };
+            return {
+              name: el.tags?.name || el.tags?.['name:en'] || '',
+              type: typeMap[el.tags?.leisure] || 'Park',
+              surface: el.tags?.surface || '',
+              access: el.tags?.access || 'Public',
+              website: el.tags?.website || el.tags?.['contact:website'] || '',
+              phone: el.tags?.phone || '',
+              opening: el.tags?.opening_hours || '',
+              description: el.tags?.description || el.tags?.['description:en'] || '',
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              fee: el.tags?.fee || '',
+              dog: el.tags?.dog || '',
+              lit: el.tags?.lit || '',
+              operator: el.tags?.operator || '',
+              lat: elLat, lng: elLng,
+              distance: getDistance(lat, lng, elLat, elLng)
+            };
+          }).filter(p => p.name).sort((a, b) => a.distance - b.distance);
+
+          if (parks.length === 0) {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsCount').textContent = 'No parks found';
+            return;
+          }
+
+          document.getElementById('resultsCount').textContent = `${parks.length} Parks & Gardens Found`;
+          document.getElementById('resultsMeta').textContent = `Within 15km of ${city} • Sorted by distance`;
+          document.getElementById('resultsGrid').style.display = 'grid';
+
+          const grid = document.getElementById('resultsGrid');
+          parks.forEach((park, i) => {
+            const rating = calcRating(park);
+            const card = document.createElement('div');
+            card.className = 'result-card glass-card clickable-card';
+            card.style.animationDelay = `${i * 0.05}s`;
+            const safetyColor = park.lit === 'yes' ? '#00e676' : park.access === 'private' ? '#ff5252' : '#ffab40';
+            const safetyLabel = park.lit === 'yes' ? 'Well Lit ✅' : park.access === 'private' ? 'Private' : 'Public';
+
+            card.innerHTML = `
+              <div class="card-image-wrapper">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23102020' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>🌿</text></svg>" 
+                     alt="${park.name}" class="card-image" id="parkImg${i}">
+                <div class="card-image-overlay">
+                  <span class="result-badge result-badge-green">${park.distance.toFixed(1)} km</span>
+                  <span class="result-type-badge">${park.type}</span>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="result-title">🌿 ${park.name}</h3>
+                <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
+                <div class="safety-indicator" style="color:${safetyColor}">● ${safetyLabel}</div>
+                <div class="result-details">
+                  ${park.opening ? `<div class="result-detail"><span class="detail-icon">🕐</span>${park.opening}</div>` : ''}
+                  ${park.operator ? `<div class="result-detail"><span class="detail-icon">🏛️</span>${park.operator}</div>` : ''}
+                </div>
+                <div class="card-actions">
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${park.lat},${park.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
+                </div>
+              </div>
+            `;
+            card.addEventListener('click', () => openDetail(park, rating));
+            grid.appendChild(card);
+
+            if (park.wikidata) fetchWikiImage(park.wikidata, `parkImg${i}`);
+            else if (park.wikipedia) fetchWikiPageImage(park.wikipedia.split(':').pop(), `parkImg${i}`);
+            else fetchUniversalImage(park.name, city, 'park', `parkImg${i}`);
+          });
+
+        } catch (err) {
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+        }
+      }
+
+      function calcRating(item) {
+        let r = 3.0;
+        if (item.website) r += 0.4;
+        if (item.phone) r += 0.2;
+        if (item.wikipedia || item.wikidata) r += 0.5;
+        if (item.lit === 'yes') r += 0.3;
+        if (item.opening) r += 0.2;
+        if (item.operator) r += 0.2;
+        if (item.fee) r += 0.1;
+        if (item.description) r += 0.1;
+        return Math.min(r, 5.0);
+      }
+
+      function renderStars(rating) {
+        let s = '';
+        for (let i = 1; i <= 5; i++) {
+          if (rating >= i) s += '<span class="star full">★</span>';
+          else if (rating >= i - 0.5) s += '<span class="star half">★</span>';
+          else s += '<span class="star empty">★</span>';
+        }
+        return s;
+      }
+
+      async function fetchWikiImage(wikidataId, imgId) {
+        try {
+          const res = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wikidataId}&property=P18&format=json&origin=*`);
+          const data = await res.json();
+          const fileName = data?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+          if (fileName) {
+            const img = document.getElementById(imgId);
+            if (img) img.src = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName.replace(/ /g, '_'))}?width=400`;
+          }
+        } catch {}
+      }
+
+      async function fetchWikiPageImage(title, imgId) {
+        try {
+          const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.thumbnail?.source) {
+              const img = document.getElementById(imgId);
+              if (img) img.src = data.thumbnail.source;
+            }
+          }
+        } catch {}
+      }
+
+      async function fetchWikiSummary(name) {
+        try {
+          const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+          if (res.ok) { const d = await res.json(); return { summary: d.extract || '', image: d.thumbnail?.source || '' }; }
+        } catch {}
+        return { summary: '', image: '' };
+      }
+
+      async function openDetail(park, rating) {
+        detailOverlay.classList.add('active');
+        detailBody.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading details...</p></div>`;
+        const wiki = park.wikipedia ? await fetchWikiSummary(park.wikipedia.split(':').pop()) : { summary: '', image: '' };
+
+        detailBody.innerHTML = `
+          ${wiki.image ? `<img src="${wiki.image}" alt="${park.name}" class="detail-hero-image">` : ''}
+          <h2>🌿 ${park.name}</h2>
+          <div class="detail-type-badge">${park.type}</div>
+          <div class="detail-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}/5.0</span> <span class="rating-label">Community Rating</span></div>
+          ${wiki.summary ? `<div class="detail-section"><h4>📖 About</h4><p>${wiki.summary}</p></div>` : ''}
+          <div class="detail-section">
+            <h4>📋 Details</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${park.distance.toFixed(2)} km</span></div>
+              <div class="detail-info-item"><span class="detail-label">🔓 Access</span><span>${park.access}</span></div>
+              ${park.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>${park.opening}</span></div>` : ''}
+              ${park.surface ? `<div class="detail-info-item"><span class="detail-label">🌱 Surface</span><span>${park.surface}</span></div>` : ''}
+              ${park.fee ? `<div class="detail-info-item"><span class="detail-label">💰 Fee</span><span>${park.fee}</span></div>` : ''}
+              ${park.lit ? `<div class="detail-info-item"><span class="detail-label">💡 Lighting</span><span>${park.lit}</span></div>` : ''}
+              ${park.dog ? `<div class="detail-info-item"><span class="detail-label">🐕 Dogs</span><span>${park.dog}</span></div>` : ''}
+              ${park.operator ? `<div class="detail-info-item"><span class="detail-label">🏛️ Operator</span><span>${park.operator}</span></div>` : ''}
+              ${park.phone ? `<div class="detail-info-item"><span class="detail-label">📞 Phone</span><span>${park.phone}</span></div>` : ''}
+              ${park.description ? `<div class="detail-info-item detail-info-full"><span class="detail-label">📝 Description</span><span>${park.description}</span></div>` : ''}
+            </div>
+          </div>
+          <div class="detail-actions">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${park.lat},${park.lng}" target="_blank" class="btn-direction">📍 Get Directions</a>
+            ${park.website ? `<a href="${park.website}" target="_blank" class="btn-direction btn-secondary-action">🌐 Visit Website</a>` : ''}
+            ${park.wikipedia ? `<a href="https://en.wikipedia.org/wiki/${park.wikipedia.split(':').pop()}" target="_blank" class="btn-direction btn-secondary-action">📖 Wikipedia</a>` : ''}
+          </div>
+        `;
+      }
+
+      async function fetchUniversalImage(name, city, category, imgId) {
+        try { let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
+          let d = await r.json();
+          if (d.query && d.query.pages) { const pageId = Object.keys(d.query.pages)[0]; const img = document.getElementById(imgId); if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; } }
+
+
+        } catch(e) {}
+      }
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      }
+    });
+  </script>
+</body>
+</html>

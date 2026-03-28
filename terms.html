@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms & Conditions — Know Your City</title>
+  <meta name="description" content="Terms and Conditions for using Know Your City platform — safe neighborhood discovery for newcomers." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="logo.png" type="image/png" />
+  <style>
+    :root {
+      --bg-primary: #0a0b1a;
+      --bg-secondary: #12132a;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8899aa;
+      --accent-cyan: #00e5ff;
+      --accent-green: #00e676;
+      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Background orbs */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+    }
+    .orb-1 { width: 500px; height: 500px; background: #00e5ff; top: -100px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
+    .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    /* Back button */
+    .back-nav {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .back-nav:hover {
+      background: var(--accent-cyan);
+      color: #0a0b1a;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Main content */
+    .terms-container {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+    }
+
+    .terms-header {
+      text-align: center;
+      margin-bottom: 50px;
+      animation: fadeInUp 0.6s ease;
+    }
+    .terms-header .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(0, 229, 255, 0.08);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      margin-bottom: 20px;
+    }
+    .terms-header h1 {
+      font-family: var(--font-heading);
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .terms-header .last-updated {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+    }
+
+    /* Sections */
+    .terms-section {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.6s ease;
+    }
+    .terms-section:hover {
+      border-color: rgba(0, 229, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .terms-section .section-icon {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .terms-section h2 {
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .terms-section h2 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      color: #0a0b1a;
+      font-size: 0.85rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .terms-section p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+    .terms-section p:last-child { margin-bottom: 0; }
+
+    .terms-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0;
+    }
+    .terms-section ul li {
+      padding: 8px 0 8px 28px;
+      position: relative;
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+    .terms-section ul li::before {
+      content: '✦';
+      position: absolute;
+      left: 4px;
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
+      top: 10px;
+    }
+
+    .highlight-box {
+      background: rgba(0, 229, 255, 0.06);
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 0.9rem;
+      color: #b0c4d8;
+    }
+    .highlight-box strong { color: var(--accent-cyan); }
+
+    /* Footer */
+    .terms-footer {
+      text-align: center;
+      padding: 40px 0 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      margin-top: 40px;
+      animation: fadeInUp 0.6s ease;
+    }
+    .terms-footer p {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+    .terms-footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .terms-footer a:hover {
+      color: var(--accent-green);
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .terms-container { padding: 90px 16px 60px; }
+      .terms-header h1 { font-size: 2rem; }
+      .terms-section { padding: 24px 20px; }
+      .back-nav { top: 16px; left: 16px; padding: 8px 16px; font-size: 0.82rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <a href="index.html" class="back-nav">← Back to Home</a>
+
+  <div class="terms-container">
+    <div class="terms-header">
+      <div class="badge">📜 Legal</div>
+      <h1>Terms & <span class="gradient-text">Conditions</span></h1>
+      <p class="last-updated">Last updated: March 26, 2026</p>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="terms-section">
+      <h2><span class="num">1</span> Introduction & Acceptance</h2>
+      <p>Welcome to <strong>Know Your City</strong> ("KYC", "we", "us", or "our"). By accessing or using our platform, website, and services, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
+      <p>If you do not agree with any part of these terms, you must not use our services. Your continued use of the platform constitutes acceptance of any modifications to these terms.</p>
+      <div class="highlight-box">
+        <strong>📌 Important:</strong> These terms apply to all visitors, registered users, and anyone who accesses or uses our services in any capacity.
+      </div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="terms-section">
+      <h2><span class="num">2</span> User Accounts & Registration</h2>
+      <p>To access certain features of Know Your City, you may be required to create an account. You agree to:</p>
+      <ul>
+        <li>Provide accurate, current, and complete information during registration</li>
+        <li>Maintain the security of your password and account credentials</li>
+        <li>Accept responsibility for all activities that occur under your account</li>
+        <li>Notify us immediately of any unauthorized use of your account</li>
+        <li>Not create multiple accounts for deceptive or abusive purposes</li>
+      </ul>
+      <p>We reserve the right to suspend or terminate accounts that violate these terms or engage in fraudulent activity.</p>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="terms-section">
+      <h2><span class="num">3</span> Platform Services & Safety Data</h2>
+      <p>Know Your City provides neighborhood safety scores, area analytics, infrastructure mapping, and relocation insights. Our services include but are not limited to:</p>
+      <ul>
+        <li>Safety heatmaps and neighborhood scoring algorithms</li>
+        <li>Real-time infrastructure data (police stations, hospitals, fire stations, CCTV)</li>
+        <li>Safe route planning and navigation assistance</li>
+        <li>Nearby amenities discovery (schools, parks, PGs, hostels)</li>
+        <li>Community testimonials and local tips</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>⚠️ Disclaimer:</strong> Safety scores and data are generated from publicly available sources such as OpenStreetMap and Wikipedia. They are meant to serve as <em>informational guides</em> and should <strong>not</strong> be considered absolute safety guarantees. Always exercise personal judgment and consult local authorities.
+      </div>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="terms-section">
+      <h2><span class="num">4</span> Data Collection & Privacy</h2>
+      <p>We respect your privacy and are committed to protecting your personal data. When you use our platform, we may collect:</p>
+      <ul>
+        <li>Account information (name, email, phone number, date of birth)</li>
+        <li>Location data (GPS coordinates, city preferences) for personalized insights</li>
+        <li>Usage data (pages visited, features used, search queries)</li>
+        <li>Device and browser information for platform optimization</li>
+      </ul>
+      <p>Your data is used solely to provide and improve our services. We do not sell your personal information to third parties. For detailed information, please refer to our Privacy Policy.</p>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="terms-section">
+      <h2><span class="num">5</span> User Conduct & Responsibilities</h2>
+      <p>While using Know Your City, you agree not to:</p>
+      <ul>
+        <li>Submit false, misleading, or defamatory content in feedback or reviews</li>
+        <li>Attempt to manipulate, reverse-engineer, or exploit our scoring algorithms</li>
+        <li>Use automated tools (bots, scrapers) to extract data without authorization</li>
+        <li>Interfere with the platform's infrastructure, security, or accessibility</li>
+        <li>Impersonate other users, organizations, or government entities</li>
+        <li>Use the platform for any illegal, harmful, or discriminatory purpose</li>
+      </ul>
+    </div>
+
+    <!-- Section 6 -->
+    <div class="terms-section">
+      <h2><span class="num">6</span> Intellectual Property</h2>
+      <p>All content, designs, logos, graphics, algorithms, and data compilations on Know Your City are the intellectual property of KYC or its licensors. You may not:</p>
+      <ul>
+        <li>Reproduce, distribute, or modify any content without written permission</li>
+        <li>Use our branding or trademarks for any unauthorized purpose</li>
+        <li>Claim ownership of safety data or analytics generated by our platform</li>
+      </ul>
+      <p>User-submitted content (testimonials, feedback) grants us a non-exclusive, royalty-free license to display and use such content on our platform.</p>
+    </div>
+
+    <!-- Section 7 -->
+    <div class="terms-section">
+      <h2><span class="num">7</span> Limitation of Liability</h2>
+      <p>To the maximum extent permitted by law, Know Your City and its team shall not be held liable for:</p>
+      <ul>
+        <li>Any direct, indirect, incidental, or consequential damages arising from the use of our platform</li>
+        <li>Inaccuracies in safety data, neighborhood scores, or infrastructure information</li>
+        <li>Decisions made based on information provided by our services</li>
+        <li>Service interruptions, data loss, or technical failures</li>
+        <li>Actions of third parties, including API data providers or map services</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>🛡️ Safety Note:</strong> Our platform is an informational tool. For emergency situations, always contact local emergency services (Police: 100, Ambulance: 108, Fire: 101).
+      </div>
+    </div>
+
+    <!-- Section 8 -->
+    <div class="terms-section">
+      <h2><span class="num">8</span> Modifications to Terms</h2>
+      <p>We reserve the right to update or modify these Terms and Conditions at any time. Changes will be effective immediately upon posting on this page. We will update the "Last Updated" date at the top of this document.</p>
+      <p>It is your responsibility to review these terms periodically. Continued use of the platform after changes constitutes acceptance of the revised terms.</p>
+    </div>
+
+    <!-- Section 9 -->
+    <div class="terms-section">
+      <h2><span class="num">9</span> Governing Law & Dispute Resolution</h2>
+      <p>These terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from the use of our platform shall be subject to the exclusive jurisdiction of the courts located in India.</p>
+      <p>We encourage users to reach out to us directly to resolve any concerns before pursuing formal legal proceedings.</p>
+    </div>
+
+    <!-- Section 10 -->
+    <div class="terms-section">
+      <h2><span class="num">10</span> Contact Us</h2>
+      <p>If you have any questions, concerns, or feedback regarding these Terms and Conditions, please reach out to us:</p>
+      <ul>
+        <li><strong>Email:</strong> support@knowyourcity.in</li>
+        <li><strong>Platform:</strong> Use the feedback form on our homepage</li>
+        <li><strong>Response Time:</strong> We aim to respond within 48 business hours</li>
+      </ul>
+    </div>
+
+    <div class="terms-footer">
+      <p>© 2026 KnowYourCity. All rights reserved. Made with 💙 for newcomers everywhere</p>
+      <p style="margin-top: 8px;"><a href="index.html">← Return to Homepage</a></p>
+    </div>
+  </div>
+</body>
+
+</html>

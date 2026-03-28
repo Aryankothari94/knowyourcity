@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Forum — Know Your City</title>
+  <meta name="description" content="Connect with other newcomers, share safety tips, and learn from local stories on the Know Your City community forum." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="logo.png" type="image/png" />
+  <style>
+    :root {
+      --bg-primary: #0a0b1a;
+      --bg-secondary: #12132a;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8899aa;
+      --accent-cyan: #00e5ff;
+      --accent-green: #00e676;
+      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Background orbs */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+    }
+    .orb-1 { width: 500px; height: 500px; background: #00e5ff; top: -100px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
+    .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    /* Back button */
+    .back-nav {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .back-nav:hover {
+      background: var(--accent-cyan);
+      color: #0a0b1a;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Main content */
+    .forum-container {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 120px 24px 80px;
+      text-align: center;
+    }
+
+    .forum-header {
+      margin-bottom: 60px;
+      animation: fadeInUp 0.6s ease;
+    }
+    .forum-header h1 {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .forum-header p {
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1.2rem;
+    }
+
+    /* Portal Card */
+    .forum-portal {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 32px;
+      padding: 60px 40px;
+      backdrop-filter: blur(15px);
+      animation: fadeInUp 0.7s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .forum-portal::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(0, 229, 255, 0.05), transparent 70%);
+      pointer-events: none;
+    }
+
+    .coming-soon-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      color: var(--accent-cyan);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+    }
+
+    .forum-content h2 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      margin-bottom: 24px;
+    }
+    .forum-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin: 40px 0;
+    }
+    .feature-item {
+      padding: 24px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: all 0.3s;
+    }
+    .feature-item:hover {
+      transform: translateY(-5px);
+      border-color: rgba(0, 229, 255, 0.15);
+    }
+    .feature-item .icon { font-size: 2.2rem; display: block; margin-bottom: 12px; }
+    .feature-item h4 { font-size: 1rem; margin-bottom: 8px; }
+    .feature-item p { font-size: 0.85rem; color: var(--text-secondary); }
+
+    .btn-notify {
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      color: #0a0b1a;
+      padding: 16px 40px;
+      border-radius: 50px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 20px;
+      box-shadow: 0 10px 30px rgba(0, 229, 255, 0.2);
+      transition: all 0.3s;
+    }
+    .btn-notify:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0, 229, 255, 0.3); }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .forum-header h1 { font-size: 2.5rem; }
+      .forum-features { grid-template-columns: 1fr; }
+      .forum-portal { padding: 40px 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <a href="index.html" class="back-nav">← Back to Home</a>
+
+  <div class="forum-container">
+    <div class="forum-header">
+      <div class="coming-soon-badge">Launching Summer 2026</div>
+      <h1>The <span class="gradient-text">Community</span> Hub</h1>
+      <p>Building India's largest collaborative network for urban safety and relocation experiences.</p>
+    </div>
+
+    <div class="forum-portal">
+      <div class="forum-content">
+        <h2>Connect. Shared. Secure.</h2>
+        <p style="color: var(--text-secondary);">We are crafting a dedicated space for newcomers to exchange verified tips, ask neighborhood-specific questions, and build local safety networks.</p>
+        
+        <div class="forum-features">
+          <div class="feature-item">
+            <span class="icon">💬</span>
+            <h4>Live Q&A</h4>
+            <p>Ask locals about specific streets, schools, or night safety.</p>
+          </div>
+          <div class="feature-item">
+            <span class="icon">🏘️</span>
+            <h4>Area Circles</h4>
+            <p>Join private groups for your specific ward or sector.</p>
+          </div>
+          <div class="feature-item">
+            <span class="icon">🛡️</span>
+            <h4>Verify Data</h4>
+            <p>Upvote or flag infrastructure nodes in realtime.</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom: 25px;">Be the first to join the conversation.</p>
+        <a href="contact.html" class="btn-notify">Get Early Access 🚀</a>
+      </div>
+    </div>
+
+    <div style="margin-top: 60px; color: var(--text-secondary); font-size: 0.9rem;">
+      <p>© 2026 KnowYourCity. Collaborative Urban Intelligence.</p>
+    </div>
+  </div>
+</body>
+
+</html>

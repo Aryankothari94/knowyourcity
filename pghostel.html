@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PG & Hostels — KnowYourCity</title>
+  <meta name="description" content="Discover nearby PGs and hostels with pricing, safety, and amenity details." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">🏠</div>
+        <h1>PG & Hostels Near <span class="gradient-text" id="cityName">Your Area</span></h1>
+        <p>Find hostels, dormitories, and guest houses within 10km with contact info, amenities, gender availability, and safety ratings. Data from OpenStreetMap.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="results-header">
+        <h2 id="resultsCount">Searching for PGs & hostels...</h2>
+        <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+      </div>
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Fetching hostels and guest houses near you...</p>
+      </div>
+      <div class="results-grid" id="resultsGrid" style="display:none;"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>No PGs/Hostels Found</h3>
+        <p>Try a different location.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+          <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
+          <a href="index.html" class="btn-primary">Go Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel glass-card">
+      <button class="detail-close" id="detailClose">✕</button>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = localStorage.getItem('kyc_userCity') || 'Your Area';
+      document.getElementById('cityName').textContent = city;
+
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
+      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
+      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+
+      fetchHostels(lat, lng);
+
+      async function fetchHostels(lat, lng) {
+        const query = `
+          [out:json][timeout:30];
+          (
+            node["tourism"="hostel"](around:10000,${lat},${lng});
+            way["tourism"="hostel"](around:10000,${lat},${lng});
+            node["tourism"="guest_house"](around:10000,${lat},${lng});
+            way["tourism"="guest_house"](around:10000,${lat},${lng});
+            node["building"="dormitory"](around:10000,${lat},${lng});
+            way["building"="dormitory"](around:10000,${lat},${lng});
+          );
+          out center tags 80;
+        `;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          document.getElementById('loadingSpinner').style.display = 'none';
+
+          const hostels = data.elements.map(el => {
+            const elLat = el.lat || el.center?.lat;
+            const elLng = el.lon || el.center?.lon;
+            const hType = el.tags?.tourism === 'hostel' ? 'Hostel' :
+                          el.tags?.tourism === 'guest_house' ? 'Guest House' : 'Dormitory';
+            return {
+              name: el.tags?.name || el.tags?.['name:en'] || '',
+              type: hType,
+              phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+              website: el.tags?.website || el.tags?.['contact:website'] || '',
+              email: el.tags?.email || el.tags?.['contact:email'] || '',
+              operator: el.tags?.operator || '',
+              stars: el.tags?.stars || '',
+              rooms: el.tags?.rooms || '',
+              beds: el.tags?.beds || '',
+              wheelchair: el.tags?.wheelchair || '',
+              internet: el.tags?.internet_access || '',
+              smoking: el.tags?.smoking || '',
+              gender: el.tags?.['male'] === 'yes' ? 'Boys Only' :
+                      el.tags?.['female'] === 'yes' ? 'Girls Only' :
+                      el.tags?.gender ? el.tags.gender : '',
+              address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
+              opening: el.tags?.opening_hours || '',
+              description: el.tags?.description || '',
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              image: el.tags?.image || '',
+              lat: elLat, lng: elLng,
+              distance: getDistance(lat, lng, elLat, elLng)
+            };
+          }).filter(h => h.name).sort((a, b) => a.distance - b.distance);
+
+          const seen = new Set();
+          const unique = hostels.filter(h => { if (seen.has(h.name)) return false; seen.add(h.name); return true; });
+
+          if (unique.length === 0) {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsCount').textContent = 'No PGs/hostels found';
+            return;
+          }
+
+          document.getElementById('resultsCount').textContent = `${unique.length} PGs, Hostels & Guest Houses`;
+          document.getElementById('resultsMeta').textContent = `Within 10km of ${city} • Sorted by distance`;
+          document.getElementById('resultsGrid').style.display = 'grid';
+
+          const grid = document.getElementById('resultsGrid');
+          unique.forEach((h, i) => {
+            const rating = calcRating(h);
+            const card = document.createElement('div');
+            card.className = 'result-card glass-card clickable-card';
+            card.style.animationDelay = `${i * 0.05}s`;
+            const genderColor = h.gender.includes('Girls') ? '#e040fb' : h.gender.includes('Boys') ? '#448aff' : '#ffab40';
+            const genderLabel = h.gender || 'Co-ed / Unspecified';
+
+            card.innerHTML = `
+              <div class="card-image-wrapper">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23101525' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>🏠</text></svg>"
+                     alt="${h.name}" class="card-image" id="pgImg${i}">
+                <div class="card-image-overlay">
+                  <span class="result-badge">${h.distance.toFixed(1)} km</span>
+                  <span class="result-type-badge">${h.type}</span>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="result-title">🏠 ${h.name}</h3>
+                <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
+                <div class="safety-indicator" style="color:${genderColor}">● ${genderLabel}</div>
+                <div class="result-details">
+                  ${h.phone ? `<div class="result-detail"><span class="detail-icon">📞</span>${h.phone}</div>` : ''}
+                  ${h.stars ? `<div class="result-detail"><span class="detail-icon">⭐</span>${h.stars} Star</div>` : ''}
+                  ${h.internet ? `<div class="result-detail"><span class="detail-icon">📶</span>Internet: ${h.internet}</div>` : ''}
+                </div>
+                <div class="card-actions">
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
+                </div>
+              </div>
+            `;
+            card.addEventListener('click', () => openDetail(h, rating));
+            grid.appendChild(card);
+
+            if (h.image) document.getElementById(`pgImg${i}`).src = h.image;
+            else if (h.wikidata) fetchWikiImage(h.wikidata, `pgImg${i}`);
+            else fetchUniversalImage(h.name, city, 'hostel', `pgImg${i}`);
+          });
+
+        } catch (err) {
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+        }
+      }
+
+      function calcRating(item) {
+        let r = 3.0;
+        if (item.website) r += 0.4;
+        if (item.phone) r += 0.3;
+        if (item.stars) r += parseFloat(item.stars) * 0.15;
+        if (item.internet) r += 0.2;
+        if (item.wheelchair === 'yes') r += 0.2;
+        if (item.email) r += 0.1;
+        if (item.beds || item.rooms) r += 0.2;
+        return Math.min(r, 5.0);
+      }
+
+      function renderStars(rating) {
+        let s = '';
+        for (let i = 1; i <= 5; i++) {
+          if (rating >= i) s += '<span class="star full">★</span>';
+          else if (rating >= i - 0.5) s += '<span class="star half">★</span>';
+          else s += '<span class="star empty">★</span>';
+        }
+        return s;
+      }
+
+      async function fetchWikiImage(wid, imgId) {
+        try { const r = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wid}&property=P18&format=json&origin=*`);
+        const d = await r.json(); const fn = d?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        if (fn) { const img = document.getElementById(imgId); if (img) img.src = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fn.replace(/ /g,'_'))}?width=400`; } } catch {}
+      }
+
+      function openDetail(h, rating) {
+        detailOverlay.classList.add('active');
+        detailBody.innerHTML = `
+          ${h.image ? `<img src="${h.image}" alt="${h.name}" class="detail-hero-image">` : ''}
+          <h2>🏠 ${h.name}</h2>
+          <div class="detail-type-badge">${h.type}</div>
+          <div class="detail-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}/5.0</span></div>
+          ${h.description ? `<div class="detail-section"><h4>📝 About</h4><p>${h.description}</p></div>` : ''}
+          <div class="detail-section">
+            <h4>🏠 Accommodation Details</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${h.distance.toFixed(2)} km</span></div>
+              <div class="detail-info-item"><span class="detail-label">👥 Gender</span><span style="color:${h.gender.includes('Girls')?'#e040fb':h.gender.includes('Boys')?'#448aff':'var(--text-secondary)'}; font-weight:600;">${h.gender || 'Co-ed / Unspecified'}</span></div>
+              ${h.stars ? `<div class="detail-info-item"><span class="detail-label">⭐ Rating</span><span>${h.stars} Star</span></div>` : ''}
+              ${h.beds ? `<div class="detail-info-item"><span class="detail-label">🛏️ Beds</span><span>${h.beds}</span></div>` : ''}
+              ${h.rooms ? `<div class="detail-info-item"><span class="detail-label">🚪 Rooms</span><span>${h.rooms}</span></div>` : ''}
+              ${h.phone ? `<div class="detail-info-item"><span class="detail-label">📞 Phone</span><span>${h.phone}</span></div>` : ''}
+              ${h.email ? `<div class="detail-info-item"><span class="detail-label">📧 Email</span><span>${h.email}</span></div>` : ''}
+              ${h.operator ? `<div class="detail-info-item"><span class="detail-label">🏛️ Operator</span><span>${h.operator}</span></div>` : ''}
+              ${h.address ? `<div class="detail-info-item"><span class="detail-label">🏠 Address</span><span>${h.address}</span></div>` : ''}
+              ${h.internet ? `<div class="detail-info-item"><span class="detail-label">📶 Internet</span><span>${h.internet}</span></div>` : ''}
+              ${h.wheelchair ? `<div class="detail-info-item"><span class="detail-label">♿ Wheelchair</span><span>${h.wheelchair}</span></div>` : ''}
+              ${h.smoking ? `<div class="detail-info-item"><span class="detail-label">🚭 Smoking</span><span>${h.smoking}</span></div>` : ''}
+              ${h.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Check-in</span><span>${h.opening}</span></div>` : ''}
+            </div>
+          </div>
+          <div class="detail-section">
+            <h4>🛡️ Safety Tips</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item detail-info-full" style="font-size:0.82rem; color:var(--text-secondary); line-height:1.6;">
+                <span>▸ Always verify the PG/hostel in person before paying<br>
+                ▸ Check for CCTV cameras in common areas<br>
+                ▸ Verify fire safety exits and extinguishers<br>
+                ▸ Ask about visitor policies and security guards<br>
+                ▸ Keep emergency contacts saved on your phone</span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}" target="_blank" class="btn-direction">📍 Get Directions</a>
+            ${h.phone ? `<a href="tel:${h.phone}" class="btn-direction btn-secondary-action">📞 Call</a>` : ''}
+            ${h.website ? `<a href="${h.website}" target="_blank" class="btn-direction btn-secondary-action">🌐 Website</a>` : ''}
+          </div>
+        `;
+      }
+
+      async function fetchUniversalImage(name, city, category, imgId) {
+        try { let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
+          let d = await r.json();
+          if (d.query && d.query.pages) { const pageId = Object.keys(d.query.pages)[0]; const img = document.getElementById(imgId); if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; } }
+
+
+        } catch(e) {}
+      }
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
+        const a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+        return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      }
+    });
+  </script>
+</body>
+</html>

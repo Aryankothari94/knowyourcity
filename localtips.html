@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Local Tips — KnowYourCity</title>
+  <meta name="description" content="Essential local tips, emergency numbers, and insider knowledge for your city." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">💡</div>
+        <h1>Local Tips for <span class="gradient-text" id="cityName">Your Area</span></h1>
+        <p>Essential insider knowledge, emergency contacts, and practical advice to help you navigate your new city with confidence.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Preparing local tips for your city...</p>
+      </div>
+
+      <!-- Emergency Numbers Banner -->
+      <div class="info-banner glass-card" id="emergencyBanner" style="display:none; margin-bottom:28px; padding:24px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <span style="font-size:1.8rem;">🚨</span>
+          <h3 style="margin:0; font-size:1.1rem;">Emergency Numbers — <span id="emergencyCity">India</span></h3>
+        </div>
+        <div class="detail-info-grid" id="emergencyGrid" style="gap:10px;"></div>
+      </div>
+
+      <div class="results-grid" id="tipsGrid" style="display:none;"></div>
+    </div>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = localStorage.getItem('kyc_userCity') || 'Your Area';
+      document.getElementById('cityName').textContent = city;
+
+      generateTips(city, lat, lng);
+
+      async function generateTips(city, lat, lng) {
+        // Get country info via reverse geocode
+        let country = 'India', state = '';
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`, { headers: { 'Accept-Language': 'en' } });
+          const data = await res.json();
+          country = data.address?.country || 'India';
+          state = data.address?.state || '';
+        } catch {}
+
+        document.getElementById('loadingSpinner').style.display = 'none';
+
+        // Emergency numbers
+        const emergencyNums = getEmergencyNumbers(country);
+        const emergencyGrid = document.getElementById('emergencyGrid');
+        document.getElementById('emergencyCity').textContent = country;
+        emergencyGrid.innerHTML = emergencyNums.map(n =>
+          `<div class="detail-info-item" style="background:rgba(255,255,255,0.03); border-radius:10px; padding:12px;">
+            <span class="detail-label">${n.icon} ${n.label}</span><span style="font-weight:600; color:var(--accent-cyan); font-size:1.05rem;">${n.number}</span>
+          </div>`
+        ).join('');
+        document.getElementById('emergencyBanner').style.display = 'block';
+
+        // Tips
+        const tips = getCityTips(city, state, country, lat, lng);
+        const grid = document.getElementById('tipsGrid');
+        grid.style.display = 'grid';
+        tips.forEach((tip, i) => {
+          const card = document.createElement('div');
+          card.className = 'result-card glass-card';
+          card.style.animationDelay = `${i * 0.08}s`;
+          card.innerHTML = `
+            <div class="card-content" style="padding:24px;">
+              <div style="font-size:2.2rem; margin-bottom:10px;">${tip.icon}</div>
+              <h3 class="result-title" style="margin-bottom:8px;">${tip.title}</h3>
+              <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.6; margin-bottom:14px;">${tip.description}</p>
+              ${tip.items ? `<ul style="list-style:none; padding:0; margin:0;">
+                ${tip.items.map(item => `<li style="padding:6px 0; color:var(--text-secondary); font-size:0.84rem; border-bottom:1px solid rgba(255,255,255,0.04);">
+                  <span style="color:var(--accent-cyan); margin-right:6px;">▸</span>${item}
+                </li>`).join('')}
+              </ul>` : ''}
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+
+      function getEmergencyNumbers(country) {
+        if (country === 'India') return [
+          { icon: '🚔', label: 'Police', number: '100' },
+          { icon: '🚑', label: 'Ambulance', number: '108' },
+          { icon: '🚒', label: 'Fire', number: '101' },
+          { icon: '📞', label: 'Universal Emergency', number: '112' },
+          { icon: '👩', label: 'Women Helpline', number: '1091 / 181' },
+          { icon: '👶', label: 'Child Helpline', number: '1098' },
+          { icon: '🛣️', label: 'Road Accident', number: '1073' },
+          { icon: '🏥', label: 'Mental Health', number: '08046110007' }
+        ];
+        return [
+          { icon: '🚨', label: 'Emergency', number: '911 / 112' },
+          { icon: '🚔', label: 'Police', number: '911' },
+          { icon: '🚑', label: 'Ambulance', number: '911' },
+          { icon: '🚒', label: 'Fire', number: '911' }
+        ];
+      }
+
+      function getCityTips(city, state, country, lat, lng) {
+        return [
+          {
+            icon: '🛡️', title: 'Safety First',
+            description: `Stay aware of your surroundings in ${city}. Familiarize yourself with the safest neighborhoods.`,
+            items: [
+              'Avoid isolated areas after dark, especially if you\'re new',
+              'Keep emergency numbers saved on speed dial',
+              'Share your live location with family when commuting late',
+              'Use well-lit main roads rather than shortcuts through alleys',
+              'Download local safety apps if available'
+            ]
+          },
+          {
+            icon: '🚌', title: 'Getting Around',
+            description: `Transportation tips to navigate ${city} like a local.`,
+            items: [
+              'Use official metro/bus apps for schedules and routes',
+              'Prefer prepaid autos/cabs or ride-sharing apps over unmarked taxis',
+              'Get a local transport card (Metro card) for discounted fares',
+              'Peak hours are usually 8-10 AM and 5-8 PM — plan accordingly',
+              'Google Maps works well for public transit directions in most Indian cities'
+            ]
+          },
+          {
+            icon: '🛒', title: 'Markets & Shopping',
+            description: `Where and how to shop smartly in ${city}.`,
+            items: [
+              'Local markets offer much better prices than malls for daily essentials',
+              'Always negotiate prices at street markets — vendors expect it',
+              'Look for weekly farmers markets for fresh produce',
+              'Keep small denominations for local shops and auto-rickshaws',
+              'Ask neighbors for trusted local grocery stores'
+            ]
+          },
+          {
+            icon: '🏥', title: 'Healthcare',
+            description: `Essential healthcare tips for newcomers in ${city}.`,
+            items: [
+              'Register at the nearest government hospital for affordable care',
+              'Keep a list of 24/7 pharmacies near your home',
+              'Many hospitals offer online appointments — check their websites',
+              'Carry health insurance documents at all times',
+              'For emergencies, call 108 for ambulance service'
+            ]
+          },
+          {
+            icon: '🍽️', title: 'Food & Water',
+            description: `Stay healthy with these food and water tips in ${city}.`,
+            items: [
+              'Drink filtered or bottled water until you verify local water quality',
+              'Try local street food — but choose busy stalls with high turnover',
+              'Most neighborhoods have tiffin services for affordable home-style meals',
+              'Food delivery apps (Swiggy, Zomato) cover most areas',
+              'Carry a water bottle — refill stations are common at metro stations'
+            ]
+          },
+          {
+            icon: '🏠', title: 'Housing & Renting',
+            description: `Finding the right place to stay in ${city}.`,
+            items: [
+              'Always verify landlord identity and property documents',
+              'Check for police verification — it\'s mandatory for tenants in many cities',
+              'Inspect water supply, electricity backup, and parking before signing',
+              'Negotiate maintenance charges — they\'re often inflated',
+              'Join local community WhatsApp/Telegram groups for insider leads'
+            ]
+          },
+          {
+            icon: '🌤️', title: 'Weather & Culture',
+            description: `Adapt to local weather and cultural norms in ${city}.`,
+            items: [
+              `Check the local weather forecast daily — ${state || city} can have sudden changes`,
+              'Dress according to local cultural norms, especially at religious sites',
+              'Learn a few phrases in the local language — it goes a long way',
+              'Respect local festivals and holidays — expect shop closures',
+              'Carry an umbrella during monsoon season (June–September)'
+            ]
+          }
+        ];
+      }
+    });
+  </script>
+</body>
+</html>

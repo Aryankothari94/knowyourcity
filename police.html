@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Police Stations Nearby — KnowYourCity</title>
+  <meta name="description" content="Find nearest police stations with emergency numbers and file online complaints." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="icon" href="logo.png" type="image/png" />
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">🚔</div>
+        <h1>Police Stations Near <span class="gradient-text" id="cityName">Your Area</span></h1>
+        <p>Locate nearest police stations with emergency contacts, jurisdiction info, and quick links to file online complaints. Data from OpenStreetMap.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Emergency & Online Complaint Banner -->
+  <section class="feature-info-banner" style="display:block;">
+    <div class="container">
+      <div class="info-banner glass-card" style="padding:24px;">
+        <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:18px;">
+          <span style="font-size:1.8rem;">🚨</span>
+          <h3 style="margin:0; font-size:1.1rem;">Quick Actions & Emergency</h3>
+        </div>
+        <div class="detail-info-grid" style="gap:10px; margin-bottom:18px;">
+          <div class="detail-info-item" style="background:rgba(255,82,82,0.08); border:1px solid rgba(255,82,82,0.2); border-radius:10px; padding:14px;">
+            <span class="detail-label">🚔 Police Control Room</span><span style="font-weight:700; color:#ff5252; font-size:1.2rem;">100</span>
+          </div>
+          <div class="detail-info-item" style="background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.2); border-radius:10px; padding:14px;">
+            <span class="detail-label">📞 Universal Emergency</span><span style="font-weight:700; color:var(--accent-cyan); font-size:1.2rem;">112</span>
+          </div>
+          <div class="detail-info-item" style="background:rgba(156,39,176,0.08); border:1px solid rgba(156,39,176,0.2); border-radius:10px; padding:14px;">
+            <span class="detail-label">👩 Women Helpline</span><span style="font-weight:700; color:#ce93d8; font-size:1.2rem;">1091</span>
+          </div>
+          <div class="detail-info-item" style="background:rgba(255,171,64,0.08); border:1px solid rgba(255,171,64,0.2); border-radius:10px; padding:14px;">
+            <span class="detail-label">👶 Child Helpline</span><span style="font-weight:700; color:#ffab40; font-size:1.2rem;">1098</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <a href="https://cybercrime.gov.in/" target="_blank" class="btn-direction" style="background:linear-gradient(135deg,#ff5252,#d32f2f); color:#fff; border:none;">🛡️ File Cyber Complaint</a>
+          <a href="https://digitalpolice.gov.in/" target="_blank" class="btn-direction" style="background:linear-gradient(135deg,var(--accent-cyan),#0097a7); color:#fff; border:none;">📋 Digital Police Portal</a>
+          <a href="https://www.ncrb.gov.in/" target="_blank" class="btn-direction btn-secondary-action">📊 NCRB Crime Data</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="results-header">
+        <h2 id="resultsCount">Searching for police stations...</h2>
+        <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+      </div>
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Fetching police stations near your location...</p>
+      </div>
+      <div class="results-grid" id="resultsGrid" style="display:none;"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>No Police Stations Found</h3>
+        <p>Try a different location.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+          <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
+          <a href="index.html" class="btn-primary">Go Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel glass-card">
+      <button class="detail-close" id="detailClose">✕</button>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = localStorage.getItem('kyc_userCity') || 'Your Area';
+      document.getElementById('cityName').textContent = city;
+
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
+      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
+      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+
+      fetchPolice(lat, lng);
+
+      async function fetchPolice(lat, lng) {
+        const query = `
+          [out:json][timeout:30];
+          (
+            node["amenity"="police"](around:15000,${lat},${lng});
+            way["amenity"="police"](around:15000,${lat},${lng});
+          );
+          out center tags 80;
+        `;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          document.getElementById('loadingSpinner').style.display = 'none';
+
+          const stations = data.elements.map(el => {
+            const elLat = el.lat || el.center?.lat;
+            const elLng = el.lon || el.center?.lon;
+            return {
+              name: el.tags?.name || el.tags?.['name:en'] || '',
+              phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+              website: el.tags?.website || el.tags?.['contact:website'] || '',
+              operator: el.tags?.operator || '',
+              jurisdiction: el.tags?.jurisdiction || '',
+              opening: el.tags?.opening_hours || '',
+              address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
+              wheelchair: el.tags?.wheelchair || '',
+              description: el.tags?.description || '',
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              lat: elLat, lng: elLng,
+              distance: getDistance(lat, lng, elLat, elLng)
+            };
+          }).filter(s => s.name).sort((a, b) => a.distance - b.distance);
+
+          const seen = new Set();
+          const unique = stations.filter(s => { if (seen.has(s.name)) return false; seen.add(s.name); return true; });
+
+          if (unique.length === 0) {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsCount').textContent = 'No police stations found';
+            return;
+          }
+
+          document.getElementById('resultsCount').textContent = `${unique.length} Police Stations Found`;
+          document.getElementById('resultsMeta').textContent = `Within 15km of ${city} • Sorted by distance`;
+          document.getElementById('resultsGrid').style.display = 'grid';
+
+          const grid = document.getElementById('resultsGrid');
+          unique.forEach((station, i) => {
+            const rating = calcRating(station);
+            const card = document.createElement('div');
+            card.className = 'result-card glass-card clickable-card';
+            card.style.animationDelay = `${i * 0.05}s`;
+
+            card.innerHTML = `
+              <div class="card-image-wrapper">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23101828' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>🚔</text></svg>"
+                     alt="${station.name}" class="card-image" id="polImg${i}">
+                <div class="card-image-overlay">
+                  <span class="result-badge">${station.distance.toFixed(1)} km</span>
+                  <span class="result-type-badge">Police</span>
+                </div>
+              </div>
+              <div class="card-content">
+                <h3 class="result-title">🚔 ${station.name}</h3>
+                <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
+                <div class="result-details">
+                  ${station.phone ? `<div class="result-detail"><span class="detail-icon">📞</span>${station.phone}</div>` : ''}
+                  ${station.operator ? `<div class="result-detail"><span class="detail-icon">🏛️</span>${station.operator}</div>` : ''}
+                  ${station.address ? `<div class="result-detail"><span class="detail-icon">📍</span>${station.address}</div>` : ''}
+                </div>
+                <div class="card-actions">
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
+                </div>
+              </div>
+            `;
+            card.addEventListener('click', () => openDetail(station, rating));
+            grid.appendChild(card);
+
+            if (station.wikidata) fetchWikiImage(station.wikidata, `polImg${i}`);
+            else fetchUniversalImage(station.name, city, 'police station', `polImg${i}`);
+          });
+
+        } catch (err) {
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+        }
+      }
+
+      function calcRating(item) {
+        let r = 3.0;
+        if (item.website) r += 0.4;
+        if (item.phone) r += 0.4;
+        if (item.wikipedia || item.wikidata) r += 0.4;
+        if (item.opening) r += 0.2;
+        if (item.operator) r += 0.2;
+        if (item.wheelchair === 'yes') r += 0.2;
+        if (item.address) r += 0.2;
+        return Math.min(r, 5.0);
+      }
+
+      function renderStars(rating) {
+        let s = '';
+        for (let i = 1; i <= 5; i++) {
+          if (rating >= i) s += '<span class="star full">★</span>';
+          else if (rating >= i - 0.5) s += '<span class="star half">★</span>';
+          else s += '<span class="star empty">★</span>';
+        }
+        return s;
+      }
+
+      async function fetchWikiImage(wid, imgId) {
+        try { const r = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wid}&property=P18&format=json&origin=*`);
+        const d = await r.json(); const fn = d?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        if (fn) { const img = document.getElementById(imgId); if (img) img.src = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fn.replace(/ /g,'_'))}?width=400`; } } catch {}
+      }
+
+      async function openDetail(station, rating) {
+        detailOverlay.classList.add('active');
+        detailBody.innerHTML = `
+          <h2>🚔 ${station.name}</h2>
+          <div class="detail-type-badge">Police Station</div>
+          <div class="detail-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}/5.0</span></div>
+          ${station.description ? `<div class="detail-section"><h4>📝 About</h4><p>${station.description}</p></div>` : ''}
+          <div class="detail-section">
+            <h4>📋 Station Details</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${station.distance.toFixed(2)} km</span></div>
+              ${station.phone ? `<div class="detail-info-item"><span class="detail-label">📞 Phone</span><span>${station.phone}</span></div>` : ''}
+              ${station.operator ? `<div class="detail-info-item"><span class="detail-label">🏛️ Operator</span><span>${station.operator}</span></div>` : ''}
+              ${station.jurisdiction ? `<div class="detail-info-item"><span class="detail-label">📑 Jurisdiction</span><span>${station.jurisdiction}</span></div>` : ''}
+              ${station.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>${station.opening}</span></div>` : ''}
+              ${station.address ? `<div class="detail-info-item"><span class="detail-label">🏠 Address</span><span>${station.address}</span></div>` : ''}
+              ${station.wheelchair ? `<div class="detail-info-item"><span class="detail-label">♿ Wheelchair</span><span>${station.wheelchair}</span></div>` : ''}
+            </div>
+          </div>
+          <div class="detail-section">
+            <h4>🚨 Emergency Numbers</h4>
+            <div class="detail-info-grid">
+              <div class="detail-info-item"><span class="detail-label">🚔 Police</span><span style="color:#ff5252; font-weight:700;">100</span></div>
+              <div class="detail-info-item"><span class="detail-label">📞 Emergency</span><span style="color:var(--accent-cyan); font-weight:700;">112</span></div>
+              <div class="detail-info-item"><span class="detail-label">👩 Women</span><span style="color:#ce93d8; font-weight:700;">1091</span></div>
+              <div class="detail-info-item"><span class="detail-label">👶 Child</span><span style="color:#ffab40; font-weight:700;">1098</span></div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}" target="_blank" class="btn-direction">📍 Get Directions</a>
+            ${station.phone ? `<a href="tel:${station.phone}" class="btn-direction btn-secondary-action">📞 Call Station</a>` : ''}
+            <a href="https://cybercrime.gov.in/" target="_blank" class="btn-direction btn-secondary-action" style="background:rgba(255,82,82,0.15); border-color:rgba(255,82,82,0.3);">🛡️ File Online Complaint</a>
+          </div>
+        `;
+      }
+
+      async function fetchUniversalImage(name, city, category, imgId) {
+        try { let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
+          let d = await r.json();
+          if (d.query && d.query.pages) { const pageId = Object.keys(d.query.pages)[0]; const img = document.getElementById(imgId); if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; } }
+
+
+        } catch(e) {}
+      }
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
+        const a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+        return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safe Route Finder — KnowYourCity</title>
+  <meta name="description" content="Find the safest route between two locations with safety-rated alternatives." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="icon" href="logo.png" type="image/png" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .route-page { display:flex; flex-wrap:wrap; gap:20px; margin-top:20px; }
+    .route-sidebar { flex:1; min-width:320px; max-width:420px; display:flex; flex-direction:column; gap:16px; }
+    .route-map-area { flex:2; min-width:400px; min-height:560px; }
+    .route-input-group { margin-bottom:14px; }
+    .route-input-group label { display:block; font-size:0.82rem; color:var(--text-secondary); margin-bottom:6px; font-weight:500; }
+    .route-input-wrap { position:relative; }
+    .route-input { width:100%; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:var(--text-primary); font-size:0.92rem; font-family:inherit; outline:none; transition:border-color 0.3s; box-sizing:border-box; }
+    .route-input:focus { border-color:var(--accent-cyan); }
+    /* Autocomplete */
+    .autocomplete-list { position:absolute; top:100%; left:0; right:0; z-index:500; background:rgba(13,17,41,0.97); border:1px solid rgba(255,255,255,0.1); border-top:none; border-radius:0 0 10px 10px; max-height:200px; overflow-y:auto; display:none; backdrop-filter:blur(12px); }
+    .autocomplete-list.show { display:block; }
+    .autocomplete-item { padding:10px 14px; cursor:pointer; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.15s; display:flex; align-items:center; gap:8px; }
+    .autocomplete-item:hover, .autocomplete-item.active { background:rgba(0,229,255,0.08); color:var(--text-primary); }
+    .autocomplete-item .ac-icon { color:var(--accent-cyan); flex-shrink:0; }
+    .autocomplete-item .ac-main { font-weight:500; color:var(--text-primary); }
+    .autocomplete-item .ac-sub { font-size:0.75rem; color:var(--text-secondary); margin-top:2px; }
+    .route-btn { width:100%; padding:14px; border:none; border-radius:12px; background:linear-gradient(135deg,var(--accent-cyan),#0097a7); color:#fff; font-size:1rem; font-weight:600; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; font-family:inherit; }
+    .route-btn:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,229,255,0.3); }
+    .route-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    #routeMap { height:560px; border-radius:14px; }
+
+    /* Route Option Cards */
+    .route-options { display:flex; flex-direction:column; gap:10px; }
+    .route-option-card { padding:14px 16px; border-radius:12px; background:rgba(255,255,255,0.03); border:2px solid rgba(255,255,255,0.06); cursor:pointer; transition:all 0.3s; position:relative; }
+    .route-option-card:hover { border-color:rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); }
+    .route-option-card.selected { border-color:var(--accent-cyan); background:rgba(0,229,255,0.06); box-shadow:0 0 20px rgba(0,229,255,0.1); }
+    .route-option-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .route-option-name { font-weight:600; font-size:0.95rem; display:flex; align-items:center; gap:8px; }
+    .safety-badge { padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+    .badge-safe { background:rgba(0,230,118,0.15); color:#00e676; border:1px solid rgba(0,230,118,0.3); }
+    .badge-moderate { background:rgba(255,171,64,0.15); color:#ffab40; border:1px solid rgba(255,171,64,0.3); }
+    .badge-unsafe { background:rgba(255,82,82,0.15); color:#ff5252; border:1px solid rgba(255,82,82,0.3); }
+    .route-option-stats { display:flex; gap:16px; font-size:0.8rem; color:var(--text-secondary); }
+    .route-option-stats span { display:flex; align-items:center; gap:4px; }
+    .route-option-safety { margin-top:8px; }
+    .safety-bar-bg { height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
+    .safety-bar-fill { height:100%; border-radius:3px; transition:width 0.8s ease; }
+
+    /* Action Buttons */
+    .route-actions { display:flex; gap:10px; margin-top:4px; }
+    .route-actions button { flex:1; padding:12px; border:none; border-radius:10px; font-weight:600; font-size:0.88rem; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+    .btn-start-journey { background:linear-gradient(135deg,#00e676,#00bfa5); color:#fff; }
+    .btn-start-journey:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,230,118,0.3); }
+    .btn-start-journey:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+    .btn-route-summary { background:rgba(255,255,255,0.06); color:var(--text-primary); border:1px solid rgba(255,255,255,0.1) !important; }
+    .btn-route-summary:hover { background:rgba(255,255,255,0.1); }
+    .btn-route-summary:disabled { opacity:0.4; cursor:not-allowed; }
+
+    /* Journey Mode */
+    .journey-banner { display:none; position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:1000; padding:10px 20px; background:rgba(10,14,39,0.92); backdrop-filter:blur(12px); border:1px solid rgba(0,230,118,0.3); border-radius:12px; font-size:0.85rem; color:#00e676; font-weight:600; box-shadow:0 4px 24px rgba(0,0,0,0.4); white-space:nowrap; }
+    .journey-banner.active { display:block; animation:slideDown 0.4s ease; }
+    .btn-stop-journey { margin-left:12px; padding:4px 12px; border:1px solid #ff5252; background:rgba(255,82,82,0.15); color:#ff5252; border-radius:8px; font-size:0.78rem; font-weight:600; cursor:pointer; }
+
+    /* Route Summary Panel */
+    .summary-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:2000; display:none; align-items:center; justify-content:center; }
+    .summary-overlay.active { display:flex; }
+    .summary-panel { background:var(--bg-secondary,#0d1129); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:28px; max-width:520px; width:92%; max-height:80vh; overflow-y:auto; position:relative; }
+    .summary-panel h3 { margin-bottom:16px; font-size:1.1rem; }
+    .summary-close { position:absolute; top:14px; right:14px; background:none; border:none; color:var(--text-secondary); font-size:1.3rem; cursor:pointer; }
+    .summary-route-info { display:flex; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+    .summary-stat { padding:10px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; text-align:center; flex:1; min-width:80px; }
+    .summary-stat-val { font-size:1.1rem; font-weight:700; color:var(--accent-cyan); }
+    .summary-stat-lbl { font-size:0.7rem; color:var(--text-secondary); margin-top:2px; }
+    .city-list { list-style:none; padding:0; margin:0; }
+    .city-list li { padding:10px 14px; border-left:3px solid var(--accent-cyan); margin-bottom:8px; background:rgba(255,255,255,0.02); border-radius:0 8px 8px 0; font-size:0.88rem; display:flex; align-items:center; gap:8px; }
+    .city-list li .city-idx { width:22px; height:22px; border-radius:50%; background:rgba(0,229,255,0.15); color:var(--accent-cyan); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; flex-shrink:0; }
+
+    @keyframes slideDown { from { opacity:0; transform:translateX(-50%) translateY(-20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+    @media(max-width:768px) { .route-page { flex-direction:column; } .route-map-area { min-height:380px; } #routeMap { height:380px; } .route-sidebar { max-width:100%; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar feature-navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">← Back to Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="feature-hero">
+    <div class="container">
+      <div class="feature-hero-content">
+        <div class="feature-icon-large">🗺️</div>
+        <h1>Safe <span class="gradient-text">Route Finder</span></h1>
+        <p>Enter pickup & drop to compare routes with real-time safety ratings. Green = safest, Yellow = moderate, Red = risky. Select a route, start your journey, and explore the cities along the way.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-results">
+    <div class="container">
+      <div class="route-page">
+        <!-- Sidebar -->
+        <div class="route-sidebar">
+          <div class="glass-card" style="padding:22px;">
+            <h3 style="margin-bottom:16px; font-size:1.05rem;">📍 Plan Your Route</h3>
+            <div class="route-input-group">
+              <label for="pickupInput">🟢 Pickup Location</label>
+              <div class="route-input-wrap">
+                <input type="text" id="pickupInput" class="route-input" placeholder="e.g. Connaught Place, Delhi" autocomplete="off" />
+                <div class="autocomplete-list" id="pickupAC"></div>
+              </div>
+              <button onclick="useCurrentLocationForPickup()" style="background:none; border:none; color:var(--accent-cyan); font-size:0.75rem; cursor:pointer; padding:4px 0; margin-top:2px;">📍 Use Current Location</button>
+            </div>
+            <div class="route-input-group">
+              <label for="dropInput">🔴 Drop Location</label>
+              <div class="route-input-wrap">
+                <input type="text" id="dropInput" class="route-input" placeholder="e.g. India Gate, Delhi" autocomplete="off" />
+                <div class="autocomplete-list" id="dropAC"></div>
+              </div>
+            </div>
+            <button class="route-btn" id="findRouteBtn" onclick="findRoutes()">🗺️ Find Routes</button>
+          </div>
+
+          <!-- Route Options -->
+          <div class="glass-card" style="padding:22px; display:none;" id="routeOptionsPanel">
+            <h4 style="margin-bottom:12px; font-size:0.95rem;">🛤️ Available Routes</h4>
+            <div class="route-options" id="routeOptions"></div>
+            <div class="route-actions" style="margin-top:14px;">
+              <button class="btn-start-journey" id="btnStartJourney" disabled onclick="startJourney()">▶ Start Journey</button>
+              <button class="btn-route-summary" id="btnRouteSummary" disabled onclick="openRouteSummary()">📋 Route Summary</button>
+            </div>
+          </div>
+
+          <!-- Safety Legend -->
+          <div class="glass-card" style="padding:16px; font-size:0.8rem; color:var(--text-secondary); line-height:1.7;">
+            💡 <strong style="color:var(--text-primary);">Safety Guide</strong><br>
+            🟢 <span style="color:#00e676;">Green route</span> = Safest (many police/hospitals)<br>
+            🟡 <span style="color:#ffab40;">Yellow route</span> = Moderate safety<br>
+            🔴 <span style="color:#ff5252;">Red route</span> = Less coverage, stay alert<br>
+            ● Green dots = Police stations<br>
+            ● Blue dots = Hospitals
+          </div>
+        </div>
+
+        <!-- Map -->
+        <div class="route-map-area glass-card" style="padding:12px; position:relative;">
+          <div id="routeMap"></div>
+          <div class="journey-banner" id="journeyBanner">
+            🚗 Journey in progress...
+            <button class="btn-stop-journey" onclick="stopJourney()">■ Stop</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Route Summary Overlay -->
+  <div class="summary-overlay" id="summaryOverlay">
+    <div class="summary-panel glass-card">
+      <button class="summary-close" onclick="closeSummary()">✕</button>
+      <h3>📋 Route Summary</h3>
+      <div id="summaryContent"><p style="color:var(--text-secondary);">Loading...</p></div>
+    </div>
+  </div>
+
+  <script>
+    // ===== STATE =====
+    let routeMap, safetyLayer, routeLayerGroup;
+    let allRoutes = [];        // { coords, distance, time, safetyScore, safetyLabel, polyline, policeCount, hospitalCount }
+    let selectedRouteIdx = -1;
+    let journeyInterval = null;
+    let journeyMarker = null;
+    let pickupData = null, dropData = null;
+    const defaultLat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+    const defaultLng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+
+    // ===== INIT MAP WITH SATELLITE + DARK LAYERS =====
+    routeMap = L.map('routeMap', { zoomControl: true }).setView([defaultLat, defaultLng], 13);
+    const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OSM & CARTO', maxZoom: 18
+    });
+    const satelliteLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+      attribution: '&copy; Google Maps', maxZoom: 20
+    });
+    satelliteLayer.addTo(routeMap);
+    L.control.layers({ '🛰️ Satellite': satelliteLayer, '🌑 Dark Map': darkLayer }, {}, { position: 'topright', collapsed: true }).addTo(routeMap);
+    safetyLayer = L.layerGroup().addTo(routeMap);
+    routeLayerGroup = L.layerGroup().addTo(routeMap);
+
+    L.circleMarker([defaultLat, defaultLng], { radius:7, fillColor:'#00e5ff', fillOpacity:1, color:'#fff', weight:2 })
+      .addTo(routeMap).bindPopup('📍 Your Location');
+
+    document.getElementById('pickupInput').addEventListener('keypress', e => { if (e.key==='Enter') { hideAC('pickupAC'); document.getElementById('dropInput').focus(); } });
+    document.getElementById('dropInput').addEventListener('keypress', e => { if (e.key==='Enter') { hideAC('dropAC'); findRoutes(); } });
+
+    // ===== AUTOCOMPLETE FOR INPUTS =====
+    let acTimeout = null;
+    function setupAutoComplete(inputId, listId) {
+      const input = document.getElementById(inputId);
+      const list = document.getElementById(listId);
+      input.addEventListener('input', () => {
+        clearTimeout(acTimeout);
+        const q = input.value.trim();
+        if (q.length < 3) { list.innerHTML=''; list.classList.remove('show'); return; }
+        acTimeout = setTimeout(async () => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`, { headers:{'Accept-Language':'en'} });
+            const data = await res.json();
+            if (!data.length) { list.innerHTML='<div class="autocomplete-item" style="cursor:default;color:var(--text-secondary)">No results found</div>'; list.classList.add('show'); return; }
+            list.innerHTML = data.map(d => {
+              const name = d.display_name.split(',')[0];
+              const sub = d.display_name.split(',').slice(1,3).join(',').trim();
+              return `<div class="autocomplete-item" data-name="${name}" data-display="${d.display_name}">
+                <span class="ac-icon">📍</span>
+                <div><div class="ac-main">${name}</div><div class="ac-sub">${sub}</div></div>
+              </div>`;
+            }).join('');
+            list.classList.add('show');
+            list.querySelectorAll('.autocomplete-item[data-name]').forEach(item => {
+              item.addEventListener('click', () => {
+                input.value = item.dataset.display.split(',').slice(0,2).join(',').trim();
+                list.innerHTML=''; list.classList.remove('show');
+              });
+            });
+          } catch { list.innerHTML=''; list.classList.remove('show'); }
+        }, 350);
+      });
+      // Hide on blur after short delay (allow click)
+      input.addEventListener('blur', () => setTimeout(() => { list.classList.remove('show'); }, 200));
+      input.addEventListener('focus', () => { if (list.innerHTML && input.value.length>=3) list.classList.add('show'); });
+    }
+    function hideAC(id) { document.getElementById(id).classList.remove('show'); }
+    setupAutoComplete('pickupInput', 'pickupAC');
+    setupAutoComplete('dropInput', 'dropAC');
+
+    // ===== GEOCODE =====
+    async function geocode(query) {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, { headers:{'Accept-Language':'en'} });
+      const d = await res.json();
+      if (!d.length) return null;
+      return { lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon), name:d[0].display_name.split(',')[0] };
+    }
+
+    // ===== FIND ROUTES (with alternatives) =====
+    async function findRoutes() {
+      const pickupText = document.getElementById('pickupInput').value.trim();
+      const dropText = document.getElementById('dropInput').value.trim();
+      if (!pickupText||!dropText) { alert('Please enter both pickup and drop locations.'); return; }
+
+      const btn = document.getElementById('findRouteBtn');
+      btn.disabled = true; btn.textContent = '🔄 Finding routes...';
+      stopJourney();
+
+      try {
+        [pickupData, dropData] = await Promise.all([geocode(pickupText), geocode(dropText)]);
+        if (!pickupData) { alert('Pickup location not found.'); return; }
+        if (!dropData)   { alert('Drop location not found.'); return; }
+
+        // Clear layers
+        safetyLayer.clearLayers();
+        routeLayerGroup.clearLayers();
+        allRoutes = []; selectedRouteIdx = -1;
+
+        // Add origin/destination markers
+        L.marker([pickupData.lat, pickupData.lng], {
+          icon: L.divIcon({ className:'', html:'<div style="background:#00e676;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #00e676"></div>', iconSize:[16,16] })
+        }).addTo(safetyLayer).bindPopup('🟢 '+pickupData.name);
+        L.marker([dropData.lat, dropData.lng], {
+          icon: L.divIcon({ className:'', html:'<div style="background:#ff5252;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #ff5252"></div>', iconSize:[16,16] })
+        }).addTo(safetyLayer).bindPopup('🔴 '+dropData.name);
+
+        // Fetch routes from OSRM with alternatives
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickupData.lng},${pickupData.lat};${dropData.lng},${dropData.lat}?overview=full&geometries=geojson&alternatives=3`;
+        const routeRes = await fetch(osrmUrl);
+        const routeData = await routeRes.json();
+
+        if (!routeData.routes || routeData.routes.length===0) { alert('No routes found.'); return; }
+
+        // Process each route
+        const routePromises = routeData.routes.map(async (r, idx) => {
+          const coords = r.geometry.coordinates.map(c => [c[1], c[0]]);
+          const distKm = (r.distance/1000).toFixed(1);
+          const timeMins = Math.round(r.duration/60);
+          // Calculate safety score for this route by sampling points along it
+          const safety = await calculateRouteSafety(coords);
+          return { coords, distance:distKm, time:timeMins, ...safety, rawCoords:r.geometry.coordinates };
+        });
+
+        allRoutes = await Promise.all(routePromises);
+
+        // Sort by safety score descending (safest first)
+        allRoutes.sort((a,b) => b.safetyScore - a.safetyScore);
+
+        // Draw all routes on map
+        drawAllRoutes();
+
+        // Build route option cards
+        buildRouteCards();
+
+        // Auto-select safest route
+        selectRoute(0);
+
+        // Fit bounds
+        const allCoords = allRoutes.flatMap(r => r.coords);
+        if (allCoords.length) routeMap.fitBounds(L.latLngBounds(allCoords), { padding:[40,40] });
+
+      } catch(err) {
+        console.error('Route error:', err);
+        alert('Error finding routes. Please try again.');
+      } finally {
+        btn.disabled = false; btn.textContent = '🗺️ Find Routes';
+      }
+    }
+
+    // ===== SAFETY SCORE CALCULATION =====
+    async function calculateRouteSafety(coords) {
+      // Sample 5-8 evenly spaced points along the route
+      const step = Math.max(1, Math.floor(coords.length / 6));
+      const samplePoints = [];
+      for (let i=0; i<coords.length; i+=step) samplePoints.push(coords[i]);
+      if (samplePoints.length > 8) samplePoints.length = 8;
+
+      // Build Overpass query for police + hospitals near the route corridor
+      const midIdx = Math.floor(coords.length/2);
+      const midLat = coords[midIdx][0], midLng = coords[midIdx][1];
+      // Calculate route extent for search radius
+      const routeLen = coords.length;
+      const latSpan = Math.abs(coords[0][0] - coords[routeLen-1][0]);
+      const lngSpan = Math.abs(coords[0][1] - coords[routeLen-1][1]);
+      const radius = Math.min(Math.max(Math.sqrt(latSpan*latSpan+lngSpan*lngSpan)*111000*0.6, 3000), 20000);
+
+      let policeCount=0, hospitalCount=0;
+      try {
+        const q = `[out:json][timeout:20];(node["amenity"="police"](around:${Math.round(radius)},${midLat},${midLng});node["amenity"="hospital"](around:${Math.round(radius)},${midLat},${midLng}););out count;`;
+        const res = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q) });
+        const d = await res.json();
+        // Count elements
+        if (d.elements) {
+          d.elements.forEach(el => {
+            if (el.tags?.amenity==='police') policeCount++;
+            else if (el.tags?.amenity==='hospital') hospitalCount++;
+          });
+        }
+        // Fallback: use total count from remark
+        if (policeCount===0 && hospitalCount===0 && d.elements?.length) {
+          // count query returns a single element with total
+          const total = d.elements[0]?.tags?.total || d.elements[0]?.tags?.nodes || 0;
+          policeCount = Math.floor(parseInt(total)/2);
+          hospitalCount = parseInt(total) - policeCount;
+        }
+      } catch {}
+
+      // Use detailed query as fallback
+      if (policeCount===0 && hospitalCount===0) {
+        try {
+          const q2 = `[out:json][timeout:20];(node["amenity"="police"](around:${Math.round(radius)},${midLat},${midLng});node["amenity"="hospital"](around:${Math.round(radius)},${midLat},${midLng}););out tags;`;
+          const res2 = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q2) });
+          const d2 = await res2.json();
+          d2.elements?.forEach(el => {
+            if (el.tags?.amenity==='police') policeCount++;
+            else if (el.tags?.amenity==='hospital') hospitalCount++;
+          });
+        } catch {}
+      }
+
+      const total = policeCount + hospitalCount;
+      // Score: 0-100 based on safety infrastructure density
+      let score = Math.min(100, total * 5);
+      // Add bonus for good police coverage
+      if (policeCount >= 5) score = Math.min(100, score + 10);
+      if (hospitalCount >= 3) score = Math.min(100, score + 5);
+
+      let label, color;
+      if (score >= 60)      { label='Safe'; color='#00e676'; }
+      else if (score >= 30) { label='Moderate'; color='#ffab40'; }
+      else                  { label='Risky'; color='#ff5252'; }
+
+      return { safetyScore:score, safetyLabel:label, safetyColor:color, policeCount, hospitalCount };
+    }
+
+    // ===== DRAW ALL ROUTES =====
+    function drawAllRoutes() {
+      routeLayerGroup.clearLayers();
+      allRoutes.forEach((r, idx) => {
+        const isSelected = idx === selectedRouteIdx;
+        r.polyline = L.polyline(r.coords, {
+          color: r.safetyColor,
+          weight: isSelected ? 7 : 4,
+          opacity: isSelected ? 0.95 : 0.4,
+          dashArray: isSelected ? null : '8,6'
+        }).addTo(routeLayerGroup);
+        r.polyline.on('click', () => selectRoute(idx));
+        r.polyline.bindTooltip(`Route ${idx+1}: ${r.safetyLabel} (${r.distance} km)`, { sticky:true, className:'', direction:'top' });
+      });
+    }
+
+    // ===== BUILD ROUTE CARDS =====
+    function buildRouteCards() {
+      const container = document.getElementById('routeOptions');
+      container.innerHTML = '';
+      document.getElementById('routeOptionsPanel').style.display = 'block';
+
+      allRoutes.forEach((r, idx) => {
+        const badgeClass = r.safetyLabel==='Safe' ? 'badge-safe' : r.safetyLabel==='Moderate' ? 'badge-moderate' : 'badge-unsafe';
+        const card = document.createElement('div');
+        card.className = 'route-option-card' + (idx===selectedRouteIdx ? ' selected' : '');
+        card.id = 'routeCard'+idx;
+        card.innerHTML = `
+          <div class="route-option-header">
+            <div class="route-option-name">
+              <span style="width:10px;height:10px;border-radius:50%;background:${r.safetyColor};display:inline-block;"></span>
+              Route ${idx+1}
+            </div>
+            <span class="safety-badge ${badgeClass}">${r.safetyLabel}</span>
+          </div>
+          <div class="route-option-stats">
+            <span>📏 ${r.distance} km</span>
+            <span>⏱ ${r.time} min</span>
+            <span>🚔 ${r.policeCount}</span>
+            <span>🏥 ${r.hospitalCount}</span>
+          </div>
+          <div class="route-option-safety" style="margin-top:8px;">
+            <div class="safety-bar-bg">
+              <div class="safety-bar-fill" style="width:${r.safetyScore}%;background:${r.safetyColor};"></div>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:3px; text-align:right;">Safety: ${r.safetyScore}%</div>
+          </div>
+        `;
+        card.addEventListener('click', () => selectRoute(idx));
+        container.appendChild(card);
+      });
+    }
+
+    // ===== SELECT ROUTE =====
+    function selectRoute(idx) {
+      selectedRouteIdx = idx;
+      // Update card styles
+      document.querySelectorAll('.route-option-card').forEach((c,i) => {
+        c.classList.toggle('selected', i===idx);
+      });
+      // Redraw routes with updated prominence
+      drawAllRoutes();
+      // Fetch and display safety markers for selected route
+      displaySafetyMarkers(allRoutes[idx]);
+      // Enable buttons
+      document.getElementById('btnStartJourney').disabled = false;
+      document.getElementById('btnRouteSummary').disabled = false;
+    }
+
+    // ===== DISPLAY SAFETY MARKERS =====
+    async function displaySafetyMarkers(route) {
+      // Clear previous safety markers (keep route polylines)
+      safetyLayer.clearLayers();
+      // Re-add origin/destination
+      if (pickupData) {
+        L.marker([pickupData.lat, pickupData.lng], {
+          icon: L.divIcon({ className:'', html:'<div style="background:#00e676;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #00e676"></div>', iconSize:[16,16] })
+        }).addTo(safetyLayer).bindPopup('🟢 '+pickupData.name);
+      }
+      if (dropData) {
+        L.marker([dropData.lat, dropData.lng], {
+          icon: L.divIcon({ className:'', html:'<div style="background:#ff5252;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #ff5252"></div>', iconSize:[16,16] })
+        }).addTo(safetyLayer).bindPopup('🔴 '+dropData.name);
+      }
+
+      // Fetch markers along selected route
+      const coords = route.coords;
+      const midIdx = Math.floor(coords.length/2);
+      const midLat = coords[midIdx][0], midLng = coords[midIdx][1];
+      const latSpan = Math.abs(coords[0][0] - coords[coords.length-1][0]);
+      const lngSpan = Math.abs(coords[0][1] - coords[coords.length-1][1]);
+      const radius = Math.min(Math.max(Math.sqrt(latSpan*latSpan+lngSpan*lngSpan)*111000*0.6, 3000), 20000);
+
+      try {
+        const q = `[out:json][timeout:20];(node["amenity"="police"](around:${Math.round(radius)},${midLat},${midLng});way["amenity"="police"](around:${Math.round(radius)},${midLat},${midLng});node["amenity"="hospital"](around:${Math.round(radius)},${midLat},${midLng});way["amenity"="hospital"](around:${Math.round(radius)},${midLat},${midLng}););out center tags;`;
+        const res = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q) });
+        const d = await res.json();
+        d.elements?.forEach(el => {
+          const la = el.lat||el.center?.lat;
+          const lo = el.lon||el.center?.lon;
+          if (!la) return;
+          const nm = el.tags?.name || '';
+          if (el.tags?.amenity==='police') {
+            L.circleMarker([la,lo], { radius:5, fillColor:'#00e676', fillOpacity:0.8, color:'#00e676', weight:1 })
+              .addTo(safetyLayer).bindPopup('🚔 '+(nm||'Police Station'));
+          } else if (el.tags?.amenity==='hospital') {
+            L.circleMarker([la,lo], { radius:5, fillColor:'#2196f3', fillOpacity:0.8, color:'#2196f3', weight:1 })
+              .addTo(safetyLayer).bindPopup('🏥 '+(nm||'Hospital'));
+          }
+        });
+      } catch {}
+    }
+
+    // ===== USE CURRENT LOCATION FOR PICKUP =====
+    function useCurrentLocationForPickup() {
+      const input = document.getElementById('pickupInput');
+      input.value = '📍 Detecting...';
+      if (!navigator.geolocation) { alert('Geolocation not supported by your browser.'); input.value=''; return; }
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, { headers:{'Accept-Language':'en'} });
+            const data = await res.json();
+            const name = data.address?.city || data.address?.town || data.address?.suburb || 'Your Location';
+            input.value = name;
+          } catch { input.value = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`; }
+        },
+        () => { alert('Could not get your location. Please check permissions.'); input.value=''; }
+      );
+    }
+
+    // ===== START JOURNEY (Real-Time GPS Tracking) =====
+    function startJourney() {
+      if (selectedRouteIdx < 0 || !allRoutes[selectedRouteIdx]) return;
+      stopJourney(); // Reset previous
+      const route = allRoutes[selectedRouteIdx];
+      const coords = route.coords;
+      if (coords.length < 2) return;
+
+      if (!navigator.geolocation) { alert('Geolocation is not supported by your browser for live tracking.'); return; }
+
+      // Show banner
+      document.getElementById('journeyBanner').classList.add('active');
+      
+      const btn = document.getElementById('btnStartJourney');
+      btn.innerHTML = '⏹ Cancel Journey';
+      btn.style.background = 'linear-gradient(135deg, #ff5252, #d32f2f)';
+      btn.onclick = stopJourney;
+
+      // Start watching position
+      journeyInterval = navigator.geolocation.watchPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const currentPos = [lat, lng];
+
+          // Create or update moving marker
+          if (!journeyMarker) {
+            journeyMarker = L.marker(currentPos, {
+              icon: L.divIcon({
+                className:'',
+                html:'<div style="width:20px;height:20px;background:#00e5ff;border-radius:50%;border:3px solid #fff;box-shadow:0 0 16px #00e5ff;animation:pulse 1.5s infinite"></div>',
+                iconSize:[20,20]
+              })
+            }).addTo(routeLayerGroup).bindPopup('🚗 You are here');
+          } else {
+            journeyMarker.setLatLng(currentPos);
+          }
+
+          // Pan map to follow user smoothly
+          routeMap.panTo(currentPos, { animate:true, duration:0.5 });
+          
+          // Basic arrival check (within ~50 meters of destination)
+          const dest = coords[coords.length - 1];
+          const distToDest = routeMap.distance(currentPos, dest);
+          if (distToDest < 50) {
+            document.getElementById('journeyBanner').innerHTML = '🏁 You have arrived at your destination! <button class="btn-stop-journey" onclick="stopJourney()">✕ Close</button>';
+          }
+        },
+        (err) => { console.error('GPS tracking error', err); },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      );
+      
+      // Initial zoom
+      routeMap.setView(coords[0], 16, { animate:true });
+    }
+
+    function stopJourney() {
+      if (journeyInterval !== null) { navigator.geolocation.clearWatch(journeyInterval); journeyInterval = null; }
+      if (journeyMarker) { routeLayerGroup.removeLayer(journeyMarker); journeyMarker = null; }
+      document.getElementById('journeyBanner').classList.remove('active');
+      document.getElementById('journeyBanner').innerHTML = '🚗 Journey Started. Follow the route to your destination. <button class="btn-stop-journey" onclick="stopJourney()">⏹ Stop</button>';
+      
+      const btn = document.getElementById('btnStartJourney');
+      if (btn) {
+        btn.innerHTML = '▶ Start Journey';
+        btn.style.background = '';
+        btn.onclick = startJourney;
+        btn.disabled = false;
+      }
+    }
+
+    // ===== ROUTE SUMMARY =====
+    async function openRouteSummary() {
+      if (selectedRouteIdx < 0) return;
+      const overlay = document.getElementById('summaryOverlay');
+      const content = document.getElementById('summaryContent');
+      overlay.classList.add('active');
+      const route = allRoutes[selectedRouteIdx];
+
+      content.innerHTML = '<p style="color:var(--text-secondary);">⏳ Fetching cities along your route...</p>';
+
+      // Stats section
+      let html = `
+        <div class="summary-route-info">
+          <div class="summary-stat"><div class="summary-stat-val">${route.distance} km</div><div class="summary-stat-lbl">Distance</div></div>
+          <div class="summary-stat"><div class="summary-stat-val">${route.time} min</div><div class="summary-stat-lbl">Est. Time</div></div>
+          <div class="summary-stat"><div class="summary-stat-val" style="color:${route.safetyColor}">${route.safetyScore}%</div><div class="summary-stat-lbl">Safety</div></div>
+          <div class="summary-stat"><div class="summary-stat-val">${route.policeCount+route.hospitalCount}</div><div class="summary-stat-lbl">Safety Points</div></div>
+        </div>
+        <h4 style="margin-bottom:12px; font-size:0.92rem;">🏙️ Cities & Places Along Route</h4>
+      `;
+
+      // Sample points along route for reverse geocoding
+      const coords = route.coords;
+      const numSamples = Math.min(12, Math.max(5, Math.floor(coords.length / 20)));
+      const step = Math.floor(coords.length / (numSamples + 1));
+      const samplePoints = [coords[0]]; // Start
+      for (let i = step; i < coords.length - step; i += step) {
+        samplePoints.push(coords[i]);
+        if (samplePoints.length >= numSamples - 1) break;
+      }
+      samplePoints.push(coords[coords.length - 1]); // End
+
+      // Reverse geocode each sample point
+      const cities = [];
+      const seenCities = new Set();
+
+      for (let i = 0; i < samplePoints.length; i++) {
+        const [lat, lng] = samplePoints[i];
+        try {
+          // Add small delay to respect Nominatim rate limits
+          if (i > 0) await new Promise(r => setTimeout(r, 1100));
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=12`, { headers:{'Accept-Language':'en'} });
+          const d = await res.json();
+          const city = d.address?.city || d.address?.town || d.address?.village || d.address?.suburb || d.address?.county || '';
+          const state = d.address?.state || '';
+          const road = d.address?.road || '';
+          const label = city || road || d.display_name?.split(',')[0] || `Point ${i+1}`;
+          const key = (city || label).toLowerCase();
+          if (!seenCities.has(key)) {
+            seenCities.add(key);
+            cities.push({ label, state, road, isStart: i===0, isEnd: i===samplePoints.length-1 });
+          }
+        } catch {}
+      }
+
+      if (cities.length === 0) {
+        html += '<p style="color:var(--text-secondary);">Could not fetch city data for this route.</p>';
+      } else {
+        html += '<ul class="city-list">';
+        cities.forEach((c, i) => {
+          const icon = c.isStart ? '🟢' : c.isEnd ? '🔴' : '📍';
+          const suffix = c.isStart ? ' <span style="color:#00e676;font-size:0.75rem;">(Start)</span>' :
+                        c.isEnd ? ' <span style="color:#ff5252;font-size:0.75rem;">(Destination)</span>' : '';
+          html += `<li><span class="city-idx">${i+1}</span>${icon} <strong>${c.label}</strong>${c.state ? ', '+c.state : ''}${suffix}</li>`;
+        });
+        html += '</ul>';
+      }
+
+      content.innerHTML = html;
+    }
+
+    function closeSummary() {
+      document.getElementById('summaryOverlay').classList.remove('active');
+    }
+    document.getElementById('summaryOverlay').addEventListener('click', e => { if (e.target.id==='summaryOverlay') closeSummary(); });
+  </script>
+</body>
+</html>

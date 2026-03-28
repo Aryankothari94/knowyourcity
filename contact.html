@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us — Know Your City</title>
+  <meta name="description" content="Get in touch with the Know Your City team for support, feedback, or general inquiries." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="logo.png" type="image/png" />
+  <style>
+    :root {
+      --bg-primary: #0a0b1a;
+      --bg-secondary: #12132a;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8899aa;
+      --accent-cyan: #00e5ff;
+      --accent-green: #00e676;
+      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Background orbs */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+    }
+    .orb-1 { width: 500px; height: 500px; background: #00e5ff; top: -100px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
+    .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    /* Back button */
+    .back-nav {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .back-nav:hover {
+      background: var(--accent-cyan);
+      color: #0a0b1a;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Main content */
+    .contact-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+    }
+
+    .contact-header {
+      text-align: center;
+      margin-bottom: 60px;
+      animation: fadeInUp 0.6s ease;
+    }
+    .contact-header h1 {
+      font-family: var(--font-heading);
+      font-size: 3.2rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .contact-header p {
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 40px;
+      margin-bottom: 60px;
+      animation: fadeInUp 0.7s ease;
+    }
+
+    /* Info Cards */
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .info-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .info-card:hover {
+      border-color: rgba(0, 229, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .info-card h3 {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .info-card h3 .icon { font-size: 1.5rem; }
+    .info-card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    .social-links {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    .social-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .social-btn:hover {
+      background: var(--accent-cyan);
+      color: #0a0b1a;
+      border-color: var(--accent-cyan);
+      transform: translateY(-3px);
+    }
+
+    /* Form Card */
+    .form-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+    }
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: white;
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: all 0.3s;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+    }
+    .submit-btn {
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      color: #0a0b1a;
+      border: none;
+      border-radius: 50px;
+      padding: 16px;
+      font-weight: 700;
+      font-size: 1rem;
+      font-family: var(--font-heading);
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 229, 255, 0.3);
+    }
+
+    .success-msg {
+      text-align: center;
+      color: var(--accent-green);
+      padding: 20px;
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 868px) {
+      .contact-grid { grid-template-columns: 1fr; }
+      .contact-header h1 { font-size: 2.4rem; }
+      .form-card { padding: 30px 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <a href="index.html" class="back-nav">← Back to Home</a>
+
+  <div class="contact-container">
+    <div class="contact-header">
+      <h1>Let's <span class="gradient-text">Connect</span></h1>
+      <p>Questions about city safety? Feedback for our team? We are here to help you settle in smoothly.</p>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-info">
+        <div class="info-card">
+          <h3><span class="icon">📧</span> Email Support</h3>
+          <!-- <p>Direct inquiries: support@knowyourcity.in</p> -->
+          <p style="margin-top: 8px;">Business: knowyourcity000@gmail.com</p>
+        </div>
+        <div class="info-card">
+          <h3><span class="icon">🏙️</span> HQ</h3>
+          <p style="margin-top: 2px;">Solapur, Maharashtra 413006</p>
+        </div>
+        <div class="info-card">
+          <h3><span class="icon">🌐</span> Socials</h3>
+          <div class="social-links">
+            <a href="#" class="social-btn">𝕏</a>
+            <a href="#" class="social-btn">📷</a>
+            <a href="#" class="social-btn">in</a>
+            <a href="#" class="social-btn">▶</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <form class="contact-form" id="contactForm">
+          <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" placeholder="Rahul Sharma" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="rahul@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="subject">How can we help?</label>
+            <select id="subject" required>
+              <option value="" style="color: black;">Select a topic</option>
+              <option value="support" style="color: black;">Safety Data Inquiry</option>
+              <option value="feedback" style="color: black;">Platform Feedback</option>
+              <option value="city" style="color: black;">Request New City Mapping</option>
+              <option value="partnership" style="color: black;">Partnership Opportunity</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" rows="5" placeholder="Tell us more about your inquiry..." required></textarea>
+          </div>
+          <button type="submit" class="submit-btn" id="submitBtn">Send Message ✨</button>
+        </form>
+        <div id="successMsg" class="success-msg">
+          <div style="font-size: 3rem; margin-bottom: 15px;">✅</div>
+          <h3>Response Sent Successfully!</h3>
+          <p>Your query has been received. Please check your inbox (and spam folder) for our automated analysis response.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const form = document.getElementById('contactForm');
+      const msg = document.getElementById('successMsg');
+      const originalBtnText = btn.textContent;
+
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        subject: document.getElementById('subject').value,
+        message: document.getElementById('message').value
+      };
+
+      btn.textContent = 'Sending Query...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('http://localhost:5000/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          form.style.display = 'none';
+          msg.querySelector('p').textContent = result.message || "Your query has been sent successfully. Please check your email for an automated response.";
+          msg.style.display = 'block';
+        } else {
+          throw new Error(result.message || 'Failed to send message');
+        }
+      } catch (err) {
+        console.error('Submission error:', err);
+        alert('Error: ' + err.message + '\nPlease ensure the server is running on http://localhost:5000');
+        btn.textContent = originalBtnText;
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+
+</html>

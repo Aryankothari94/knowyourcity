@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>City Guides — Know Your City</title>
+  <meta name="description" content="Explore comprehensive city guides to help you navigate and settle into new urban environments safely." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="logo.png" type="image/png" />
+  <style>
+    :root {
+      --bg-primary: #0a0b1a;
+      --bg-secondary: #12132a;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8899aa;
+      --accent-cyan: #00e5ff;
+      --accent-green: #00e676;
+      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Background orbs */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+    }
+    .orb-1 { width: 500px; height: 500px; background: #00e5ff; top: -100px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
+    .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    /* Back button */
+    .back-nav {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .back-nav:hover {
+      background: var(--accent-cyan);
+      color: #0a0b1a;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Main content */
+    .guides-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+    }
+
+    .guides-header {
+      text-align: center;
+      margin-bottom: 60px;
+      animation: fadeInUp 0.6s ease;
+    }
+    .guides-header h1 {
+      font-family: var(--font-heading);
+      font-size: 3.2rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #00e5ff, #00e676);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .guides-header p {
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+    }
+
+    /* Featured Cities */
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-bottom: 60px;
+      animation: fadeInUp 0.7s ease;
+    }
+    .city-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+    .city-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: var(--accent-gradient);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .city-card:hover {
+      border-color: rgba(0, 229, 255, 0.3);
+      background: rgba(255, 255, 255, 0.06);
+      transform: translateY(-8px);
+    }
+    .city-card:hover::before { opacity: 1; }
+
+    .city-card h3 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      color: var(--text-primary);
+    }
+    .city-card .tag {
+      display: inline-flex;
+      padding: 4px 12px;
+      background: rgba(0, 229, 255, 0.1);
+      border-radius: 50px;
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      width: fit-content;
+    }
+    .city-card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .city-card .meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Info Section */
+    .guides-info {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 40px;
+      text-align: center;
+      animation: fadeInUp 0.8s ease;
+    }
+    .guides-info h2 {
+      font-family: var(--font-heading);
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+    .guides-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .step-item {
+      padding: 20px;
+    }
+    .step-item .icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      display: block;
+    }
+    .step-item h4 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .step-item p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .city-grid { grid-template-columns: 1fr 1fr; }
+      .guides-steps { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .city-grid { grid-template-columns: 1fr; }
+      .guides-steps { grid-template-columns: 1fr; }
+      .guides-header h1 { font-size: 2.4rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <a href="index.html" class="back-nav">← Back to Home</a>
+
+  <div class="guides-container">
+    <div class="guides-header">
+      <h1>City <span class="gradient-text">Guides</span></h1>
+      <p>Your ultimate companion for discovering safe, comfortable, and vibrant living spaces in 100+ cities across India.</p>
+    </div>
+
+    <div class="city-grid">
+      <div class="city-card">
+        <span class="tag">Most Safe</span>
+        <h3>Mumbai</h3>
+        <p>The city that never sleeps offers surprisingly safe sub-zones. Explore Navi Mumbai and BKC insights.</p>
+        <div class="meta">
+          <span>🛡️ 9.2 Score</span>
+          <span>📍 45 Areas Mapped</span>
+        </div>
+      </div>
+      <div class="city-card">
+        <span class="tag">Top Planned</span>
+        <h3>Chandigarh</h3>
+        <p>Consistent infrastructure and grid-based planning make it a top choice for newcomers and families.</p>
+        <div class="meta">
+          <span>🛡️ 9.5 Score</span>
+          <span>📍 60 Sectors Mapped</span>
+        </div>
+      </div>
+      <div class="city-card">
+        <span class="tag">Tech Hub</span>
+        <h3>Bengaluru</h3>
+        <p>Dynamic and diverse. Navigate the tech zones with details on hospital proximity and dark spot alerts.</p>
+        <div class="meta">
+          <span>🛡️ 8.8 Score</span>
+          <span>📍 120 Areas Mapped</span>
+        </div>
+      </div>
+      <div class="city-card">
+        <span class="tag">Historical</span>
+        <h3>Jaipur</h3>
+        <p>Tradition meets urban growth. Discover heritage zones with high density of emergency services.</p>
+        <div class="meta">
+          <span>🛡️ 8.5 Score</span>
+          <span>📍 35 Areas Mapped</span>
+        </div>
+      </div>
+      <div class="city-card">
+        <span class="tag">Commercial</span>
+        <h3>Gurugram</h3>
+        <p>High-growth zones with varying safety metrics. Focus on gated community density insights.</p>
+        <div class="meta">
+          <span>🛡️ 8.2 Score</span>
+          <span>📍 50 Areas Mapped</span>
+        </div>
+      </div>
+      <div class="city-card">
+        <span class="tag">Cultural</span>
+        <h3>Pune</h3>
+        <p>Educational and IT hub. Balanced safety scores across Viman Nagar and Baner.</p>
+        <div class="meta">
+          <span>🛡️ 9.0 Score</span>
+          <span>📍 40 Areas Mapped</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="guides-info">
+      <h2>How We Create Our Guides</h2>
+      <p>Data meets community. Our guides are built on four pillars of authenticity.</p>
+      <div class="guides-steps">
+        <div class="step-item">
+          <span class="icon">🛰️</span>
+          <h4>Sat-Data</h4>
+          <p>Realtime mapping of infrastructure density.</p>
+        </div>
+        <div class="step-item">
+          <span class="icon">🚓</span>
+          <h4>Public Safety</h4>
+          <p>Police and emergency hub distance analysis.</p>
+        </div>
+        <div class="step-item">
+          <span class="icon">💡</span>
+          <h4>Light Index</h4>
+          <p>Analysis of night-time street lighting coverage.</p>
+        </div>
+        <div class="step-item">
+          <span class="icon">👥</span>
+          <h4>Local Input</h4>
+          <p>Verified feedback from current residents.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 60px;">
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">Can't find your city?</p>
+      <a href="contact.html" style="color: var(--accent-cyan); text-decoration: none; font-weight: 700; border: 1px solid var(--accent-cyan); padding: 12px 24px; border-radius: 50px; transition: all 0.3s;" onmouseover="this.style.background='var(--accent-cyan)'; this.style.color='#0a0b1a'" onmouseout="this.style.background='transparent'; this.style.color='var(--accent-cyan)'">Request a City Mapping</a>
+    </div>
+  </div>
+</body>
+
+</html>
