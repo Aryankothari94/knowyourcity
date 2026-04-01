@@ -71,16 +71,32 @@
       const city = localStorage.getItem('kyc_userCity') || 'Your Area';
       document.getElementById('cityName').textContent = city;
 
+      const CACHE_KEY = `kyc_cache_pghostel_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       const detailOverlay = document.getElementById('detailOverlay');
       const detailBody = document.getElementById('detailBody');
       document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
       detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
 
+      // Check cache
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            renderHostels(data, city);
+            return;
+          } else { localStorage.removeItem(CACHE_KEY); }
+        }
+      } catch {}
+
       fetchHostels(lat, lng);
 
       async function fetchHostels(lat, lng) {
         const query = `
-          [out:json][timeout:30];
+          [out:json][timeout:25];
           (
             node["tourism"="hostel"](around:10000,${lat},${lng});
             way["tourism"="hostel"](around:10000,${lat},${lng});
@@ -89,12 +105,15 @@
             node["building"="dormitory"](around:10000,${lat},${lng});
             way["building"="dormitory"](around:10000,${lat},${lng});
           );
-          out center tags 80;
+          out center tags 100;
         `;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         try {
           const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST', body: 'data=' + encodeURIComponent(query)
+            method: 'POST', body: 'data=' + encodeURIComponent(query), signal: controller.signal
           });
+          clearTimeout(timeoutId);
           const data = await res.json();
           document.getElementById('loadingSpinner').style.display = 'none';
 
@@ -133,6 +152,18 @@
           const seen = new Set();
           const unique = hostels.filter(h => { if (seen.has(h.name)) return false; seen.add(h.name); return true; });
 
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: unique, timestamp: Date.now() })); } catch {}
+          renderHostels(unique, city);
+
+        } catch (err) {
+          clearTimeout(timeoutId);
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+          document.getElementById('resultsCount').textContent = 'Failed to load — please refresh';
+        }
+      }
+
+      function renderHostels(unique, city) {
           if (unique.length === 0) {
             document.getElementById('emptyState').style.display = 'block';
             document.getElementById('resultsCount').textContent = 'No PGs/hostels found';
@@ -182,11 +213,6 @@
             else if (h.wikidata) fetchWikiImage(h.wikidata, `pgImg${i}`);
             else fetchUniversalImage(h.name, city, 'hostel', `pgImg${i}`);
           });
-
-        } catch (err) {
-          document.getElementById('loadingSpinner').style.display = 'none';
-          document.getElementById('emptyState').style.display = 'block';
-        }
       }
 
       function calcRating(item) {

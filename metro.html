@@ -84,16 +84,32 @@
       const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
       document.getElementById('cityName').textContent = city;
 
+      const CACHE_KEY = `kyc_cache_metro_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       const detailOverlay = document.getElementById('detailOverlay');
       const detailBody = document.getElementById('detailBody');
       document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
       detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
 
+      // Check cache
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            renderTransit(data, city, lat, lng);
+            return;
+          } else { localStorage.removeItem(CACHE_KEY); }
+        }
+      } catch {}
+
       fetchTransit(lat, lng);
 
       async function fetchTransit(lat, lng) {
         const query = `
-          [out:json][timeout:30];
+          [out:json][timeout:25];
           (
             node["station"="subway"](around:15000,${lat},${lng});
             node["station"="light_rail"](around:15000,${lat},${lng});
@@ -104,12 +120,15 @@
             way["amenity"="bus_station"](around:10000,${lat},${lng});
             node["highway"="bus_stop"](around:5000,${lat},${lng});
           );
-          out center tags 120;
+          out center tags 150;
         `;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         try {
           const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST', body: 'data=' + encodeURIComponent(query)
+            method: 'POST', body: 'data=' + encodeURIComponent(query), signal: controller.signal
           });
+          clearTimeout(timeoutId);
           const data = await res.json();
           document.getElementById('loadingSpinner').style.display = 'none';
 
@@ -150,10 +169,21 @@
             };
           }).filter(s => s.name).sort((a, b) => a.distance - b.distance);
 
-          // Dedup
           const seen = new Set();
           const unique = stations.filter(s => { if (seen.has(s.name)) return false; seen.add(s.name); return true; });
 
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: unique, timestamp: Date.now() })); } catch {}
+          renderTransit(unique, city, lat, lng);
+
+        } catch (err) {
+          clearTimeout(timeoutId);
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+          document.getElementById('resultsCount').textContent = 'Failed to load — please refresh';
+        }
+      }
+
+      function renderTransit(unique, city, lat, lng) {
           // Banner info
           const banner = document.getElementById('transitBanner');
           banner.style.display = 'block';
@@ -225,11 +255,6 @@
             else if (station.wikipedia) fetchWikiPageImage(station.wikipedia.split(':').pop(), `stImg${i}`);
             else fetchUniversalImage(station.name, city, 'train station', `stImg${i}`);
           });
-
-        } catch (err) {
-          document.getElementById('loadingSpinner').style.display = 'none';
-          document.getElementById('emptyState').style.display = 'block';
-        }
       }
 
       function calcRating(item) {

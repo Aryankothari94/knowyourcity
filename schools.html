@@ -73,28 +73,47 @@
       const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
       document.getElementById('cityName').textContent = city;
 
+      const CACHE_KEY = `kyc_cache_schools_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       const detailOverlay = document.getElementById('detailOverlay');
       const detailBody = document.getElementById('detailBody');
       document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
       detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
 
+      // Check cache
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            renderSchools(data, city);
+            return;
+          } else { localStorage.removeItem(CACHE_KEY); }
+        }
+      } catch {}
+
       fetchSchools(lat, lng);
 
       async function fetchSchools(lat, lng) {
         const query = `
-          [out:json][timeout:30];
+          [out:json][timeout:25];
           (
             node["amenity"="school"](around:15000,${lat},${lng});
             way["amenity"="school"](around:15000,${lat},${lng});
             node["amenity"="college"](around:15000,${lat},${lng});
             way["amenity"="college"](around:15000,${lat},${lng});
           );
-          out center tags 100;
+          out center tags 150;
         `;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         try {
           const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST', body: 'data=' + encodeURIComponent(query)
+            method: 'POST', body: 'data=' + encodeURIComponent(query), signal: controller.signal
           });
+          clearTimeout(timeoutId);
           const data = await res.json();
           document.getElementById('loadingSpinner').style.display = 'none';
 
@@ -120,6 +139,18 @@
             };
           }).filter(s => s.name).sort((a, b) => a.distance - b.distance);
 
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: schools, timestamp: Date.now() })); } catch {}
+          renderSchools(schools, city);
+
+        } catch (err) {
+          clearTimeout(timeoutId);
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
+          document.getElementById('resultsCount').textContent = 'Failed to load — please refresh';
+        }
+      }
+
+      function renderSchools(schools, city) {
           if (schools.length === 0) {
             document.getElementById('emptyState').style.display = 'block';
             document.getElementById('resultsCount').textContent = 'No schools found';
@@ -167,12 +198,6 @@
             else if (school.wikipedia) fetchWikiPageImage(school.wikipedia.split(':').pop(), `schImg${i}`);
             else fetchUniversalImage(school.name, city, 'school', `schImg${i}`);
           });
-
-        } catch (err) {
-          document.getElementById('loadingSpinner').style.display = 'none';
-          document.getElementById('emptyState').style.display = 'block';
-          document.getElementById('resultsCount').textContent = 'Error fetching data';
-        }
       }
 
       function calcRating(item) {

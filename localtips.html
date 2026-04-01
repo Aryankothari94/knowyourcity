@@ -61,6 +61,22 @@
       const city = localStorage.getItem('kyc_userCity') || 'Your Area';
       document.getElementById('cityName').textContent = city;
 
+      const CACHE_KEY = `kyc_cache_localtips_${city.replace(/\s/g,'_')}`;
+      const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+      // Check cache
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            renderTips(data.tips, data.country, data.wikiInfo, city);
+            return;
+          } else { localStorage.removeItem(CACHE_KEY); }
+        }
+      } catch {}
+
       generateTips(city, lat, lng);
 
       async function generateTips(city, lat, lng) {
@@ -71,6 +87,20 @@
           const data = await res.json();
           country = data.address?.country || 'India';
           state = data.address?.state || '';
+        } catch {}
+
+        // Fetch Wikipedia city info in parallel
+        let wikiInfo = { summary: '', image: '', population: '', area: '', elevation: '', timezone: '' };
+        try {
+          const controller = new AbortController();
+          const tid = setTimeout(() => controller.abort(), 8000);
+          const wRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(city)}`, { signal: controller.signal });
+          clearTimeout(tid);
+          if (wRes.ok) {
+            const wData = await wRes.json();
+            wikiInfo.summary = wData.extract || '';
+            wikiInfo.image = wData.thumbnail?.source || '';
+          }
         } catch {}
 
         document.getElementById('loadingSpinner').style.display = 'none';
@@ -88,12 +118,54 @@
 
         // Tips
         const tips = getCityTips(city, state, country, lat, lng);
+
+        // Cache
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: { tips, country, wikiInfo }, timestamp: Date.now() })); } catch {}
+
+        renderTips(tips, country, wikiInfo, city);
+      }
+
+      function renderTips(tips, country, wikiInfo, city) {
+        // If from cache, also render emergency numbers
+        if (document.getElementById('emergencyBanner').style.display === 'none') {
+          const emergencyNums = getEmergencyNumbers(country);
+          const emergencyGrid = document.getElementById('emergencyGrid');
+          document.getElementById('emergencyCity').textContent = country;
+          emergencyGrid.innerHTML = emergencyNums.map(n =>
+            `<div class="detail-info-item" style="background:rgba(255,255,255,0.03); border-radius:10px; padding:12px;">
+              <span class="detail-label">${n.icon} ${n.label}</span><span style="font-weight:600; color:var(--accent-cyan); font-size:1.05rem;">${n.number}</span>
+            </div>`
+          ).join('');
+          document.getElementById('emergencyBanner').style.display = 'block';
+        }
+
         const grid = document.getElementById('tipsGrid');
         grid.style.display = 'grid';
+
+        // Add Wikipedia city overview as first card if available
+        if (wikiInfo && wikiInfo.summary) {
+          const wikiCard = document.createElement('div');
+          wikiCard.className = 'result-card glass-card';
+          wikiCard.style.animationDelay = '0s';
+          wikiCard.style.gridColumn = '1 / -1';
+          wikiCard.innerHTML = `
+            <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">
+              ${wikiInfo.image ? `<img src="${wikiInfo.image}" alt="${city}" style="width:160px; height:120px; object-fit:cover; border-radius:12px; flex-shrink:0;">` : ''}
+              <div class="card-content" style="padding:24px; flex:1; min-width:200px;">
+                <div style="font-size:1.6rem; margin-bottom:6px;">📖</div>
+                <h3 class="result-title" style="margin-bottom:8px;">About ${city}</h3>
+                <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.7;">${wikiInfo.summary}</p>
+                <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(city)}" target="_blank" style="display:inline-block; margin-top:10px; color:var(--accent-cyan); font-size:0.84rem; text-decoration:none;">Read more on Wikipedia →</a>
+              </div>
+            </div>
+          `;
+          grid.appendChild(wikiCard);
+        }
+
         tips.forEach((tip, i) => {
           const card = document.createElement('div');
           card.className = 'result-card glass-card';
-          card.style.animationDelay = `${i * 0.08}s`;
+          card.style.animationDelay = `${(i + 1) * 0.08}s`;
           card.innerHTML = `
             <div class="card-content" style="padding:24px;">
               <div style="font-size:2.2rem; margin-bottom:10px;">${tip.icon}</div>
