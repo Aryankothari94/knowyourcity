@@ -361,100 +361,80 @@
     }
 
     async function fetchSafetyData(map, lat, lng, city) {
-      // Check localStorage cache first (expires after 30 min)
+      // Cache version — increment when query changes to auto-purge old data
+      const CACHE_VER = 3;
       const cacheKey = _safetyKey(lat, lng);
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
           const c = JSON.parse(cached);
-          if (Date.now() - c.ts < 30 * 60 * 1000) {
-            const { police, hosp, fire, cctv } = c;
-            renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Cached Data');
+          // Only use cache if same version and under 30 min old
+          if (c.ver === CACHE_VER && Date.now() - c.ts < 30 * 60 * 1000 && (c.police.length + c.hosp.length + c.fire.length + c.cctv.length) > 0) {
+            renderSafetyOnMap(map, c.police, c.hosp, c.fire, c.cctv, city, 'Cached Data');
             updateAreaCards(lat, lng, city);
             return;
-          }
+          } else { localStorage.removeItem(cacheKey); }
         } catch(e) { localStorage.removeItem(cacheKey); }
       }
 
-      // Try backend API first with a 8-second timeout
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-      try {
-        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`, { signal: controller.signal });
-        clearTimeout(timeout);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Backend error');
+      // Strategy: 4 parallel small Overpass queries (FAST) + backend in parallel
+      document.getElementById('safetySummary').innerHTML = '<p>⏳ Fetching real-time safety data for ' + city + '...</p>';
 
-        const police = (data.infrastructures || []).filter(i => i.nodeType === 'police').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'Police Station'}));
-        const hosp = (data.infrastructures || []).filter(i => i.nodeType === 'hospital').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'Hospital'}));
-        const fire = (data.infrastructures || []).filter(i => i.nodeType === 'fire_station').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'Fire Station'}));
-        const cctv = (data.infrastructures || []).filter(i => i.nodeType === 'surveillance').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'CCTV'}));
-
-        // Cache the real data
-        localStorage.setItem(cacheKey, JSON.stringify({ police, hosp, fire, cctv, ts: Date.now() }));
-        renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Live Backend + OSM');
-
-        // Update area cards from backend tourist zones if available
-        if (data.touristZones && data.touristZones.length >= 2) {
-          const tz1 = data.touristZones[0], tz2 = data.touristZones[1];
-          document.getElementById('dynamicCard1Title').textContent = tz1.name;
-          document.getElementById('dynamicCard1SafetyVal').textContent = `${tz1.safetyScore}/100`;
-          document.getElementById('dynamicCard1SafetyBar').style.width = `${tz1.safetyScore}%`;
-          document.getElementById('dynamicCard1FamilyVal').textContent = `${tz1.familyFriendly}/100`;
-          document.getElementById('dynamicCard1FamilyBar').style.width = `${tz1.familyFriendly}%`;
-          document.getElementById('dynamicCard1WalkVal').textContent = `${tz1.walkability}/100`;
-          document.getElementById('dynamicCard1WalkBar').style.width = `${tz1.walkability}%`;
-          document.getElementById('dynamicCard2Title').textContent = tz2.name;
-          document.getElementById('dynamicCard2SafetyVal').textContent = `${tz2.safetyScore}/100`;
-          document.getElementById('dynamicCard2SafetyBar').style.width = `${tz2.safetyScore}%`;
-          document.getElementById('dynamicCard2FamilyVal').textContent = `${tz2.familyFriendly}/100`;
-          document.getElementById('dynamicCard2FamilyBar').style.width = `${tz2.familyFriendly}%`;
-          document.getElementById('dynamicCard2WalkVal').textContent = `${tz2.walkability}/100`;
-          document.getElementById('dynamicCard2WalkBar').style.width = `${tz2.walkability}%`;
-        } else {
-          updateAreaCards(lat, lng, city);
-        }
-        return;
-      } catch (err) {
-        clearTimeout(timeout);
-        console.warn('Backend unavailable, falling back to Overpass API directly.', err.message);
+      // Helper: fetch one Overpass query with timeout
+      async function queryOverpass(q, timeoutMs) {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), timeoutMs || 12000);
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(q), signal: ctrl.signal
+          });
+          clearTimeout(tid);
+          const data = await res.json();
+          return data.elements || [];
+        } catch { clearTimeout(tid); return []; }
       }
 
-      // Fallback: query Overpass API directly
-      try {
-        const query = `[out:json][timeout:25];(
-          node["amenity"="police"](around:15000,${lat},${lng});
-          way["amenity"="police"](around:15000,${lat},${lng});
-          node["amenity"="hospital"](around:15000,${lat},${lng});
-          way["amenity"="hospital"](around:15000,${lat},${lng});
-          node["amenity"="clinic"](around:10000,${lat},${lng});
-          way["amenity"="clinic"](around:10000,${lat},${lng});
-          node["amenity"="fire_station"](around:15000,${lat},${lng});
-          way["amenity"="fire_station"](around:15000,${lat},${lng});
-          node["emergency"="fire_hydrant"](around:10000,${lat},${lng});
-          node["man_made"="surveillance"](around:10000,${lat},${lng});
-          way["man_made"="surveillance"](around:10000,${lat},${lng});
-          node["surveillance:type"="camera"](around:10000,${lat},${lng});
-          node["surveillance:type"="ALPR"](around:10000,${lat},${lng});
-          node["amenity"="cctv"](around:10000,${lat},${lng});
-        );out center tags 500;`;
-        const overpassController = new AbortController();
-        const overpassTimeout = setTimeout(() => overpassController.abort(), 20000);
-        const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
-          method: 'POST', body: 'data=' + encodeURIComponent(query), signal: overpassController.signal
+      // 4 parallel queries — each is small and fast
+      const [policeEls, hospEls, fireEls, cctvEls] = await Promise.all([
+        // Police: 15km
+        queryOverpass(`[out:json][timeout:15];(node["amenity"="police"](around:15000,${lat},${lng});way["amenity"="police"](around:15000,${lat},${lng}););out center tags;`),
+        // Hospitals + clinics: 15km/10km
+        queryOverpass(`[out:json][timeout:15];(node["amenity"="hospital"](around:15000,${lat},${lng});way["amenity"="hospital"](around:15000,${lat},${lng});node["amenity"="clinic"](around:10000,${lat},${lng});way["amenity"="clinic"](around:10000,${lat},${lng}););out center tags;`),
+        // Fire stations + hydrants: 15km/10km
+        queryOverpass(`[out:json][timeout:15];(node["amenity"="fire_station"](around:15000,${lat},${lng});way["amenity"="fire_station"](around:15000,${lat},${lng});node["emergency"="fire_hydrant"](around:10000,${lat},${lng}););out center tags;`),
+        // CCTV + surveillance: 10km
+        queryOverpass(`[out:json][timeout:15];(node["man_made"="surveillance"](around:10000,${lat},${lng});way["man_made"="surveillance"](around:10000,${lat},${lng});node["surveillance:type"="camera"](around:10000,${lat},${lng});node["surveillance:type"="ALPR"](around:10000,${lat},${lng}););out center tags;`)
+      ]);
+
+      // Parse results
+      const seen = new Set();
+      function parseEls(els, category) {
+        const items = [];
+        els.forEach(el => {
+          const elLat = el.lat || el.center?.lat;
+          const elLng = el.lon || el.center?.lon;
+          if (!elLat || !elLng) return;
+          const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          const name = el.tags?.name || el.tags?.['name:en'] || '';
+          items.push({ lat: elLat, lng: elLng, name: name || category });
         });
-        clearTimeout(overpassTimeout);
-        const overpassData = await overpassRes.json();
-        const { police, hosp, fire, cctv } = parseOverpassData(overpassData.elements || []);
-
-        // Cache real data
-        localStorage.setItem(cacheKey, JSON.stringify({ police, hosp, fire, cctv, ts: Date.now() }));
-        renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Live Overpass/OSM');
-        updateAreaCards(lat, lng, city);
-      } catch(fallbackErr) {
-        console.error('Overpass fallback also failed:', fallbackErr);
-        document.getElementById('safetySummary').innerHTML = '<p style="color:#ff5252">Could not load safety data. Please try refreshing.</p>';
+        return items;
       }
+
+      const police = parseEls(policeEls, 'Police Station');
+      const hosp = parseEls(hospEls, 'Hospital/Clinic');
+      const fire = parseEls(fireEls, 'Fire Station');
+      const cctv = parseEls(cctvEls, 'CCTV Camera');
+
+      // Cache with version tag — only cache if we got real data
+      if (police.length + hosp.length + fire.length + cctv.length > 0) {
+        try { localStorage.setItem(cacheKey, JSON.stringify({ police, hosp, fire, cctv, ts: Date.now(), ver: CACHE_VER })); } catch {}
+      }
+
+      renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Live Overpass/OSM');
+      updateAreaCards(lat, lng, city);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSafetyMap);
     else initSafetyMap();
