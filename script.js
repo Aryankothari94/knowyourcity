@@ -638,21 +638,78 @@ document.addEventListener('DOMContentLoaded', () => {
           
           renderRealtimeMarkers(items, lat, lng, fullAreaName, data.safetyStats);
       } catch(e) {
-          // Fallback to Wikipedia GeoSearch if backend is down or returns 0 infrastructure
+          // Fallback to unified Overpass query if backend is down
           try {
-             const wRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=10000&gslimit=10&format=json&origin=*`);
-             const wData = await wRes.json();
-             const places = wData.query?.geosearch || [];
-             if(places.length > 0) {
-                 const items = places.map(p => ({ name: p.title, lat: p.lat, lng: p.lon, nodeType: 'landmark' }));
+             reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Connecting to regional safety monitors...</li>';
+             
+             const query = `[out:json][timeout:25];(
+               node["amenity"="police"](around:15000,${lat},${lng});
+               way["amenity"="police"](around:15000,${lat},${lng});
+               node["amenity"="hospital"](around:15000,${lat},${lng});
+               way["amenity"="hospital"](around:15000,${lat},${lng});
+               node["amenity"="clinic"](around:10000,${lat},${lng});
+               way["amenity"="clinic"](around:10000,${lat},${lng});
+               node["amenity"="fire_station"](around:15000,${lat},${lng});
+               way["amenity"="fire_station"](around:15000,${lat},${lng});
+               node["emergency"="fire_hydrant"](around:10000,${lat},${lng});
+               node["man_made"="surveillance"](around:10000,${lat},${lng});
+               way["man_made"="surveillance"](around:10000,${lat},${lng});
+               node["surveillance:type"="camera"](around:10000,${lat},${lng});
+               node["surveillance:type"="ALPR"](around:10000,${lat},${lng});
+               node["amenity"="cctv"](around:10000,${lat},${lng});
+             );out center tags 500;`;
+
+             const oController = new AbortController();
+             const oTimeout = setTimeout(() => oController.abort(), 12000);
+             const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
+                 method: 'POST', body: 'data=' + encodeURIComponent(query), signal: oController.signal
+             });
+             clearTimeout(oTimeout);
+             const overpassData = await overpassRes.json();
+             const elements = overpassData.elements || [];
+
+             const items = [];
+             const seen = new Set();
+             elements.forEach(el => {
+                const elLat = el.lat || el.center?.lat;
+                const elLng = el.lon || el.center?.lon;
+                if (!elLat || !elLng) return;
+                const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+
+                const tags = el.tags || {};
+                const name = tags.name || tags['name:en'] || '';
+                
+                if (tags.amenity === 'police') items.push({ lat: elLat, lng: elLng, name: name || 'Police Station', nodeType: 'police' });
+                else if (tags.amenity === 'hospital' || tags.amenity === 'clinic') items.push({ lat: elLat, lng: elLng, name: name || 'Hospital/Clinic', nodeType: 'hospital' });
+                else if (tags.amenity === 'fire_station' || tags.emergency === 'fire_hydrant') items.push({ lat: elLat, lng: elLng, name: name || 'Fire Station', nodeType: 'fire_station' });
+                else if (tags.man_made === 'surveillance' || tags['surveillance:type'] || tags.amenity === 'cctv') items.push({ lat: elLat, lng: elLng, name: name || 'CCTV Camera', nodeType: 'surveillance' });
+             });
+
+             if(items.length > 0) {
                  renderRealtimeMarkers(items, lat, lng, fullAreaName, null);
              } else {
-                 reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">No digital footprint found for this region.</li>';
-                 safeZone.textContent = `📍 ${city}`;
-                 dangerZone.textContent = `Insufficient geodata available.`;
+                 throw new Error("Empty Overpass");
              }
           } catch(err) {
-             reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">Failed to load location data.</li>';
+             // Ultimate fallback: Wikipedia
+             try {
+                reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Searching digital footprint...</li>';
+                const wRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=10000&gslimit=10&format=json&origin=*`);
+                const wData = await wRes.json();
+                const places = wData.query?.geosearch || [];
+                if(places.length > 0) {
+                    const items = places.map(p => ({ name: p.title, lat: p.lat, lng: p.lon, nodeType: 'landmark' }));
+                    renderRealtimeMarkers(items, lat, lng, fullAreaName, null);
+                } else {
+                    reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">No digital footprint found for this region.</li>';
+                    safeZone.textContent = `📍 ${city}`;
+                    dangerZone.textContent = `Insufficient geodata available.`;
+                }
+             } catch(wErr) {
+                reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">Failed to load location data.</li>';
+             }
           }
       }
   };

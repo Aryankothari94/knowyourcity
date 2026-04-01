@@ -362,7 +362,7 @@
 
     async function fetchSafetyData(map, lat, lng, city) {
       // Cache version — increment when query changes to auto-purge old data
-      const CACHE_VER = 3;
+      const CACHE_VER = 4;
       const cacheKey = _safetyKey(lat, lng);
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -377,58 +377,69 @@
         } catch(e) { localStorage.removeItem(cacheKey); }
       }
 
-      // Strategy: 4 parallel small Overpass queries (FAST) + backend in parallel
+      // Strategy: 1 unified Overpass query (bypass 429 Too Many Requests limit)
       document.getElementById('safetySummary').innerHTML = '<p>⏳ Fetching real-time safety data for ' + city + '...</p>';
 
-      // Helper: fetch one Overpass query with timeout
-      async function queryOverpass(q, timeoutMs) {
-        const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), timeoutMs || 12000);
-        try {
-          const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST', body: 'data=' + encodeURIComponent(q), signal: ctrl.signal
-          });
-          clearTimeout(tid);
-          const data = await res.json();
-          return data.elements || [];
-        } catch { clearTimeout(tid); return []; }
-      }
+      const query = `[out:json][timeout:25];(
+        node["amenity"="police"](around:15000,${lat},${lng});
+        way["amenity"="police"](around:15000,${lat},${lng});
+        node["amenity"="hospital"](around:15000,${lat},${lng});
+        way["amenity"="hospital"](around:15000,${lat},${lng});
+        node["amenity"="clinic"](around:10000,${lat},${lng});
+        way["amenity"="clinic"](around:10000,${lat},${lng});
+        node["amenity"="fire_station"](around:15000,${lat},${lng});
+        way["amenity"="fire_station"](around:15000,${lat},${lng});
+        node["emergency"="fire_hydrant"](around:10000,${lat},${lng});
+        node["man_made"="surveillance"](around:10000,${lat},${lng});
+        way["man_made"="surveillance"](around:10000,${lat},${lng});
+        node["surveillance:type"="camera"](around:10000,${lat},${lng});
+        node["surveillance:type"="ALPR"](around:10000,${lat},${lng});
+        node["amenity"="cctv"](around:10000,${lat},${lng});
+      );out center tags 3000;`;
 
-      // 4 parallel queries — each is small and fast
-      const [policeEls, hospEls, fireEls, cctvEls] = await Promise.all([
-        // Police: 15km
-        queryOverpass(`[out:json][timeout:15];(node["amenity"="police"](around:15000,${lat},${lng});way["amenity"="police"](around:15000,${lat},${lng}););out center tags;`),
-        // Hospitals + clinics: 15km/10km
-        queryOverpass(`[out:json][timeout:15];(node["amenity"="hospital"](around:15000,${lat},${lng});way["amenity"="hospital"](around:15000,${lat},${lng});node["amenity"="clinic"](around:10000,${lat},${lng});way["amenity"="clinic"](around:10000,${lat},${lng}););out center tags;`),
-        // Fire stations + hydrants: 15km/10km
-        queryOverpass(`[out:json][timeout:15];(node["amenity"="fire_station"](around:15000,${lat},${lng});way["amenity"="fire_station"](around:15000,${lat},${lng});node["emergency"="fire_hydrant"](around:10000,${lat},${lng}););out center tags;`),
-        // CCTV + surveillance: 10km
-        queryOverpass(`[out:json][timeout:15];(node["man_made"="surveillance"](around:10000,${lat},${lng});way["man_made"="surveillance"](around:10000,${lat},${lng});node["surveillance:type"="camera"](around:10000,${lat},${lng});node["surveillance:type"="ALPR"](around:10000,${lat},${lng}););out center tags;`)
-      ]);
-
-      // Parse results
-      const seen = new Set();
-      function parseEls(els, category) {
-        const items = [];
-        els.forEach(el => {
-          const elLat = el.lat || el.center?.lat;
-          const elLng = el.lon || el.center?.lon;
-          if (!elLat || !elLng) return;
-          const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
-          if (seen.has(key)) return;
-          seen.add(key);
-          const name = el.tags?.name || el.tags?.['name:en'] || '';
-          items.push({ lat: elLat, lng: elLng, name: name || category });
+      const overpassController = new AbortController();
+      const overpassTimeout = setTimeout(() => overpassController.abort(), 20000);
+      let elements = [];
+      try {
+        const res = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST', body: 'data=' + encodeURIComponent(query), signal: overpassController.signal
         });
-        return items;
+        clearTimeout(overpassTimeout);
+        const data = await res.json();
+        elements = data.elements || [];
+      } catch (e) {
+        clearTimeout(overpassTimeout);
+        document.getElementById('safetySummary').innerHTML = '<p style="color:#ff5252">Safety data unavailable right now.</p>';
+        return;
       }
 
-      const police = parseEls(policeEls, 'Police Station');
-      const hosp = parseEls(hospEls, 'Hospital/Clinic');
-      const fire = parseEls(fireEls, 'Fire Station');
-      const cctv = parseEls(cctvEls, 'CCTV Camera');
+      const police = [], hosp = [], fire = [], cctv = [];
+      const seen = new Set();
 
-      // Cache with version tag — only cache if we got real data
+      elements.forEach(el => {
+        const elLat = el.lat || el.center?.lat;
+        const elLng = el.lon || el.center?.lon;
+        if (!elLat || !elLng) return;
+        
+        const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        const tags = el.tags || {};
+        const name = tags.name || tags['name:en'] || '';
+
+        if (tags.amenity === 'police') {
+          police.push({ lat: elLat, lng: elLng, name: name || 'Police Station', nodeType: 'police' });
+        } else if (tags.amenity === 'hospital' || tags.amenity === 'clinic') {
+          hosp.push({ lat: elLat, lng: elLng, name: name || 'Hospital/Clinic', nodeType: 'hospital' });
+        } else if (tags.amenity === 'fire_station' || tags.emergency === 'fire_hydrant') {
+          fire.push({ lat: elLat, lng: elLng, name: name || 'Fire Station', nodeType: 'fire_station' });
+        } else if (tags.man_made === 'surveillance' || tags['surveillance:type'] || tags.amenity === 'cctv') {
+          cctv.push({ lat: elLat, lng: elLng, name: name || 'CCTV Camera', nodeType: 'surveillance' });
+        }
+      });
+
+      // Cache with version tag
       if (police.length + hosp.length + fire.length + cctv.length > 0) {
         try { localStorage.setItem(cacheKey, JSON.stringify({ police, hosp, fire, cctv, ts: Date.now(), ver: CACHE_VER })); } catch {}
       }
