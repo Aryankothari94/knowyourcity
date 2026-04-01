@@ -247,6 +247,9 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     var _safetyMap = null;
+    // Cache key for safety data
+    function _safetyKey(lat,lng) { return `kyc_safety_${lat.toFixed(2)}_${lng.toFixed(2)}`; }
+
     function initSafetyMap() {
       const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
       const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
@@ -258,7 +261,6 @@
       }).addTo(_safetyMap);
       L.circleMarker([lat, lng], { radius: 8, fillColor: '#00e5ff', fillOpacity: 1, color: '#fff', weight: 2 })
         .addTo(_safetyMap).bindPopup('📍 You — ' + city).openPopup();
-      // Reset stats while loading
       document.getElementById('policeCount').textContent = '--';
       document.getElementById('hospitalCount').textContent = '--';
       document.getElementById('fireCount').textContent = '--';
@@ -269,237 +271,172 @@
 
     function reloadSafetyMap() { initSafetyMap(); }
 
-    async function fetchSafetyData(map, lat, lng, city) {
+    // Render real data on map and stats panel — NO fake/extrapolated data
+    function renderSafetyOnMap(map, police, hosp, fire, cctv, city, source) {
+      // Update stat counts — REAL numbers only
+      document.getElementById('policeCount').textContent = police.length;
+      document.getElementById('hospitalCount').textContent = hosp.length;
+      document.getElementById('fireCount').textContent = fire.length;
+      document.getElementById('cctvCount').textContent = cctv.length;
+
+      // Draw safety grid heatmap
+      const lat = map.getCenter().lat, lng = map.getCenter().lng;
+      const step = 0.012;
+      for (let gLat = lat - 0.06; gLat <= lat + 0.06; gLat += step) {
+        for (let gLng = lng - 0.06; gLng <= lng + 0.06; gLng += step) {
+          let count = 0;
+          const within = (p) => p.lat >= gLat && p.lat < gLat + step && p.lng >= gLng && p.lng < gLng + step;
+          count += police.filter(within).length * 2.5;
+          count += hosp.filter(within).length * 1.5;
+          count += fire.filter(within).length * 1.5;
+          count += cctv.filter(within).length * 1;
+          let color = '#ff5252', fillOp = 0.15;
+          if (count >= 4) { color = '#00e676'; fillOp = 0.4; }
+          else if (count >= 1.5) { color = '#ffab40'; fillOp = 0.3; }
+          else if (count === 0) { fillOp = 0.05; }
+          L.rectangle([[gLat, gLng], [gLat + step, gLng + step]], { color, weight: 1, fillOpacity: fillOp, opacity: 0.5 }).addTo(map);
+        }
+      }
+
+      // Plot real markers
+      police.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#00e676', fillOpacity: 0.8, color: '#00e676', weight: 1 }).addTo(map).bindPopup((p.name || 'Police Station')));
+      hosp.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#2196f3', fillOpacity: 0.8, color: '#2196f3', weight: 1 }).addTo(map).bindPopup((p.name || 'Hospital')));
+      fire.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#ff9800', weight: 1 }).addTo(map).bindPopup((p.name || 'Fire Station')));
+      cctv.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#9c27b0', weight: 1 }).addTo(map).bindPopup((p.name || 'CCTV')));
+
+      // Accurate safety summary based on real data
+      const tot = police.length + hosp.length + fire.length + cctv.length;
+      const areaKm2 = Math.PI * 8 * 8; // ~200 km² for 8km radius
+      const den = (tot / areaKm2).toFixed(2);
+      const lv = tot > 30 ? 'High' : tot > 10 ? 'Moderate' : 'Low';
+      document.getElementById('safetySummary').innerHTML = `
+        <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
+        <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252'}">${lv}</span></div>
+        <div class="summary-item"><strong>Total Safety Points:</strong> ${tot} (${police.length} police, ${hosp.length} hospitals, ${fire.length} fire, ${cctv.length} CCTV)</div>
+        <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis covers ~8km radius. Only verified OSM data. Source: ${source}.</div>`;
+
+      generateCityProTips(city);
+    }
+
+    // Parse Overpass API response into categorized arrays
+    function parseOverpassData(elements) {
+      let police = [], hosp = [], fire = [], cctv = [];
+      elements.forEach(el => {
+        const elLat = el.lat || el.center?.lat;
+        const elLng = el.lon || el.center?.lon;
+        if (!elLat || !elLng) return;
+        const name = el.tags?.name || el.tags?.['name:en'] || '';
+        const t = el.tags || {};
+        if (t.amenity === 'police') police.push({lat: elLat, lng: elLng, name: name || 'Police Station'});
+        else if (t.amenity === 'hospital') hosp.push({lat: elLat, lng: elLng, name: name || 'Hospital'});
+        else if (t.amenity === 'fire_station') fire.push({lat: elLat, lng: elLng, name: name || 'Fire Station'});
+        else if (t.man_made === 'surveillance') cctv.push({lat: elLat, lng: elLng, name: name || 'CCTV'});
+      });
+      return { police, hosp, fire, cctv };
+    }
+
+    // Update area cards with real neighborhood data from Nominatim
+    async function updateAreaCards(lat, lng, city) {
       try {
-        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
-        const data = await res.json();
-        
-        if (!res.ok) throw new Error(data.message || 'Error fetching data');
-
-        const { safetyStats, infrastructures } = data;
-        let police = infrastructures.filter(i => i.nodeType === 'police');
-        let hosp = infrastructures.filter(i => i.nodeType === 'hospital');
-        let fire = infrastructures.filter(i => i.nodeType === 'fire_station');
-        let cctv = infrastructures.filter(i => i.nodeType === 'surveillance');
-
-        // Gap-fill sparse OSM data for Fire and CCTV
-        let hashGap = 0; for(let i=0;i<city.length;i++) hashGap=city.charCodeAt(i)+((hashGap<<5)-hashGap);
-        const seedGap = Math.abs(hashGap);
-        
-        if (police.length < 15) {
-            const added = 10 + (seedGap % 30);
-            for (let i = 0; i < added; i++) police.push({ lat: lat + (Math.random()-0.5)*0.09, lng: lng + (Math.random()-0.5)*0.09, name: 'Police Station (Extrapolated)' });
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=tourist+attractions+near+${encodeURIComponent(city)}&format=json&limit=2&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
+        const places = await res.json();
+        if (places.length >= 1) {
+          const p1 = places[0];
+          const name1 = p1.display_name.split(',')[0];
+          document.getElementById('dynamicCard1Title').textContent = name1 + ', ' + city;
         }
-        if (hosp.length < 20) {
-            const added = 15 + (seedGap % 40);
-            for (let i = 0; i < added; i++) hosp.push({ lat: lat + (Math.random()-0.5)*0.09, lng: lng + (Math.random()-0.5)*0.09, name: 'Hospital (Extrapolated)' });
+        if (places.length >= 2) {
+          const p2 = places[1];
+          const name2 = p2.display_name.split(',')[0];
+          document.getElementById('dynamicCard2Title').textContent = name2 + ', ' + city;
         }
-        
-        if (fire.length < 10) {
-            const added = 8 + (seedGap % 6);
-            for (let i = 0; i < added; i++) {
-                fire.push({ lat: lat + (Math.random()-0.5)*0.07, lng: lng + (Math.random()-0.5)*0.07, name: 'Fire Station (Extrapolated)' });
-            }
-        }
-        if (cctv.length < 20) {
-            const added = 25 + (seedGap % 20);
-            for (let i = 0; i < added; i++) {
-                cctv.push({ lat: lat + (Math.random()-0.5)*0.08, lng: lng + (Math.random()-0.5)*0.08, name: 'Surveillance Node (Extrapolated)' });
-            }
-        }
-        
-        // Update stats
-        safetyStats.fireCount = fire.length;
-        safetyStats.cctvCount = cctv.length;
+      } catch(e) { console.log('Area cards Nominatim lookup skipped'); }
+    }
 
-
-        document.getElementById('policeCount').textContent = safetyStats.policeCount;
-        document.getElementById('hospitalCount').textContent = safetyStats.hospitalCount;
-        document.getElementById('fireCount').textContent = safetyStats.fireCount;
-        document.getElementById('cctvCount').textContent = safetyStats.cctvCount;
-
-        if (data.touristZones && data.touristZones.length >= 2) {
-            const tz1 = data.touristZones[0];
-            document.getElementById('dynamicCard1Title').textContent = `📍 ${tz1.name}`;
-            document.getElementById('dynamicCard1SafetyVal').textContent = `${tz1.safetyScore}/100`;
-            document.getElementById('dynamicCard1SafetyBar').style.width = `${tz1.safetyScore}%`;
-            document.getElementById('dynamicCard1FamilyVal').textContent = `${tz1.familyFriendly}/100`;
-            document.getElementById('dynamicCard1FamilyBar').style.width = `${tz1.familyFriendly}%`;
-            document.getElementById('dynamicCard1WalkVal').textContent = `${tz1.walkability}/100`;
-            document.getElementById('dynamicCard1WalkBar').style.width = `${tz1.walkability}%`;
-            
-            const tz2 = data.touristZones[1];
-            document.getElementById('dynamicCard2Title').textContent = `📍 ${tz2.name}`;
-            document.getElementById('dynamicCard2SafetyVal').textContent = `${tz2.safetyScore}/100`;
-            document.getElementById('dynamicCard2SafetyBar').style.width = `${tz2.safetyScore}%`;
-            document.getElementById('dynamicCard2FamilyVal').textContent = `${tz2.familyFriendly}/100`;
-            document.getElementById('dynamicCard2FamilyBar').style.width = `${tz2.familyFriendly}%`;
-            document.getElementById('dynamicCard2WalkVal').textContent = `${tz2.walkability}/100`;
-            document.getElementById('dynamicCard2WalkBar').style.width = `${tz2.walkability}%`;
-        }
-
-
-        const step = 0.012; // ~1.2km squares
-        for (let gridLat = lat - 0.06; gridLat <= lat + 0.06; gridLat += step) {
-          for (let gridLng = lng - 0.06; gridLng <= lng + 0.06; gridLng += step) {
-             let count = 0;
-             const ptWithin = (p) => p.lat >= gridLat && p.lat < gridLat + step && p.lng >= gridLng && p.lng < gridLng + step;
-             count += police.filter(ptWithin).length * 2.5;
-             count += hosp.filter(ptWithin).length * 1.5;
-             count += fire.filter(ptWithin).length * 1.5;
-             count += cctv.filter(ptWithin).length * 1;
-             
-             let color = '#ff5252'; let fillOp = 0.15;
-             if (count >= 4) { color = '#00e676'; fillOp = 0.4; } // High coverage Box
-             else if (count >= 1.5) { color = '#ffab40'; fillOp = 0.3; } // Moderate coverage Box
-             else if (count === 0) { fillOp = 0.05; } // Low coverage
-             
-             const bounds = [[gridLat, gridLng], [gridLat + step, gridLng + step]];
-             L.rectangle(bounds, { color: color, weight: 1, fillOpacity: fillOp, opacity: 0.5 }).addTo(map);
-          }
-        }
-
-        police.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#00e676', fillOpacity: 0.8, color: '#00e676', weight: 1 }).addTo(map).bindPopup('🚔 ' + (p.name || 'Police Station')));
-        hosp.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#2196f3', fillOpacity: 0.8, color: '#2196f3', weight: 1 }).addTo(map).bindPopup('🏥 ' + (p.name || 'Hospital')));
-        fire.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#ff9800', weight: 1 }).addTo(map).bindPopup('🚒 ' + (p.name || 'Fire Station')));
-        cctv.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#9c27b0', weight: 1 }).addTo(map).bindPopup('📹 ' + (p.name || 'CCTV Camera')));
-
-        const tot = safetyStats.totalScore;
-        const den = safetyStats.densityPerKm;
-        const lv = tot > 15 ? 'High' : tot > 8 ? 'Moderate' : 'Low';
-        document.getElementById('safetySummary').innerHTML = `
-          <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
-          <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252'}">${lv}</span></div>
-          <div class="summary-item"><strong>Total Safety Points:</strong> ${tot + cctv.length} (${police.length} police, ${hosp.length} hospitals, ${fire.length} fire, ${cctv.length} CCTV)</div>
-          <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis covers approx 8km radius. Green=5+ nearby. Source: ${data.source==='cache'?'Cached':'Live OSM'} Data.</div>`;
-          
-          generateCityProTips(city);
-      } catch (err) { 
-        console.error("Backend Error - Emulating map structure algorithmically", err); 
+    async function fetchSafetyData(map, lat, lng, city) {
+      // Check localStorage cache first (expires after 30 min)
+      const cacheKey = _safetyKey(lat, lng);
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
         try {
-          const query = `
-            [out:json][timeout:25];
-            (
-              node["amenity"="police"](around:8000,${lat},${lng});
-              way["amenity"="police"](around:8000,${lat},${lng});
-              node["amenity"="hospital"](around:8000,${lat},${lng});
-              way["amenity"="hospital"](around:8000,${lat},${lng});
-              node["amenity"="fire_station"](around:8000,${lat},${lng});
-              way["amenity"="fire_station"](around:8000,${lat},${lng});
-              node["man_made"="surveillance"](around:8000,${lat},${lng});
-            );
-            out center tags;
-          `;
-          const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST', body: 'data=' + encodeURIComponent(query)
-          });
-          const overpassData = await overpassRes.json();
-          
-          let police = [], hosp = [], fire = [], cctv = [];
-          overpassData.elements.forEach(el => {
-            const elLat = el.lat || el.center?.lat;
-            const elLng = el.lon || el.center?.lon;
-            const name = el.tags?.name || el.tags?.['name:en'] || '';
-            const t = el.tags || {};
-            if (t.amenity === 'police') police.push({lat:elLat, lng:elLng, name});
-            else if (t.amenity === 'hospital') hosp.push({lat:elLat, lng:elLng, name});
-            else if (t.amenity === 'fire_station') fire.push({lat:elLat, lng:elLng, name});
-            else if (t.man_made === 'surveillance') cctv.push({lat:elLat, lng:elLng, name});
-          });
+          const c = JSON.parse(cached);
+          if (Date.now() - c.ts < 30 * 60 * 1000) {
+            const { police, hosp, fire, cctv } = c;
+            renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Cached Data');
+            updateAreaCards(lat, lng, city);
+            return;
+          }
+        } catch(e) { localStorage.removeItem(cacheKey); }
+      }
 
-          // Gap-fill sparse OSM data
-          let hashGap = 0; for(let i=0;i<city.length;i++) hashGap=city.charCodeAt(i)+((hashGap<<5)-hashGap);
-          const seedGap = Math.abs(hashGap);
-          
-          if (police.length < 15) {
-              const added = 10 + (seedGap % 30);
-              for (let i = 0; i < added; i++) police.push({ lat: lat + (Math.random()-0.5)*0.09, lng: lng + (Math.random()-0.5)*0.09, name: 'Police Station (Extrapolated)' });
-          }
-          if (hosp.length < 20) {
-              const added = 15 + (seedGap % 40);
-              for (let i = 0; i < added; i++) hosp.push({ lat: lat + (Math.random()-0.5)*0.09, lng: lng + (Math.random()-0.5)*0.09, name: 'Hospital (Extrapolated)' });
-          }
-          
-          if (fire.length < 10) {
-              const added = 8 + (seedGap % 6);
-              for (let i = 0; i < added; i++) {
-                  fire.push({ lat: lat + (Math.random()-0.5)*0.07, lng: lng + (Math.random()-0.5)*0.07, name: 'Fire Station (Extrapolated)' });
-              }
-          }
-          if (cctv.length < 20) {
-              const added = 25 + (seedGap % 20);
-              for (let i = 0; i < added; i++) {
-                  cctv.push({ lat: lat + (Math.random()-0.5)*0.08, lng: lng + (Math.random()-0.5)*0.08, name: 'Surveillance Node (Extrapolated)' });
-              }
-          }
+      // Try backend API first with a 8-second timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      try {
+        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`, { signal: controller.signal });
+        clearTimeout(timeout);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Backend error');
 
-          document.getElementById('policeCount').textContent = police.length;
-          document.getElementById('hospitalCount').textContent = hosp.length;
-          document.getElementById('fireCount').textContent = fire.length;
-          document.getElementById('cctvCount').textContent = cctv.length;
+        const police = (data.infrastructures || []).filter(i => i.nodeType === 'police').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'Police Station'}));
+        const hosp = (data.infrastructures || []).filter(i => i.nodeType === 'hospital').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'Hospital'}));
+        const fire = (data.infrastructures || []).filter(i => i.nodeType === 'fire_station').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'Fire Station'}));
+        const cctv = (data.infrastructures || []).filter(i => i.nodeType === 'surveillance').map(i => ({lat: i.lat, lng: i.lng, name: i.name || 'CCTV'}));
 
-          let hash = 0; for(let i=0;i<city.length;i++) hash=city.charCodeAt(i)+((hash<<5)-hash);
-          const seed = Math.abs(hash);
-          const tz1Names = ['Central Square', 'Heritage Avenue', 'Metro Heights', 'Sunrise District', 'Riverfront', 'Palm Gardens'];
-          const tz2Names = ['Lakeside Park', 'Tech Corridor', 'University Road', 'Old Town', 'Shopping Plaza', 'Green Valley'];
-          const tz1 = { name: tz1Names[seed % tz1Names.length] + ', ' + city, safetyScore: 75 + (seed % 20), familyFriendly: 70 + ((seed*2) % 25), walkability: 60 + ((seed*3) % 40) };
-          const tz2 = { name: tz2Names[seed % tz2Names.length] + ', ' + city, safetyScore: 72 + ((seed*4) % 20), familyFriendly: 65 + ((seed*5) % 30), walkability: 55 + ((seed*6) % 40) };
-          
-          document.getElementById('dynamicCard1Title').textContent = `📍 ${tz1.name}`;
+        // Cache the real data
+        localStorage.setItem(cacheKey, JSON.stringify({ police, hosp, fire, cctv, ts: Date.now() }));
+        renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Live Backend + OSM');
+
+        // Update area cards from backend tourist zones if available
+        if (data.touristZones && data.touristZones.length >= 2) {
+          const tz1 = data.touristZones[0], tz2 = data.touristZones[1];
+          document.getElementById('dynamicCard1Title').textContent = tz1.name;
           document.getElementById('dynamicCard1SafetyVal').textContent = `${tz1.safetyScore}/100`;
           document.getElementById('dynamicCard1SafetyBar').style.width = `${tz1.safetyScore}%`;
           document.getElementById('dynamicCard1FamilyVal').textContent = `${tz1.familyFriendly}/100`;
           document.getElementById('dynamicCard1FamilyBar').style.width = `${tz1.familyFriendly}%`;
           document.getElementById('dynamicCard1WalkVal').textContent = `${tz1.walkability}/100`;
           document.getElementById('dynamicCard1WalkBar').style.width = `${tz1.walkability}%`;
-
-          document.getElementById('dynamicCard2Title').textContent = `📍 ${tz2.name}`;
+          document.getElementById('dynamicCard2Title').textContent = tz2.name;
           document.getElementById('dynamicCard2SafetyVal').textContent = `${tz2.safetyScore}/100`;
           document.getElementById('dynamicCard2SafetyBar').style.width = `${tz2.safetyScore}%`;
           document.getElementById('dynamicCard2FamilyVal').textContent = `${tz2.familyFriendly}/100`;
           document.getElementById('dynamicCard2FamilyBar').style.width = `${tz2.familyFriendly}%`;
           document.getElementById('dynamicCard2WalkVal').textContent = `${tz2.walkability}/100`;
           document.getElementById('dynamicCard2WalkBar').style.width = `${tz2.walkability}%`;
-
-          const step = 0.012; // ~1.2km squares
-          for (let gridLat = lat - 0.06; gridLat <= lat + 0.06; gridLat += step) {
-            for (let gridLng = lng - 0.06; gridLng <= lng + 0.06; gridLng += step) {
-               let count = 0;
-               const ptWithin = (p) => p.lat >= gridLat && p.lat < gridLat + step && p.lng >= gridLng && p.lng < gridLng + step;
-               count += police.filter(ptWithin).length * 2.5;
-               count += hosp.filter(ptWithin).length * 1.5;
-               count += fire.filter(ptWithin).length * 1.5;
-               count += cctv.filter(ptWithin).length * 1;
-               
-               let color = '#ff5252'; let fillOp = 0.15;
-               if (count >= 4) { color = '#00e676'; fillOp = 0.4; }
-               else if (count >= 1.5) { color = '#ffab40'; fillOp = 0.3; }
-               else if (count === 0) { fillOp = 0.05; }
-               
-               const bounds = [[gridLat, gridLng], [gridLat + step, gridLng + step]];
-               L.rectangle(bounds, { color: color, weight: 1, fillOpacity: fillOp, opacity: 0.5 }).addTo(map);
-            }
-          }
-
-          police.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#00e676', fillOpacity: 0.8, color: '#00e676', weight: 1 }).addTo(map).bindPopup('🚔 ' + (p.name || 'Police Station')));
-          hosp.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#2196f3', fillOpacity: 0.8, color: '#2196f3', weight: 1 }).addTo(map).bindPopup('🏥 ' + (p.name || 'Hospital')));
-          fire.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#ff9800', weight: 1 }).addTo(map).bindPopup('🚒 ' + (p.name || 'Fire Station')));
-          cctv.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#9c27b0', weight: 1 }).addTo(map).bindPopup('📹 ' + (p.name || 'CCTV Camera')));
-
-          const tot = police.length + hosp.length + fire.length;
-          const den = ((tot + cctv.length) / 200).toFixed(1);
-          const lv = tot > 15 ? 'High' : tot > 8 ? 'Moderate' : 'Low';
-          document.getElementById('safetySummary').innerHTML = `
-            <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
-            <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252'}">${lv}</span></div>
-            <div class="summary-item"><strong>Total Safety Points:</strong> ${tot + cctv.length} (${police.length} police, ${hosp.length} hospitals, ${fire.length} fire, ${cctv.length} CCTV)</div>
-            <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis covers approx 8km radius. Green=5+ nearby. Source: Live OSM Data.</div>`;
-            
-          generateCityProTips(city);
-
-        } catch(fallbackErr) {
-          console.error("Overpass fallback failed.", fallbackErr);
+        } else {
+          updateAreaCards(lat, lng, city);
         }
+        return;
+      } catch (err) {
+        clearTimeout(timeout);
+        console.warn('Backend unavailable, falling back to Overpass API directly.', err.message);
+      }
+
+      // Fallback: query Overpass API directly
+      try {
+        const query = `[out:json][timeout:15];(
+          node["amenity"="police"](around:8000,${lat},${lng});
+          way["amenity"="police"](around:8000,${lat},${lng});
+          node["amenity"="hospital"](around:8000,${lat},${lng});
+          way["amenity"="hospital"](around:8000,${lat},${lng});
+          node["amenity"="fire_station"](around:8000,${lat},${lng});
+          way["amenity"="fire_station"](around:8000,${lat},${lng});
+          node["man_made"="surveillance"](around:8000,${lat},${lng});
+        );out center tags;`;
+        const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST', body: 'data=' + encodeURIComponent(query)
+        });
+        const overpassData = await overpassRes.json();
+        const { police, hosp, fire, cctv } = parseOverpassData(overpassData.elements || []);
+
+        // Cache real data
+        localStorage.setItem(cacheKey, JSON.stringify({ police, hosp, fire, cctv, ts: Date.now() }));
+        renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Live Overpass/OSM');
+        updateAreaCards(lat, lng, city);
+      } catch(fallbackErr) {
+        console.error('Overpass fallback also failed:', fallbackErr);
+        document.getElementById('safetySummary').innerHTML = '<p style="color:#ff5252">Could not load safety data. Please try refreshing.</p>';
       }
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSafetyMap);
@@ -2057,7 +1994,7 @@
       localStorage.setItem('kyc_userLat', lat);
       localStorage.setItem('kyc_userLng', lng);
       localStorage.setItem('kyc_userCity', city);
-      sessionStorage.setItem('kyc_showFact', city);
+      // Do NOT show fact popup on city change — only on login
       showToast(`📍 Location set to ${city}. Reloading...`);
       setTimeout(() => window.location.reload(), 800);
     }

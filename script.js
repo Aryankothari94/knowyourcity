@@ -169,6 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
     showLoginToast(firstName);
     window.isLoggedIn = true;
 
+    // Show fact popup ONCE after login (not on city change or refresh)
+    const city = localStorage.getItem('kyc_userCity') || 'Your City';
+    sessionStorage.setItem('kyc_showFact', city);
+
     // Request geolocation for the location badge only
     detectUserCity();
   };
