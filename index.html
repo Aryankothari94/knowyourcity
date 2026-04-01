@@ -281,9 +281,9 @@
 
       // Draw safety grid heatmap
       const lat = map.getCenter().lat, lng = map.getCenter().lng;
-      const step = 0.012;
-      for (let gLat = lat - 0.06; gLat <= lat + 0.06; gLat += step) {
-        for (let gLng = lng - 0.06; gLng <= lng + 0.06; gLng += step) {
+      const step = 0.015;
+      for (let gLat = lat - 0.13; gLat <= lat + 0.13; gLat += step) {
+        for (let gLng = lng - 0.13; gLng <= lng + 0.13; gLng += step) {
           let count = 0;
           const within = (p) => p.lat >= gLat && p.lat < gLat + step && p.lng >= gLng && p.lng < gLng + step;
           count += police.filter(within).length * 2.5;
@@ -306,14 +306,14 @@
 
       // Accurate safety summary based on real data
       const tot = police.length + hosp.length + fire.length + cctv.length;
-      const areaKm2 = Math.PI * 8 * 8; // ~200 km² for 8km radius
+      const areaKm2 = Math.PI * 15 * 15; // ~707 km² for 15km radius
       const den = (tot / areaKm2).toFixed(2);
       const lv = tot > 30 ? 'High' : tot > 10 ? 'Moderate' : 'Low';
       document.getElementById('safetySummary').innerHTML = `
         <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
         <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252'}">${lv}</span></div>
-        <div class="summary-item"><strong>Total Safety Points:</strong> ${tot} (${police.length} police, ${hosp.length} hospitals, ${fire.length} fire, ${cctv.length} CCTV)</div>
-        <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis covers ~8km radius. Only verified OSM data. Source: ${source}.</div>`;
+        <div class="summary-item"><strong>Total Safety Points:</strong> ${tot} (${police.length} police, ${hosp.length} hospitals/clinics, ${fire.length} fire, ${cctv.length} CCTV)</div>
+        <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis covers ~15km radius. Only verified OSM data. Source: ${source}.</div>`;
 
       generateCityProTips(city);
     }
@@ -321,16 +321,23 @@
     // Parse Overpass API response into categorized arrays
     function parseOverpassData(elements) {
       let police = [], hosp = [], fire = [], cctv = [];
+      const seen = new Set();
       elements.forEach(el => {
         const elLat = el.lat || el.center?.lat;
         const elLng = el.lon || el.center?.lon;
         if (!elLat || !elLng) return;
+        // Deduplicate
+        const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
+        if (seen.has(key)) return;
+        seen.add(key);
         const name = el.tags?.name || el.tags?.['name:en'] || '';
         const t = el.tags || {};
         if (t.amenity === 'police') police.push({lat: elLat, lng: elLng, name: name || 'Police Station'});
         else if (t.amenity === 'hospital') hosp.push({lat: elLat, lng: elLng, name: name || 'Hospital'});
+        else if (t.amenity === 'clinic') hosp.push({lat: elLat, lng: elLng, name: name || 'Clinic'});
         else if (t.amenity === 'fire_station') fire.push({lat: elLat, lng: elLng, name: name || 'Fire Station'});
-        else if (t.man_made === 'surveillance') cctv.push({lat: elLat, lng: elLng, name: name || 'CCTV'});
+        else if (t.emergency === 'fire_hydrant') fire.push({lat: elLat, lng: elLng, name: 'Fire Hydrant'});
+        else if (t.man_made === 'surveillance' || t['surveillance:type'] || t.amenity === 'cctv') cctv.push({lat: elLat, lng: elLng, name: name || 'CCTV Camera'});
       });
       return { police, hosp, fire, cctv };
     }
@@ -415,18 +422,28 @@
 
       // Fallback: query Overpass API directly
       try {
-        const query = `[out:json][timeout:15];(
-          node["amenity"="police"](around:8000,${lat},${lng});
-          way["amenity"="police"](around:8000,${lat},${lng});
-          node["amenity"="hospital"](around:8000,${lat},${lng});
-          way["amenity"="hospital"](around:8000,${lat},${lng});
-          node["amenity"="fire_station"](around:8000,${lat},${lng});
-          way["amenity"="fire_station"](around:8000,${lat},${lng});
-          node["man_made"="surveillance"](around:8000,${lat},${lng});
-        );out center tags;`;
+        const query = `[out:json][timeout:25];(
+          node["amenity"="police"](around:15000,${lat},${lng});
+          way["amenity"="police"](around:15000,${lat},${lng});
+          node["amenity"="hospital"](around:15000,${lat},${lng});
+          way["amenity"="hospital"](around:15000,${lat},${lng});
+          node["amenity"="clinic"](around:10000,${lat},${lng});
+          way["amenity"="clinic"](around:10000,${lat},${lng});
+          node["amenity"="fire_station"](around:15000,${lat},${lng});
+          way["amenity"="fire_station"](around:15000,${lat},${lng});
+          node["emergency"="fire_hydrant"](around:10000,${lat},${lng});
+          node["man_made"="surveillance"](around:10000,${lat},${lng});
+          way["man_made"="surveillance"](around:10000,${lat},${lng});
+          node["surveillance:type"="camera"](around:10000,${lat},${lng});
+          node["surveillance:type"="ALPR"](around:10000,${lat},${lng});
+          node["amenity"="cctv"](around:10000,${lat},${lng});
+        );out center tags 500;`;
+        const overpassController = new AbortController();
+        const overpassTimeout = setTimeout(() => overpassController.abort(), 20000);
         const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
-          method: 'POST', body: 'data=' + encodeURIComponent(query)
+          method: 'POST', body: 'data=' + encodeURIComponent(query), signal: overpassController.signal
         });
+        clearTimeout(overpassTimeout);
         const overpassData = await overpassRes.json();
         const { police, hosp, fire, cctv } = parseOverpassData(overpassData.elements || []);
 

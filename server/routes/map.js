@@ -4,16 +4,24 @@ const CityData = require('../models/CityData');
 
 // Ensure native fetch is available (Node 18+) or install node-fetch later if missing.
 async function fetchOverpassData(lat, lng) {
-    const R = 8000;
-    const query = `[out:json][timeout:25];(
+    const R = 15000; // 15km radius for comprehensive coverage
+    const R2 = 10000; // secondary radius for dense items
+    const query = `[out:json][timeout:30];(
         node["amenity"="police"](around:${R},${lat},${lng});
         way["amenity"="police"](around:${R},${lat},${lng});
         node["amenity"="hospital"](around:${R},${lat},${lng});
         way["amenity"="hospital"](around:${R},${lat},${lng});
+        node["amenity"="clinic"](around:${R2},${lat},${lng});
+        way["amenity"="clinic"](around:${R2},${lat},${lng});
         node["amenity"="fire_station"](around:${R},${lat},${lng});
         way["amenity"="fire_station"](around:${R},${lat},${lng});
-        node["man_made"="surveillance"](around:${R},${lat},${lng});
-    );out center tags;`;
+        node["emergency"="fire_hydrant"](around:${R2},${lat},${lng});
+        node["man_made"="surveillance"](around:${R2},${lat},${lng});
+        way["man_made"="surveillance"](around:${R2},${lat},${lng});
+        node["surveillance:type"="camera"](around:${R2},${lat},${lng});
+        node["surveillance:type"="ALPR"](around:${R2},${lat},${lng});
+        node["amenity"="cctv"](around:${R2},${lat},${lng});
+    );out center tags 500;`;
 
     const res = await fetch('https://overpass-api.de/api/interpreter', {
         method: 'POST',
@@ -87,6 +95,7 @@ router.get('/insights', async (req, res) => {
 
         const police = [], hospitals = [], fire = [], cctv = [];
         const infrastructures = [];
+        const seenCoords = new Set(); // deduplicate
 
         const sElements = safetyData?.elements || [];
         sElements.forEach(el => {
@@ -94,22 +103,29 @@ router.get('/insights', async (req, res) => {
             const lo = el.lon || el.center?.lon;
             if (!la || !lo) return;
 
+            // Deduplicate by coordinate
+            const coordKey = `${la.toFixed(5)}_${lo.toFixed(5)}`;
+            if (seenCoords.has(coordKey)) return;
+            seenCoords.add(coordKey);
+
             const name = el.tags?.name || '';
             let type = '';
 
             if (el.tags?.amenity === 'police') { police.push(1); type = 'police'; }
             else if (el.tags?.amenity === 'hospital') { hospitals.push(1); type = 'hospital'; }
+            else if (el.tags?.amenity === 'clinic') { hospitals.push(1); type = 'hospital'; }
             else if (el.tags?.amenity === 'fire_station') { fire.push(1); type = 'fire_station'; }
-            else if (el.tags?.man_made === 'surveillance') { cctv.push(1); type = 'surveillance'; }
+            else if (el.tags?.emergency === 'fire_hydrant') { fire.push(1); type = 'fire_station'; }
+            else if (el.tags?.man_made === 'surveillance' || el.tags?.['surveillance:type'] || el.tags?.amenity === 'cctv') { cctv.push(1); type = 'surveillance'; }
 
             if (type) {
-                infrastructures.push({ nodeType: type, lat: la, lng: lo, name });
+                infrastructures.push({ nodeType: type, lat: la, lng: lo, name: name || (type === 'police' ? 'Police Station' : type === 'hospital' ? 'Hospital/Clinic' : type === 'fire_station' ? 'Fire Station' : 'CCTV Camera') });
             }
         });
 
         // Calculate safety stats
         const tot = police.length + hospitals.length + fire.length;
-        const R = 8000;
+        const R = 15000;
         const den = parseFloat((tot / (Math.PI * Math.pow(R / 1000, 2))).toFixed(1));
 
         const safetyStats = {
