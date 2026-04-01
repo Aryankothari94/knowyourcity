@@ -38,7 +38,7 @@
     <div class="container">
       <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner"></div>
-        <p>Preparing local tips for your city...</p>
+        <p id="loadingText">Preparing local tips for your city...</p>
       </div>
 
       <!-- Emergency Numbers Banner -->
@@ -56,6 +56,28 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+
+      // --- Dynamic Loading Text ---
+      const loadingTexts = [
+        "Searching best data for you...",
+        "Connecting to regional systems...",
+        "Analyzing neighborhood metrics...",
+        "Gathering real-time information...",
+        "Almost there..."
+      ];
+      let loadingIndex = 0;
+      const loadingInterval = setInterval(() => {
+        const p = document.getElementById('loadingText');
+        const spinner = document.getElementById('loadingSpinner');
+        if (p && spinner && spinner.style.display !== 'none') {
+          loadingIndex = (loadingIndex + 1) % loadingTexts.length;
+          p.textContent = loadingTexts[loadingIndex];
+        } else if (spinner && spinner.style.display === 'none') {
+          clearInterval(loadingInterval);
+        }
+      }, 2000);
+      // ----------------------------
+
       const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
       const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
       const city = localStorage.getItem('kyc_userCity') || 'Your Area';

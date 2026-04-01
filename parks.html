@@ -42,7 +42,7 @@
       </div>
       <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner"></div>
-        <p>Fetching parks near your location...</p>
+        <p id="loadingText">Fetching parks near your location...</p>
       </div>
       <div class="results-grid" id="resultsGrid" style="display:none;"></div>
       <div class="empty-state" id="emptyState" style="display:none;">
@@ -66,6 +66,28 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+
+      // --- Dynamic Loading Text ---
+      const loadingTexts = [
+        "Searching best data for you...",
+        "Connecting to regional systems...",
+        "Analyzing neighborhood metrics...",
+        "Gathering real-time information...",
+        "Almost there..."
+      ];
+      let loadingIndex = 0;
+      const loadingInterval = setInterval(() => {
+        const p = document.getElementById('loadingText');
+        const spinner = document.getElementById('loadingSpinner');
+        if (p && spinner && spinner.style.display !== 'none') {
+          loadingIndex = (loadingIndex + 1) % loadingTexts.length;
+          p.textContent = loadingTexts[loadingIndex];
+        } else if (spinner && spinner.style.display === 'none') {
+          clearInterval(loadingInterval);
+        }
+      }, 2000);
+      // ----------------------------
+
       const params = new URLSearchParams(window.location.search);
       const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
       const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
