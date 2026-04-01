@@ -451,8 +451,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!checkLoggedIn) {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
 
-      const target = e.currentTarget;
+      const target = e.currentTarget || e.target;
       target.classList.add('restricted-shake');
       setTimeout(() => target.classList.remove('restricted-shake'), 400);
 
@@ -462,13 +463,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   };
 
-  // Select elements to restrict
+  // Select elements to restrict — comprehensive list
   const restrictedSelectors = [
-    '.btn-primary',
-    '.area-card',
     '.feature-card',
+    '.area-card',
     '.step-card',
-    '.nav-brand'
+    'a.floating-card',
+    '.safety-map-section',
+    '.safety-explorer',
+    '.hiw-step',
+    '.feedback-section',
+    '.testimonials',
   ];
 
   restrictedSelectors.forEach(selector => {
@@ -477,10 +482,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Specifically for some links in nav (EXCLUDING Features link since it has a custom handler)
-  document.querySelectorAll('.nav-links a:not(.nav-login):not(#navFeatures)').forEach(link => {
-    link.addEventListener('click', gateFeature);
+  // Gate hero CTA buttons (Analyze City / Login to Explore)
+  document.querySelectorAll('#heroCtaPrimary, #heroCtaSecondary').forEach(el => {
+    el.addEventListener('click', gateFeature, true);
   });
+
+  // Gate nav links EXCEPT: Login button, Contact Us CTA, and Features
+  document.querySelectorAll('.nav-links a').forEach(link => {
+    // Skip the login button, Contact Us CTA, and the Features nav
+    if (link.classList.contains('nav-login') || 
+        link.classList.contains('nav-cta') || 
+        link.id === 'navFeatures') return;
+    link.addEventListener('click', gateFeature, true);
+  });
+
+  // Gate footer links to feature pages (resources, explore sections)
+  document.querySelectorAll('.footer-col a, .footer-links a').forEach(link => {
+    const href = link.getAttribute('href') || '';
+    // Allow contact.html, terms.html, privacy.html — gate everything else
+    if (href.includes('contact.html') || href.includes('terms.html') || href.includes('privacy.html') || href.includes('about.html')) return;
+    link.addEventListener('click', gateFeature, true);
+  });
+
+  // Gate social links
+  document.querySelectorAll('.social-link').forEach(link => {
+    link.addEventListener('click', gateFeature, true);
+  });
+
+  // Delegated handler for dynamically generated clickable elements
+  document.addEventListener('click', (e) => {
+    const checkLoggedIn = isLoggedIn || localStorage.getItem('kyc_isLoggedIn') === 'true';
+    if (checkLoggedIn) return; // Already logged in, allow everything
+
+    // Check if click target is within a gated section
+    const gatedAncestor = e.target.closest('.feature-card, .area-card, a.floating-card, .step-card, .safety-map-section a, .safety-explorer .btn-primary');
+    if (gatedAncestor) {
+      e.preventDefault();
+      e.stopPropagation();
+      gatedAncestor.classList.add('restricted-shake');
+      setTimeout(() => gatedAncestor.classList.remove('restricted-shake'), 400);
+      openAuthModal();
+    }
+  }, true);
 
   // ===== INTERACTIVE CRIME MAP LOGIC =====
   const navFeatures = document.getElementById('navFeatures');

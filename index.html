@@ -13,6 +13,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap"
     rel="stylesheet">
+  <!-- Google Material Symbols -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -28,7 +30,7 @@
 
   <!-- ===== LOGIN TOAST ====== -->
   <div id="loginToast" class="login-toast glass-card">
-    <div class="toast-icon">✨</div>
+    <div class="toast-icon"><span class="material-symbols-outlined">auto_awesome</span></div>
     <div class="toast-content">
       <h4 id="toastTitle">Welcome back!</h4>
       <p>Your safety is our priority. Explore confidently.</p>
@@ -109,7 +111,7 @@
           </div>
         </li>
 
-        <li><a href="#newsletter" class="nav-cta">Get Started</a></li>
+        <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
       </ul>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu">
         <span></span>
@@ -163,19 +165,19 @@
           <div class="city-center-icon"><img src="logo.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Logo"></div>
 
           <a href="#" class="floating-card fc-1" data-feature="safezone" onclick="openFeaturePage('safezone.html')">
-            <div class="icon-circle">🛡️</div>
+            <div class="icon-circle"><span class="material-symbols-outlined">shield</span></div>
             <span>Safe Zone</span>
           </a>
           <a href="#" class="floating-card fc-2" data-feature="schools" onclick="openFeaturePage('schools.html')">
-            <div class="icon-circle">🏫</div>
+            <div class="icon-circle"><span class="material-symbols-outlined">school</span></div>
             <span>Top Schools</span>
           </a>
           <a href="#" class="floating-card fc-3" data-feature="parks" onclick="openFeaturePage('parks.html')">
-            <div class="icon-circle">🌳</div>
+            <div class="icon-circle"><span class="material-symbols-outlined">park</span></div>
             <span>Parks Nearby</span>
           </a>
           <a href="#" class="floating-card fc-4" data-feature="metro" onclick="openFeaturePage('metro.html')">
-            <div class="icon-circle">🚇</div>
+            <div class="icon-circle"><span class="material-symbols-outlined">subway</span></div>
             <span>Metro Access</span>
           </a>
         </div>
@@ -207,18 +209,18 @@
           </div>
         </div>
         <div class="safety-map-info glass-card" id="safetyMapInfo">
-          <h3>📊 Safety Analysis</h3>
+          <h3><span class="material-symbols-outlined mi">analytics</span> Safety Analysis</h3>
           <div class="safety-stats" id="safetyStats">
-            <div class="safety-stat"><span class="stat-icon">🚔</span>
+            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">local_police</span></span>
               <div><span class="stat-num" id="policeCount">--</span><br />Police Stations</div>
             </div>
-            <div class="safety-stat"><span class="stat-icon">🏥</span>
+            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">local_hospital</span></span>
               <div><span class="stat-num" id="hospitalCount">--</span><br />Hospitals</div>
             </div>
-            <div class="safety-stat"><span class="stat-icon">🚒</span>
+            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">local_fire_department</span></span>
               <div><span class="stat-num" id="fireCount">--</span><br />Fire Stations</div>
             </div>
-            <div class="safety-stat"><span class="stat-icon">📹</span>
+            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">videocam</span></span>
               <div><span class="stat-num" id="cctvCount">--</span><br />CCTV/Surveillance</div>
             </div>
           </div>
@@ -227,11 +229,11 @@
           </div>
           <div class="safety-tip"
             style="margin-top:12px; padding:12px; font-size:0.78rem; color:var(--text-secondary); background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:10px;">
-            💡 <strong>How it works:</strong> We analyze the density of safety infrastructure (police, hospitals, fire
+            <span class="material-symbols-outlined mi">lightbulb</span> <strong>How it works:</strong> We analyze the density of safety infrastructure (police, hospitals, fire
             stations, CCTV) in each grid cell. Green = high coverage, Orange = moderate, Red = low coverage.
           </div>
           <div id="topMapProTips" style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);">
-            <strong style="color: #00e676; font-size: 0.9rem; letter-spacing: 0.5px;">🌟 PRO TIPS</strong>
+            <strong style="color: #00e676; font-size: 0.9rem; letter-spacing: 0.5px;"><span class="material-symbols-outlined mi">star</span> PRO TIPS</strong>
             <ul id="topMapProTipsList" style="margin: 8px 0 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
               <li style="color:#aaa;">Analyzing regional facts...</li>
             </ul>
@@ -516,55 +518,55 @@
       <div class="features-grid">
         <!-- Feature 1 -->
         <div class="feature-card glass-card reveal" onclick="openFeaturePage('safezone.html')" style="cursor:pointer">
-          <div class="feature-icon green">🛡️</div>
+          <div class="feature-icon green"><span class="material-symbols-outlined">shield</span></div>
           <h3>Safe Neighborhoods</h3>
           <p>Real-time safety scores powered by verified data, so you always know which areas are secure for you and
             your family.</p>
         </div>
         <!-- Feature 2 -->
         <div class="feature-card glass-card reveal" onclick="openChoiceModal()" style="cursor:pointer">
-          <div class="feature-icon cyan">🏫</div>
+          <div class="feature-icon cyan"><span class="material-symbols-outlined">school</span></div>
           <h3>Schools & Parks</h3>
           <p>Discover top-rated schools, green spaces, and recreational zones perfect for kids — all within walkable
             distance.</p>
         </div>
         <!-- Feature 3 -->
         <div class="feature-card glass-card reveal" onclick="openFeaturePage('metro.html')" style="cursor:pointer">
-          <div class="feature-icon purple">🚇</div>
+          <div class="feature-icon purple"><span class="material-symbols-outlined">subway</span></div>
           <h3>Transport Hub</h3>
           <p>Check public transit access, commute times, and connectivity so you never feel stranded in a new place.</p>
         </div>
         <!-- Feature 4 -->
         <div class="feature-card glass-card reveal" onclick="openFeaturePage('localtips.html')" style="cursor:pointer">
-          <div class="feature-icon amber">💡</div>
+          <div class="feature-icon amber"><span class="material-symbols-outlined">lightbulb</span></div>
           <h3>Local Tips</h3>
           <p>Insider knowledge from locals — best markets, healthcare facilities, community centers, and hidden gems.
           </p>
         </div>
         <!-- Feature 5 -->
         <div class="feature-card glass-card reveal" onclick="openFeaturePage('hospitals.html')" style="cursor:pointer">
-          <div class="feature-icon green">🏥</div>
+          <div class="feature-icon green"><span class="material-symbols-outlined">local_hospital</span></div>
           <h3>Hospitals Nearby</h3>
           <p>Find the nearest hospitals and clinics with contact info, specialities, emergency services, and ambulance
             availability.</p>
         </div>
         <!-- Feature 6 -->
         <div class="feature-card glass-card reveal" onclick="openFeaturePage('police.html')" style="cursor:pointer">
-          <div class="feature-icon cyan">🚔</div>
+          <div class="feature-icon cyan"><span class="material-symbols-outlined">local_police</span></div>
           <h3>Police Stations</h3>
           <p>Locate nearest police stations with emergency numbers, jurisdiction details, and file complaints online.
           </p>
         </div>
         <!-- Feature 7 -->
         <div class="feature-card glass-card reveal" onclick="openFeaturePage('pghostel.html')" style="cursor:pointer">
-          <div class="feature-icon purple">🏠</div>
+          <div class="feature-icon purple"><span class="material-symbols-outlined">home</span></div>
           <h3>PG & Hostels</h3>
           <p>Discover nearby PGs and hostels with pricing cues, safety ratings, and amenity details for boys and girls.
           </p>
         </div>
         <!-- Feature 8 -->
         <div class="feature-card glass-card reveal" onclick="openFeaturePage('saferoute.html')" style="cursor:pointer">
-          <div class="feature-icon amber">🗺️</div>
+          <div class="feature-icon amber"><span class="material-symbols-outlined">map</span></div>
           <h3>Safe Route Finder</h3>
           <p>Enter pickup and drop locations to find the safest route with police stations and hospitals along the way.
           </p>
@@ -579,7 +581,7 @@
       event.preventDefault();
       event.stopPropagation();
       const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
-      if (!isLoggedIn) { document.getElementById('authOverlay')?.classList.add('active'); return; }
+      if (!isLoggedIn) { document.getElementById('authModal')?.classList.add('active'); document.body.style.overflow='hidden'; return; }
       document.getElementById('choiceModal').classList.add('active');
     }
     document.getElementById('choiceModal')?.addEventListener('click', function (e) {
@@ -608,7 +610,7 @@
         <!-- Dynamic User City Card -->
         <div class="area-card glass-card reveal" id="dynamicCityCard" onclick="this.classList.toggle('expanded')">
           <div class="area-card-header">
-            <h3 class="area-name" id="dynamicCityName">🏘️ Your City</h3>
+            <h3 class="area-name" id="dynamicCityName"><span class="material-symbols-outlined mi">location_city</span> Your City</h3>
             <span class="area-badge badge-safe" id="dynamicCityBadge">Safe</span>
           </div>
           <div class="area-details-hidden">
@@ -642,17 +644,17 @@
             </div>
           </div>
           <div class="area-tags" id="dynamicCityTags">
-            <span class="area-tag">🌳 Parks</span>
-            <span class="area-tag">🏫 Schools</span>
-            <span class="area-tag">🏥 Hospital</span>
-            <span class="area-tag">🛒 Market</span>
+            <span class="area-tag"><span class="material-symbols-outlined mi">park</span> Parks</span>
+            <span class="area-tag"><span class="material-symbols-outlined mi">school</span> Schools</span>
+            <span class="area-tag"><span class="material-symbols-outlined mi">local_hospital</span> Hospital</span>
+            <span class="area-tag"><span class="material-symbols-outlined mi">shopping_cart</span> Market</span>
           </div>
           <div class="safety-points-list" style="margin-top: 15px;">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <span class="badge" style="background: rgba(0,230,118,0.1); color: #00e676; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicPolice">👮 -- Police Stations</span>
-              <span class="badge" style="background: rgba(33,150,243,0.1); color: #2196f3; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicHosp">🏥 -- Hospitals</span>
-              <span class="badge" style="background: rgba(255,152,0,0.1); color: #ff9800; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicFire">🚒 -- Fire Stations</span>
-              <span class="badge" style="background: rgba(156,39,176,0.1); color: #9c27b0; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicCCTV">📹 -- CCTV/Surveillance</span>
+              <span class="badge" style="background: rgba(0,230,118,0.1); color: #00e676; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicPolice"><span class="material-symbols-outlined mi">local_police</span> -- Police Stations</span>
+              <span class="badge" style="background: rgba(33,150,243,0.1); color: #2196f3; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicHosp"><span class="material-symbols-outlined mi">local_hospital</span> -- Hospitals</span>
+              <span class="badge" style="background: rgba(255,152,0,0.1); color: #ff9800; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicFire"><span class="material-symbols-outlined mi">local_fire_department</span> -- Fire Stations</span>
+              <span class="badge" style="background: rgba(156,39,176,0.1); color: #9c27b0; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicCCTV"><span class="material-symbols-outlined mi">videocam</span> -- CCTV/Surveillance</span>
             </div>
           </div>
           <div id="dynamicCityAnalysis" style="display: none; margin-top: 15px; font-size: 0.85rem; padding: 12px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: #cbd5e1; line-height: 1.4;">
@@ -664,7 +666,7 @@
         <!-- Area Card 2 -->
         <div class="area-card glass-card reveal" onclick="this.classList.toggle('expanded')">
           <div class="area-card-header">
-            <h3 class="area-name" id="dynamicCard1Title">🌊 Marine Drive, Mumbai</h3>
+            <h3 class="area-name" id="dynamicCard1Title"><span class="material-symbols-outlined mi">waves</span> Marine Drive, Mumbai</h3>
             <span class="area-badge badge-safe" id="dynamicCard1Badge">Very Safe</span>
           </div>
           <div class="area-details-hidden">
@@ -683,7 +685,7 @@
             </div>
           </div>
           <div class="area-tags" id="dynamicCard1Tags">
-            <span class="area-tag">🌊 Seaface</span><span class="area-tag">🍽️ Dining</span><span class="area-tag">🏛️ Heritage</span><span class="area-tag">👮 High Patrolling</span>
+            <span class="area-tag"><span class="material-symbols-outlined mi">waves</span> Seaface</span><span class="area-tag"><span class="material-symbols-outlined mi">restaurant</span> Dining</span><span class="area-tag"><span class="material-symbols-outlined mi">account_balance</span> Heritage</span><span class="area-tag"><span class="material-symbols-outlined mi">local_police</span> High Patrolling</span>
           </div>
           </div>
         </div>
@@ -691,7 +693,7 @@
         <!-- Area Card 2: Dynamic Tourist Places (Hidden by default until a city is searched) -->
         <div class="area-card glass-card reveal" id="dynamicTouristCard" style="display: none;" onclick="this.classList.toggle('expanded')">
           <div class="area-card-header">
-            <h3 class="area-name" id="touristCardTitle">📸 Tourist Places</h3>
+            <h3 class="area-name" id="touristCardTitle"><span class="material-symbols-outlined mi">photo_camera</span> Tourist Places</h3>
             <span class="area-badge badge-safe">Explore</span>
           </div>
           <div class="area-details-hidden">
@@ -704,7 +706,7 @@
         <!-- Area Card 4 -->
         <div class="area-card glass-card reveal" onclick="this.classList.toggle('expanded')">
           <div class="area-card-header">
-            <h3 class="area-name" id="dynamicCard2Title">🏡 Jubilee Hills, Hyderabad</h3>
+            <h3 class="area-name" id="dynamicCard2Title"><span class="material-symbols-outlined mi">cottage</span> Jubilee Hills, Hyderabad</h3>
             <span class="area-badge badge-safe" id="dynamicCard2Badge">Safe</span>
           </div>
           <div class="area-details-hidden">
@@ -723,7 +725,7 @@
             </div>
           </div>
           <div class="area-tags" id="dynamicCard2Tags">
-            <span class="area-tag">🏡 Villas</span><span class="area-tag">📹 CCTV</span><span class="area-tag">🌇 Views</span>
+            <span class="area-tag"><span class="material-symbols-outlined mi">cottage</span> Villas</span><span class="area-tag"><span class="material-symbols-outlined mi">videocam</span> CCTV</span><span class="area-tag"><span class="material-symbols-outlined mi">panorama</span> Views</span>
           </div>
           </div>
         </div>
@@ -1108,12 +1110,12 @@
             <div class="hiw-step-line"></div>
           </div>
           <div class="hiw-step-content">
-            <div class="hiw-step-icon">📍</div>
+            <div class="hiw-step-icon"><span class="material-symbols-outlined">location_on</span></div>
             <div class="hiw-step-text">
               <h3>Set Your Location</h3>
               <p>Click the location badge in the top-right corner of the navbar. Search for your city or use GPS auto-detection. Your dashboard instantly personalizes to your area.</p>
               <div class="hiw-step-detail">
-                <span class="hiw-detail-tag">🔑 Pro Tip</span>
+                <span class="hiw-detail-tag"><span class="material-symbols-outlined mi">vpn_key</span> Pro Tip</span>
                 <p>You can change your city anytime. All safety maps, analytics, and recommendations update in real-time when you switch.</p>
               </div>
             </div>
@@ -1127,12 +1129,12 @@
             <div class="hiw-step-line"></div>
           </div>
           <div class="hiw-step-content">
-            <div class="hiw-step-icon">🗺️</div>
+            <div class="hiw-step-icon"><span class="material-symbols-outlined">map</span></div>
             <div class="hiw-step-text">
               <h3>View the Safety Heatmap</h3>
               <p>Scroll to the Neighborhood Safety Analysis section. The satellite map shows a color-coded grid based on police, hospitals, and CCTV coverage.</p>
               <div class="hiw-step-detail">
-                <span class="hiw-detail-tag">📊 What You See</span>
+                <span class="hiw-detail-tag"><span class="material-symbols-outlined mi">analytics</span> What You See</span>
                 <p>Green = high safety coverage, Orange = moderate, Red = low coverage. Each grid cell is analyzed within an 8km radius.</p>
               </div>
             </div>
@@ -1146,12 +1148,12 @@
             <div class="hiw-step-line"></div>
           </div>
           <div class="hiw-step-content">
-            <div class="hiw-step-icon">🔎</div>
+            <div class="hiw-step-icon"><span class="material-symbols-outlined">search</span></div>
             <div class="hiw-step-text">
               <h3>Search Any Neighborhood</h3>
               <p>Use the Safety Explorer search bar to type any area. Get instant safety scores, family-friendliness ratings, walkability metrics, and Wikipedia analytics.</p>
               <div class="hiw-step-detail">
-                <span class="hiw-detail-tag">✨ Feature</span>
+                <span class="hiw-detail-tag"><span class="material-symbols-outlined mi">auto_awesome</span> Feature</span>
                 <p>Search auto-suggests real locations as you type. Results include nearby tourist attractions with verified Wikipedia descriptions.</p>
               </div>
             </div>
@@ -1165,12 +1167,12 @@
             <div class="hiw-step-line"></div>
           </div>
           <div class="hiw-step-content">
-            <div class="hiw-step-icon">🛡️</div>
+            <div class="hiw-step-icon"><span class="material-symbols-outlined">shield</span></div>
             <div class="hiw-step-text">
               <h3>Explore Safe Routes & Zones</h3>
               <p>Click "Safe Zone" or "Safe Route Finder" from the features panel. Navigate with satellite maps, real-time routing, and journey tracking.</p>
               <div class="hiw-step-detail">
-                <span class="hiw-detail-tag">🚀 Bonus</span>
+                <span class="hiw-detail-tag"><span class="material-symbols-outlined mi">rocket_launch</span> Bonus</span>
                 <p>Route finder includes "Cancel Journey" toggle, satellite/dark map layers, and live GPS tracking during your commute.</p>
               </div>
             </div>
@@ -1183,12 +1185,12 @@
             <div class="hiw-step-num">5</div>
           </div>
           <div class="hiw-step-content">
-            <div class="hiw-step-icon">🏠</div>
+            <div class="hiw-step-icon"><span class="material-symbols-outlined">home</span></div>
             <div class="hiw-step-text">
               <h3>Decide & Settle In</h3>
               <p>Compare neighborhoods side-by-side, review Pro Tips from our analytics engine, browse nearby schools and parks, and confidently choose where to live.</p>
               <div class="hiw-step-detail">
-                <span class="hiw-detail-tag">🌟 Result</span>
+                <span class="hiw-detail-tag"><span class="material-symbols-outlined mi">star</span> Result</span>
                 <p>A complete, data-backed picture of your new neighborhood — safety, amenities, culture, and commute — before you ever step foot there.</p>
               </div>
             </div>
@@ -1467,30 +1469,30 @@
       <div class="feedback-form-wrapper glass-card reveal">
         <form id="feedbackForm" autocomplete="off">
           <div class="feedback-field" style="margin-bottom: 16px;">
-            <label for="fbName">👤 Your Name</label>
+            <label for="fbName"><span class="material-symbols-outlined mi">person</span> Your Name</label>
             <input type="text" id="fbName" placeholder="e.g. karan rajput" required />
           </div>
           <div class="feedback-cities-row">
             <div class="feedback-field">
-              <label for="fbCityFrom">🏙️ Traveled From</label>
+              <label for="fbCityFrom"><span class="material-symbols-outlined mi">location_city</span> Traveled From</label>
               <input type="text" id="fbCityFrom" placeholder="e.g. Delhi" required />
             </div>
             <div class="feedback-arrow">→</div>
             <div class="feedback-field">
-              <label for="fbCityTo">📍 Traveled To</label>
+              <label for="fbCityTo"><span class="material-symbols-outlined mi">location_on</span> Traveled To</label>
               <input type="text" id="fbCityTo" placeholder="e.g. Jaipur" required />
             </div>
           </div>
           <div class="feedback-field" style="margin-top: 16px;">
-            <label for="fbMessage">💬 Your Experience</label>
+            <label for="fbMessage"><span class="material-symbols-outlined mi">chat</span> Your Experience</label>
             <textarea id="fbMessage" rows="3" placeholder="Tell us how Know Your City helped you relocate..." required></textarea>
           </div>
           <button type="submit" class="btn-primary feedback-submit-btn">
-            Submit Feedback <span>✨</span>
+            Submit Feedback <span class="material-symbols-outlined mi">send</span>
           </button>
         </form>
         <div id="feedbackSuccess" style="display:none;" class="feedback-success">
-          <span style="font-size:2rem;">🎉</span>
+          <span style="font-size:2rem;"><span class="material-symbols-outlined" style="font-size:2rem;">celebration</span></span>
           <p>Thank you! Your story has been added to our Newcomers section.</p>
         </div>
       </div>
@@ -1779,15 +1781,15 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <a href="#" class="nav-brand">
-            <div class="nav-brand-icon">🏙️</div>
+            <div class="nav-brand-icon"><span class="material-symbols-outlined">location_city</span></div>
             <div class="nav-brand-text">Know<span>Your</span>City</div>
           </a>
           <p>Helping newcomers discover safe neighborhoods and settle into their new city with confidence.</p>
           <div class="social-links">
-            <a href="#" class="social-link" aria-label="Twitter">𝕏</a>
-            <a href="#" class="social-link" aria-label="Instagram">📷</a>
-            <a href="#" class="social-link" aria-label="LinkedIn">in</a>
-            <a href="#" class="social-link" aria-label="YouTube">▶</a>
+            <a href="#" class="social-link" aria-label="Twitter"><span class="material-symbols-outlined">tag</span></a>
+            <a href="#" class="social-link" aria-label="Instagram"><span class="material-symbols-outlined">photo_camera</span></a>
+            <a href="#" class="social-link" aria-label="LinkedIn"><span class="material-symbols-outlined">work</span></a>
+            <a href="#" class="social-link" aria-label="YouTube"><span class="material-symbols-outlined">play_circle</span></a>
           </div>
         </div>
         <div class="footer-col">
@@ -1802,25 +1804,25 @@
         <div class="footer-col">
           <h4>Resources</h4>
           <ul class="footer-links">
-            <li><a href="guides.html">🏙️ City Guides</a></li>
-            <li><a href="reports.html">📊 Safety Reports</a></li>
-            <li><a href="forum.html">💬 Community Forum</a></li>
-            <li><a href="blog.html">✍️ Blog</a></li>
+            <li><a href="guides.html"><span class="material-symbols-outlined mi">menu_book</span> City Guides</a></li>
+            <li><a href="reports.html"><span class="material-symbols-outlined mi">analytics</span> Safety Reports</a></li>
+            <li><a href="forum.html"><span class="material-symbols-outlined mi">forum</span> Community Forum</a></li>
+            <li><a href="blog.html"><span class="material-symbols-outlined mi">edit_note</span> Blog</a></li>
           </ul>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
           <ul class="footer-links">
-            <li><a href="about.html">🏗️ About Us</a></li>
-            <li><a href="contact.html">📧 Contact</a></li>
-            <li><a href="privacy.html">🔒 Privacy Policy</a></li>
-            <li><a href="terms.html">📜 Terms & Conditions</a></li>
+            <li><a href="about.html"><span class="material-symbols-outlined mi">apartment</span> About Us</a></li>
+            <li><a href="contact.html"><span class="material-symbols-outlined mi">mail</span> Contact</a></li>
+            <li><a href="privacy.html"><span class="material-symbols-outlined mi">lock</span> Privacy Policy</a></li>
+            <li><a href="terms.html"><span class="material-symbols-outlined mi">description</span> Terms & Conditions</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <p>© 2026 KnowYourCity. All rights reserved.</p>
-        <p>Made with 💙 for newcomers everywhere</p>
+        <p>Made with <span class="material-symbols-outlined mi" style="color:#42a5f5;">favorite</span> for newcomers everywhere</p>
       </div>
     </div>
   </footer>
@@ -1833,11 +1835,11 @@
       </p>
       <div class="confirm-actions" style="gap:12px;">
         <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem;"
-          onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('schools.html')">🏫
+          onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('schools.html')"><span class="material-symbols-outlined mi">school</span>
           Schools</button>
         <button class="btn-primary"
           style="flex:1; padding:14px 0; font-size:1rem; background:linear-gradient(135deg,#00e676,#00bfa5);"
-          onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('parks.html')">🌳
+          onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('parks.html')"><span class="material-symbols-outlined mi">park</span>
           Parks</button>
       </div>
     </div>
@@ -1973,7 +1975,8 @@
       event.preventDefault();
       const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
       if (!isLoggedIn) {
-        document.getElementById('authOverlay')?.classList.add('active');
+        document.getElementById('authModal')?.classList.add('active');
+        document.body.style.overflow = 'hidden';
         return;
       }
       const lat = localStorage.getItem('kyc_userLat') || '19.0760';
@@ -2176,7 +2179,7 @@
   <div id="factPopup" class="glass-card" style="display: none; position: fixed; bottom: 30px; right: 30px; max-width: 350px; z-index: 100000; animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid rgba(0, 230, 118, 0.3);">
     <button onclick="closeFactPopup()" style="position: absolute; top: 12px; right: 15px; background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; transition: 0.2s; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-      <span style="font-size: 1.8rem;">💡</span>
+      <span style="font-size: 1.8rem;"><span class="material-symbols-outlined" style="font-size:1.8rem;color:var(--accent-cyan);">lightbulb</span></span>
       <h4 style="margin: 0; color: var(--accent-cyan); font-family: var(--font-heading);">Did you know?</h4>
     </div>
     <p id="factText" style="margin: 0; font-size: 0.95rem; color: #cbd5e1; line-height: 1.5;"></p>
