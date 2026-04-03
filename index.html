@@ -801,13 +801,10 @@
             let fCount = safetyStats.fireCount;
             let cCount = safetyStats.cctvCount;
 
-            let hashGap = 0; for(let i=0;i<city.length;i++) hashGap=city.charCodeAt(i)+((hashGap<<5)-hashGap);
-            const seedGap = Math.abs(hashGap);
-            
-            if (pCount < 15) pCount += 10 + (seedGap % 30);
-            if (hCount < 20) hCount += 15 + (seedGap % 40);
-            if (fCount < 10) fCount += 8 + (seedGap % 6);
-            if (cCount < 20) cCount += 25 + (seedGap % 20);
+            let pCount = safetyStats.policeCount;
+            let hCount = safetyStats.hospitalCount;
+            let fCount = safetyStats.fireCount;
+            let cCount = safetyStats.cctvCount;
 
             const pBadge = document.getElementById('dynamicPolice');
             if(pBadge) pBadge.textContent = '👮 ' + pCount + ' Police Stations';
