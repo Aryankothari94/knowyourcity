@@ -20,33 +20,41 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=70">
+  <link rel="stylesheet" href="style.css?v=75">
   <style>
     /* NUCLEAR OVERRIDE: Forced 1 Row, 3 Columns for Safety Explorer */
     #safety .safety-grid {
       display: grid !important;
       grid-template-columns: repeat(3, 1fr) !important;
       grid-auto-rows: min-content !important;
-      gap: 20px !important;
-      margin-top: 40px !important;
+      gap: 24px !important;
+      margin-top: 48px !important;
       width: 100% !important;
-      max-width: 1200px !important;
+      max-width: 1400px !important;
       margin-left: auto !important;
       margin-right: auto !important;
     }
     #safety .area-card {
       width: 100% !important;
       min-width: 0 !important;
+      max-width: none !important;
       display: flex !important;
       flex-direction: column !important;
       height: 100% !important;
+      margin: 0 !important;
+      background: rgba(30, 32, 47, 0.6) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      backdrop-filter: blur(12px) !important;
     }
     .crime-incident-item {
-      background: rgba(255, 78, 78, 0.05) !important;
-      border: 1px solid rgba(255, 78, 78, 0.4) !important;
-      border-radius: 8px !important;
-      padding: 12px !important;
-      margin-bottom: 10px !important;
+      background: rgba(255, 78, 78, 0.08) !important;
+      border: 1px solid rgba(255, 78, 78, 0.5) !important;
+      border-radius: 10px !important;
+      padding: 14px !important;
+      margin-bottom: 12px !important;
+    }
+    @media (max-width: 1024px) {
+      #safety .safety-grid { grid-template-columns: 1fr !important; }
     }
   </style>
   <link rel="icon" href="logo.png" type="image/png" />
@@ -358,21 +366,21 @@
       let police = [], hosp = [], fire = [], cctv = [];
       const seen = new Set();
       elements.forEach(el => {
-        const elLat = el.globalLat || el.center?.globalLat;
+        const elLat = el.lat || el.center?.lat;
         const elLng = el.lon || el.center?.lon;
         if (!elLat || !elLng) return;
-        // Deduplicate
-        const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
+        
+        const key = `${elLat.toFixed(4)},${elLng.toFixed(4)}`;
         if (seen.has(key)) return;
         seen.add(key);
         const name = el.tags?.name || el.tags?.['name:en'] || '';
         const t = el.tags || {};
-        if (t.amenity === 'police') police.push({globalLat: elLat, globalLng: elLng, name: name || 'Police Station'});
-        else if (t.amenity === 'hospital') hosp.push({globalLat: elLat, globalLng: elLng, name: name || 'Hospital'});
-        else if (t.amenity === 'clinic') hosp.push({globalLat: elLat, globalLng: elLng, name: name || 'Clinic'});
-        else if (t.amenity === 'fire_station') fire.push({globalLat: elLat, globalLng: elLng, name: name || 'Fire Station'});
-        else if (t.emergency === 'fire_hydrant') fire.push({globalLat: elLat, globalLng: elLng, name: 'Fire Hydrant'});
-        else if (t.man_made === 'surveillance' || t['surveillance:type'] || t.amenity === 'cctv') cctv.push({globalLat: elLat, globalLng: elLng, name: name || 'CCTV Camera'});
+        if (t.amenity === 'police') police.push({lat: elLat, lng: elLng, name: name || 'Police Station'});
+        else if (t.amenity === 'hospital') hosp.push({lat: elLat, lng: elLng, name: name || 'Hospital'});
+        else if (t.amenity === 'clinic') hosp.push({lat: elLat, lng: elLng, name: name || 'Clinic'});
+        else if (t.amenity === 'fire_station') fire.push({lat: elLat, lng: elLng, name: name || 'Fire Station'});
+        else if (t.emergency === 'fire_hydrant') fire.push({lat: elLat, lng: elLng, name: 'Fire Hydrant'});
+        else if (t.man_made === 'surveillance' || t['surveillance:type'] || t.amenity === 'cctv') cctv.push({lat: elLat, lng: elLng, name: name || 'CCTV Camera'});
       });
       return { police, hosp, fire, cctv };
     }
