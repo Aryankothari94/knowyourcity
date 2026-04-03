@@ -72,9 +72,16 @@ router.get('/insights', async (req, res) => {
         // 1. Check Cache
         let cachedCity = await CityData.findOne({ cityName }).catch(() => null);
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        
         if (cachedCity && cachedCity.lastUpdated > sevenDaysAgo) {
-            console.log(`\u26A1 Returning cached analytics for ${cityName}...`);
-            return res.json({ source: 'cache', safetyStats: cachedCity.safetyStats, infrastructures: cachedCity.infrastructures, recentIncidents: cachedCity.recentIncidents || [] });
+            // AUTO-BUST logic: If cache is 0 for critical items, ignore it and re-fetch live
+            const stats = cachedCity.safetyStats || {};
+            if (stats.policeCount > 0 || stats.hospitalCount > 0) {
+              console.log(`⚡ Returning cached analytics for ${cityName}...`);
+              return res.json({ source: 'cache', safetyStats: cachedCity.safetyStats, infrastructures: cachedCity.infrastructures, recentIncidents: cachedCity.recentIncidents || [] });
+            } else {
+              console.log(`⚡ Cache bust triggered for ${cityName} due to 0-counts. Re-fetching live...`);
+            }
         }
 
         console.log(`\u26A1 Aggressive Persistent Fetching (15km) for ${cityName}...`);
