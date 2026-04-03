@@ -23,7 +23,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=16">
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
 
@@ -417,18 +417,18 @@
             incidents.slice(0, 3).forEach(inc => {
                 const date = inc.timestamp ? new Date(inc.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent';
                 const item = document.createElement('div');
-                item.style.cssText = 'padding: 10px; background: rgba(255,50,50,0.05); border-left: 3px solid #ff5252; border-radius: 4px; border-bottom: 1px solid rgba(255,255,255,0.05);';
+                item.className = 'crime-incident-item';
                 item.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                        <strong style="color:#ff5252; font-size:0.85rem;">⚠️ ${inc.type || 'Alert'}</strong>
-                        <span style="color:#888; font-size:0.75rem;">${date}</span>
+                    <div class="crime-incident-header">
+                        <span class="crime-incident-type">⚠️ ${inc.type || 'Alert'}</span>
+                        <span class="crime-incident-date">${date}</span>
                     </div>
-                    <div style="color:#cbd5e1; font-size:0.8rem; line-height:1.3;">${inc.description || 'Public awareness notice issued for this region.'}</div>
+                    <div class="crime-incident-desc">${inc.description || 'Public awareness notice issued for this region.'}</div>
                 `;
                 crimeList.appendChild(item);
             });
         } else {
-            crimeList.innerHTML = '<div style="color:#888; font-size:0.85rem; padding:10px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 6px;">🟢 Area analytics indicate high stability with no major recent incidents.</div>';
+            crimeList.innerHTML = '<div style="color:#888; font-size:0.85rem; padding:15px; border: 1.5px dashed rgba(255,255,255,0.1); border-radius: 12px; text-align: center;">🟢 Area analytics indicate high stability with no major recent incidents.</div>';
         }
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSafetyMap);

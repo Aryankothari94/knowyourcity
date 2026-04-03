@@ -1656,6 +1656,49 @@ body {
   gap: 4px;
 }
 
+/* Attractive Crime Incident Items */
+.crime-incident-item {
+  padding: 12px;
+  background: rgba(255, 82, 82, 0.08);
+  border: 1.5px solid rgba(255, 82, 82, 0.4);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.crime-incident-item:hover {
+  background: rgba(255, 82, 82, 0.12);
+  transform: translateX(4px);
+  box-shadow: 0 4px 15px rgba(255, 82, 82, 0.15);
+}
+
+.crime-incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.crime-incident-type {
+  color: var(--caution-red);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.crime-incident-date {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.crime-incident-desc {
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 1024px) {
   .hero .container {
