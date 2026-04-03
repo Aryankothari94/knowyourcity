@@ -717,6 +717,17 @@
       if(cname) {
         cname.innerHTML = `📍 ${areaName} (Analyzing...)`;
         
+        // Show spinning loaders immediately
+        const spinner = '<div class="spinner-small"></div>';
+        const pBadge = document.getElementById('dynamicPolice');
+        if(pBadge) pBadge.innerHTML = `<span class="material-symbols-outlined mi">local_police</span> ${spinner} Searching...`;
+        const hBadge = document.getElementById('dynamicHosp');
+        if(hBadge) hBadge.innerHTML = `<span class="material-symbols-outlined mi">local_hospital</span> ${spinner} Searching...`;
+        const fBadge = document.getElementById('dynamicFire');
+        if(fBadge) fBadge.innerHTML = `<span class="material-symbols-outlined mi">local_fire_department</span> ${spinner} Searching...`;
+        const cBadge = document.getElementById('dynamicCCTV');
+        if(cBadge) cBadge.innerHTML = `<span class="material-symbols-outlined mi">videocam</span> ${spinner} Searching...`;
+        
         let globalLat = 20;
         let globalLng = 79;
         let globalCity = areaName;
@@ -748,13 +759,13 @@
             let cCount = safetyStats.cctvCount;
 
             const pBadge = document.getElementById('dynamicPolice');
-            if(pBadge) pBadge.textContent = '👮 ' + pCount + ' Police Stations';
+            if(pBadge) pBadge.innerHTML = `<span class="material-symbols-outlined mi">local_police</span> ${pCount} Police Stations`;
             const hBadge = document.getElementById('dynamicHosp');
-            if(hBadge) hBadge.textContent = '🏥 ' + hCount + ' Hospitals';
+            if(hBadge) hBadge.innerHTML = `<span class="material-symbols-outlined mi">local_hospital</span> ${hCount} Hospitals`;
             const fBadge = document.getElementById('dynamicFire');
-            if(fBadge) fBadge.textContent = '🚒 ' + fCount + ' Fire Stations';
+            if(fBadge) fBadge.innerHTML = `<span class="material-symbols-outlined mi">local_fire_department</span> ${fCount} Fire Stations`;
             const cBadge = document.getElementById('dynamicCCTV');
-            if(cBadge) cBadge.textContent = '📹 ' + cCount + ' CCTV/Surveillance';
+            if(cBadge) cBadge.innerHTML = `<span class="material-symbols-outlined mi">videocam</span> ${cCount} CCTV/Surveillance`;
             
             const sSafe = safetyStats.crimeScore || 85;
             const sFam = safetyStats.familyScore || 80;

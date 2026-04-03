@@ -98,6 +98,28 @@
 
 /* Toast icon */
 .toast-icon .material-symbols-outlined {
+  font-size: 2.2rem;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* === Fast Fetch Spinner === */
+.spinner-small {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin-slow 0.8s linear infinite;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast icon */
+.toast-icon .material-symbols-outlined {
   font-size: 1.5rem;
 }
 
