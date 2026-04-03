@@ -23,7 +23,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
 
@@ -274,18 +274,16 @@
 
     // Render real data on map and stats panel — NO fake/extrapolated data
     function renderSafetyOnMap(map, police, hosp, fire, cctv, city, source, stats) {
-      // Update stat counts — Unified with backend safetyStats
-      if (stats) {
-        document.getElementById('policeCount').textContent = stats.policeCount || 0;
-        document.getElementById('hospitalCount').textContent = stats.hospitalCount || 0;
-        document.getElementById('fireCount').textContent = stats.fireCount || 0;
-        document.getElementById('cctvCount').textContent = stats.cctvCount || 0;
-      } else {
-        document.getElementById('policeCount').textContent = police.length;
-        document.getElementById('hospitalCount').textContent = hosp.length;
-        document.getElementById('fireCount').textContent = fire.length;
-        document.getElementById('cctvCount').textContent = cctv.length;
-      }
+      // DUAL-SOURCE SYNC: Priority 1 - Backend Stats, Priority 2 - Manual Array Count
+      const pC = (stats && (stats.policeCount || stats.pol)) !== undefined ? (stats.policeCount || stats.pol) : police.length;
+      const hC = (stats && (stats.hospitalCount || stats.hosp)) !== undefined ? (stats.hospitalCount || stats.hosp) : hosp.length;
+      const fC = (stats && (stats.fireCount || stats.fire)) !== undefined ? (stats.fireCount || stats.fire) : fire.length;
+      const cC = (stats && (stats.cctvCount || stats.cctv)) !== undefined ? (stats.cctvCount || stats.cctv) : cctv.length;
+
+      document.getElementById('policeCount').textContent = pC;
+      document.getElementById('hospitalCount').textContent = hC;
+      document.getElementById('fireCount').textContent = fC;
+      document.getElementById('cctvCount').textContent = cC;
 
       // Draw safety grid heatmap
       const lat = map.getCenter().lat, lng = map.getCenter().lng;
@@ -763,14 +761,17 @@
         .then(data => {
             if(!data.safetyStats) throw new Error("Analytics failed");
             const { safetyStats } = data;
-            const city = globalCity;
-            const lat = globalLat;
-            const lng = globalLng;
+            
+            // DUAL-SOURCE SYNC for Explorer Card
+            const pArr = data.infrastructures.filter(el => el.nodeType === 'police').length;
+            const hArr = data.infrastructures.filter(el => el.nodeType === 'hospital').length;
+            const fArr = data.infrastructures.filter(el => el.nodeType === 'fire_station').length;
+            const cArr = data.infrastructures.filter(el => el.nodeType === 'surveillance').length;
 
-            let pCount = safetyStats.policeCount;
-            let hCount = safetyStats.hospitalCount;
-            let fCount = safetyStats.fireCount;
-            let cCount = safetyStats.cctvCount;
+            const pCount = (safetyStats && safetyStats.policeCount !== undefined) ? safetyStats.policeCount : pArr;
+            const hCount = (safetyStats && safetyStats.hospitalCount !== undefined) ? safetyStats.hospitalCount : hArr;
+            const fCount = (safetyStats && safetyStats.fireCount !== undefined) ? safetyStats.fireCount : fArr;
+            const cCount = (safetyStats && safetyStats.cctvCount !== undefined) ? safetyStats.cctvCount : cArr;
 
             const pBadge = document.getElementById('dynamicPolice');
             if(pBadge) pBadge.innerHTML = `<span class="material-symbols-outlined mi">local_police</span> ${pCount} Police Stations`;
@@ -781,9 +782,9 @@
             const cBadge = document.getElementById('dynamicCCTV');
             if(cBadge) cBadge.innerHTML = `<span class="material-symbols-outlined mi">videocam</span> ${cCount} CCTV/Surveillance`;
             
-            const sSafe = safetyStats.crimeScore || 85;
-            const sFam = safetyStats.familyScore || 80;
-            const sWalk = safetyStats.walkScore || 82;
+            const sSafe = (safetyStats && safetyStats.crimeScore) || 85;
+            const sFam = (safetyStats && safetyStats.familyScore) || 80;
+            const sWalk = (safetyStats && safetyStats.walkScore) || 82;
 
             cname.innerHTML = `📍 ${areaName}`;
             

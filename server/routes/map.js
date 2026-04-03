@@ -14,6 +14,7 @@ async function fetchCrimeData(lat, lng, distance = 10) {
 }
 
 // Adaptive infrastructure fetching from OpenStreetMap (Overpass API)
+// We use a progressive expansion strategy: 15km -> 40km to ensure 0-counts are avoided.
 async function fetchOverpassData(lat, lng, radius = 15000) {
     const r2 = Math.floor(radius * 0.7); // adaptive radius for dense items
     const query = `[out:json][timeout:35];(
@@ -65,31 +66,28 @@ async function fetchTouristZones(lat, lng, radius = 15000) {
 router.get('/insights', async (req, res) => {
     try {
         const { lat, lng, city } = req.query;
-        if (!lat || !lng || !city) return res.status(400).json({ message: 'Missing params' });
+        if (!lat || !lng || !city) return res.status(400).json({ message: 'Missing parameters' });
         const cityName = city.toLowerCase().trim();
 
         // 1. Check Cache
         let cachedCity = await CityData.findOne({ cityName }).catch(() => null);
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         if (cachedCity && cachedCity.lastUpdated > sevenDaysAgo) {
-           return res.json({ source: 'cache', safetyStats: cachedCity.safetyStats, infrastructures: cachedCity.infrastructures, recentIncidents: cachedCity.recentIncidents || [] });
+            console.log(`\u26A1 Returning cached analytics for ${cityName}...`);
+            return res.json({ source: 'cache', safetyStats: cachedCity.safetyStats, infrastructures: cachedCity.infrastructures, recentIncidents: cachedCity.recentIncidents || [] });
         }
 
-        console.log(`\u26A1 Persistent fetching for ${cityName}...`);
+        console.log(`\u26A1 Aggressive Persistent Fetching (15km) for ${cityName}...`);
         
-        // 2. Fetch Data (Adaptive Radius)
+        // 2. Initial Fetch (15km)
         let mainData = await fetchOverpassData(lat, lng, 15000);
         
-        // Expansion logic: if we find 0 police/hospitals, retry with 30km
-        const initPolice = mainData.elements?.filter(e => e.tags?.amenity === 'police').length || 0;
-        const initHosp = mainData.elements?.filter(e => e.tags?.amenity === 'hospital').length || 0;
-        
-        if (initPolice === 0 || initHosp === 0) {
-            console.log(`\u26A1 Expanding search radius to 30km for ${cityName} (insufficient initial data)...`);
-            const expandedData = await fetchOverpassData(lat, lng, 30000);
-            if (expandedData.elements?.length > mainData.elements?.length) {
-                mainData = expandedData;
-            }
+        // Expansion logic: if we find 0 police/hospitals, retry with 40km (Deep Search)
+        const checkCount = (type) => (mainData.elements || []).filter(e => e.tags?.amenity === type).length;
+        if (checkCount('police') === 0 || checkCount('hospital') === 0) {
+            console.log(`\u26A1 Deep Searching for ${cityName} - Radius 40km...`);
+            const deepData = await fetchOverpassData(lat, lng, 40000);
+            if ((deepData.elements || []).length > (mainData.elements || []).length) mainData = deepData;
         }
 
         const [touristData, crimeData] = await Promise.all([
@@ -120,7 +118,8 @@ router.get('/insights', async (req, res) => {
         const fCount = infrastructures.filter(i => i.nodeType === 'fire_station').length;
         const cCount = infrastructures.filter(i => i.nodeType === 'surveillance').length;
 
-        const crimePoints = incidents.length * 2.5;
+        // AUTHENTIC SAFETY SCORING
+        const crimePoints = incidents.length * 2.5; 
         const sSafe = Math.max(65, Math.min(99, Math.floor(88 - crimePoints + (pCount * 1.5))));
         const sFam = Math.max(65, Math.min(99, Math.floor(82 - (incidents.length * 1.5) + (hCount * 2))));
         const sWalk = Math.max(60, Math.min(99, Math.floor(84 - (incidents.length * 2) + (cCount * 1.2))));
@@ -135,17 +134,29 @@ router.get('/insights', async (req, res) => {
             walkScore: sWalk,
             crimeCount: incidents.length
         };
-        const recentIncidents = incidents.slice(0, 5).map(inc => ({ type: inc.incident_offense || 'Incident', description: inc.incident_offense_description || 'Police report filed', timestamp: inc.incident_datetime || inc.incident_date }));
 
-        // 3. Save Cache
+        const recentIncidents = incidents.slice(0, 5).map(inc => ({
+            type: inc.incident_offense || 'Incident',
+            description: inc.incident_offense_description || 'Police report filed',
+            timestamp: inc.incident_datetime || inc.incident_date
+        }));
+
+        // 3. Update Cache
         try {
-            if (cachedCity) Object.assign(cachedCity, { safetyStats, infrastructures, recentIncidents, lastUpdated: Date.now() });
-            else cachedCity = new CityData({ cityName, coordinates: { lat, lng }, safetyStats, infrastructures, recentIncidents });
-            await cachedCity.save();
-        } catch (e) {}
+            if (cachedCity) {
+                Object.assign(cachedCity, { safetyStats, infrastructures, recentIncidents, lastUpdated: Date.now() });
+                await cachedCity.save();
+            } else {
+                cachedCity = new CityData({ cityName, coordinates: { lat, lng }, safetyStats, infrastructures, recentIncidents });
+                await cachedCity.save();
+            }
+        } catch (e) { console.error('Cache Save Error:', e.message); }
 
         res.json({ source: 'live', safetyStats, infrastructures, recentIncidents });
-    } catch (e) { res.status(500).json({ message: 'Error' }); }
+    } catch (error) {
+        console.error('Error fetching insights:', error.message);
+        res.status(500).json({ message: 'Error' });
+    }
 });
 
 module.exports = router;
