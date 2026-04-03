@@ -23,7 +23,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=18">
+  <link rel="stylesheet" href="style.css?v=19">
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
 
@@ -912,29 +912,29 @@
                         placeDiv.innerHTML = `<strong style="color:#00e5ff; font-size: 1.05rem;">📍 ${name}</strong><div style="margin-top:6px; color:#cbd5e1; font-size:0.85rem; line-height:1.4;">A notable ${type} attraction located in the region. Highly recommended for exploring!</div>`;
                      }
                   }).catch(e => {
-                     placeDiv.innerHTML = `<strong style="color:#00e5ff; font-size: 1.05rem;">📍 ${name}</strong><div style="margin-top:6px; color:#cbd5e1; font-size:0.85rem; line-height:1.4;">A popular landmark to visit around ${cityStr}.</div>`;
+                     placeDiv.innerHTML = `<strong style="color:#00e5ff; font-size: 1.05rem;">📍 ${name}</strong><div style="margin-top:6px; color:#cbd5e1; font-size:0.85rem; line-height:1.4;">A popular landmark to visit around ${globalCityStr}.</div>`;
                   });
                }
                
                if (CITY_OVERRIDES[normalizedCity]) {
-                   CITY_OVERRIDES[normalizedCity].slice(0, 5).forEach(p => appendTouristCard(p.title, 'Attraction', city, tList));
+                   CITY_OVERRIDES[normalizedCity].slice(0, 5).forEach(p => appendTouristCard(p.title, 'Attraction', globalCity, tList));
                    return;
                }
 
                if(zones.length === 0) {
-                  fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=10000&gslimit=4&format=json&origin=*`)
+                  fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=4&format=json&origin=*`)
                   .then(r => r.json())
                   .then(geoData => {
                      const places = geoData.query?.geosearch || [];
                      if(places.length === 0) {
-                        tList.innerHTML = `<span style="color:#ff5252;">No major encyclopedia landmarks found digitally near ${city}.</span>`;
+                        tList.innerHTML = `<span style="color:#ff5252;">No major encyclopedia landmarks found digitally near ${globalCity}.</span>`;
                         return;
                      }
                      tList.innerHTML = '';
-                     places.forEach(p => appendTouristCard(p.title, 'Landmark', city, tList));
+                     places.forEach(p => appendTouristCard(p.title, 'Landmark', globalCity, tList));
                   })
                   .catch(e => {
-                     tList.innerHTML = `<span style="color:#ff5252;">Failed to fetch landmarks for ${city}.</span>`;
+                     tList.innerHTML = `<span style="color:#ff5252;">Failed to fetch landmarks for ${globalCity}.</span>`;
                   });
                } else {
                   // Show up to 4 major tourist places
