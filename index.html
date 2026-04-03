@@ -20,19 +20,20 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=75">
+  <link rel="stylesheet" href="style.css?v=80">
   <style>
     /* NUCLEAR OVERRIDE: Forced 1 Row, 3 Columns for Safety Explorer */
     #safety .safety-grid {
       display: grid !important;
       grid-template-columns: repeat(3, 1fr) !important;
       grid-auto-rows: min-content !important;
-      gap: 24px !important;
-      margin-top: 48px !important;
+      gap: 20px !important;
+      margin-top: 40px !important;
       width: 100% !important;
-      max-width: 1400px !important;
+      max-width: 1250px !important;
       margin-left: auto !important;
       margin-right: auto !important;
+      padding: 0 15px !important;
     }
     #safety .area-card {
       width: 100% !important;
@@ -42,16 +43,22 @@
       flex-direction: column !important;
       height: 100% !important;
       margin: 0 !important;
-      background: rgba(30, 32, 47, 0.6) !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      backdrop-filter: blur(12px) !important;
+      background: rgba(30, 32, 47, 0.7) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      backdrop-filter: blur(15px) !important;
     }
     .crime-incident-item {
-      background: rgba(255, 78, 78, 0.08) !important;
+      background: rgba(255, 78, 78, 0.1) !important;
       border: 1px solid rgba(255, 78, 78, 0.5) !important;
-      border-radius: 10px !important;
-      padding: 14px !important;
+      border-radius: 12px !important;
+      padding: 15px !important;
       margin-bottom: 12px !important;
+      transition: all 0.3s ease !important;
+    }
+    .crime-incident-item:hover {
+      background: rgba(255, 78, 78, 0.15) !important;
+      border-color: rgba(255, 78, 78, 0.7) !important;
+      transform: translateY(-2px) !important;
     }
     @media (max-width: 1024px) {
       #safety .safety-grid { grid-template-columns: 1fr !important; }
@@ -323,12 +330,13 @@
       document.getElementById('cctvCount').textContent = cC;
 
       // Draw safety grid heatmap
-      const globalLat = map.getCenter().globalLat, globalLng = map.getCenter().globalLng;
+      const c = map.getCenter();
+      const currentLat = c.lat, currentLng = c.lng;
       const step = 0.015;
-      for (let gLat = globalLat - 0.13; gLat <= globalLat + 0.13; gLat += step) {
-        for (let gLng = globalLng - 0.13; gLng <= globalLng + 0.13; gLng += step) {
+      for (let gLat = currentLat - 0.13; gLat <= currentLat + 0.13; gLat += step) {
+        for (let gLng = currentLng - 0.13; gLng <= currentLng + 0.13; gLng += step) {
           let count = 0;
-          const within = (p) => p.globalLat >= gLat && p.globalLat < gLat + step && p.globalLng >= gLng && p.globalLng < gLng + step;
+          const within = (p) => p.lat >= gLat && p.lat < gLat + step && p.lng >= gLng && p.lng < gLng + step;
           count += police.filter(within).length * 2.5;
           count += hosp.filter(within).length * 1.5;
           count += fire.filter(within).length * 1.5;
