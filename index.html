@@ -23,7 +23,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=18">
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
 
@@ -877,13 +877,13 @@
             const touristCard = document.getElementById('dynamicTouristCard');
             if(touristCard) {
                touristCard.style.display = 'block';
-               document.getElementById('touristCardTitle').innerHTML = `📸 Explore ${city}`;
+               document.getElementById('touristCardTitle').innerHTML = `📸 Explore ${globalCity}`;
                const tList = document.getElementById('touristPlacesList');
                tList.innerHTML = '';
                
                let zones = data.touristZones || [];
                
-               const normalizedCity = city.toLowerCase().trim();
+               const normalizedCity = globalCity.toLowerCase().trim();
                const CITY_OVERRIDES = {
                  'solapur': [
                    { title: 'Siddheshwar Temple' },
