@@ -362,91 +362,28 @@
     }
 
     async function fetchSafetyData(map, lat, lng, city) {
-      // Cache version — increment when query changes to auto-purge old data
-      const CACHE_VER = 4;
-      const cacheKey = _safetyKey(lat, lng);
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        try {
-          const c = JSON.parse(cached);
-          // Only use cache if same version and under 30 min old
-          if (c.ver === CACHE_VER && Date.now() - c.ts < 30 * 60 * 1000 && (c.police.length + c.hosp.length + c.fire.length + c.cctv.length) > 0) {
-            renderSafetyOnMap(map, c.police, c.hosp, c.fire, c.cctv, city, 'Cached Data');
-            updateAreaCards(lat, lng, city);
-            return;
-          } else { localStorage.removeItem(cacheKey); }
-        } catch(e) { localStorage.removeItem(cacheKey); }
-      }
-
-      // Strategy: 1 unified Overpass query (bypass 429 Too Many Requests limit)
       document.getElementById('safetySummary').innerHTML = '<p>⏳ Fetching real-time safety data for ' + city + '...</p>';
 
-      const query = `[out:json][timeout:25];(
-        node["amenity"="police"](around:15000,${lat},${lng});
-        way["amenity"="police"](around:15000,${lat},${lng});
-        node["amenity"="hospital"](around:15000,${lat},${lng});
-        way["amenity"="hospital"](around:15000,${lat},${lng});
-        node["amenity"="clinic"](around:10000,${lat},${lng});
-        way["amenity"="clinic"](around:10000,${lat},${lng});
-        node["amenity"="fire_station"](around:15000,${lat},${lng});
-        way["amenity"="fire_station"](around:15000,${lat},${lng});
-        node["emergency"="fire_hydrant"](around:10000,${lat},${lng});
-        node["man_made"="surveillance"](around:10000,${lat},${lng});
-        way["man_made"="surveillance"](around:10000,${lat},${lng});
-        node["surveillance:type"="camera"](around:10000,${lat},${lng});
-        node["surveillance:type"="ALPR"](around:10000,${lat},${lng});
-        node["amenity"="cctv"](around:10000,${lat},${lng});
-      );out center tags 3000;`;
-
-      const overpassController = new AbortController();
-      const overpassTimeout = setTimeout(() => overpassController.abort(), 20000);
-      let elements = [];
       try {
-        const res = await fetch('https://overpass-api.de/api/interpreter', {
-          method: 'POST', body: 'data=' + encodeURIComponent(query), signal: overpassController.signal
-        });
-        clearTimeout(overpassTimeout);
+        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
         const data = await res.json();
-        elements = data.elements || [];
-      } catch (e) {
-        clearTimeout(overpassTimeout);
-        document.getElementById('safetySummary').innerHTML = '<p style="color:#ff5252">Safety data unavailable right now.</p>';
-        return;
-      }
-
-      const police = [], hosp = [], fire = [], cctv = [];
-      const seen = new Set();
-
-      elements.forEach(el => {
-        const elLat = el.lat || el.center?.lat;
-        const elLng = el.lon || el.center?.lon;
-        if (!elLat || !elLng) return;
         
-        const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
-        if (seen.has(key)) return;
-        seen.add(key);
+        if (!data.infrastructures) throw new Error("Analytics failed");
 
-        const tags = el.tags || {};
-        const name = tags.name || tags['name:en'] || '';
+        const police = [], hosp = [], fire = [], cctv = [];
+        data.infrastructures.forEach(el => {
+          if (el.nodeType === 'police') police.push(el);
+          else if (el.nodeType === 'hospital') hosp.push(el);
+          else if (el.nodeType === 'fire_station') fire.push(el);
+          else if (el.nodeType === 'surveillance') cctv.push(el);
+        });
 
-        if (tags.amenity === 'police') {
-          police.push({ lat: elLat, lng: elLng, name: name || 'Police Station', nodeType: 'police' });
-        } else if (tags.amenity === 'hospital' || tags.amenity === 'clinic') {
-          hosp.push({ lat: elLat, lng: elLng, name: name || 'Hospital/Clinic', nodeType: 'hospital' });
-        } else if (tags.amenity === 'fire_station' || tags.emergency === 'fire_hydrant') {
-          fire.push({ lat: elLat, lng: elLng, name: name || 'Fire Station', nodeType: 'fire_station' });
-        } else if (tags.man_made === 'surveillance' || tags['surveillance:type'] || tags.amenity === 'cctv') {
-          cctv.push({ lat: elLat, lng: elLng, name: name || 'CCTV Camera', nodeType: 'surveillance' });
-        }
-      });
-
-      // Cache with version tag
-      if (police.length + hosp.length + fire.length + cctv.length > 0) {
-        try { localStorage.setItem(cacheKey, JSON.stringify({ police, hosp, fire, cctv, ts: Date.now(), ver: CACHE_VER })); } catch {}
+        renderSafetyOnMap(map, police, hosp, fire, cctv, city, data.source === 'cache' ? 'Verified Repository' : 'Live Verified Data');
+        updateAreaCards(lat, lng, city);
+      } catch (e) {
+        console.error("Safety Fetch Failed:", e);
+        document.getElementById('safetySummary').innerHTML = '<p style="color:#ff5252">Safety analytics temporarily unavailable. Please try again later.</p>';
       }
-
-      renderSafetyOnMap(map, police, hosp, fire, cctv, city, 'Live Overpass/OSM');
-      updateAreaCards(lat, lng, city);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSafetyMap);
     else initSafetyMap();
@@ -795,11 +732,6 @@
             const city = globalCity;
             const lat = globalLat;
             const lng = globalLng;
-
-            let pCount = safetyStats.policeCount;
-            let hCount = safetyStats.hospitalCount;
-            let fCount = safetyStats.fireCount;
-            let cCount = safetyStats.cctvCount;
 
             let pCount = safetyStats.policeCount;
             let hCount = safetyStats.hospitalCount;
