@@ -65,7 +65,10 @@ async function fetchTouristZones(lat, lng, radius = 15000) {
 // GET /api/safety/insights
 router.get('/insights', async (req, res) => {
     try {
-        const { lat, lng, city } = req.query;
+        const q = req.query;
+        const lat = q.lat || q.globalLat;
+        const lng = q.lng || q.globalLng;
+        const city = q.city;
         if (!lat || !lng || !city) return res.status(400).json({ message: 'Missing parameters' });
         const cityName = city.toLowerCase().trim();
 
