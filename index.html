@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=80">
+  <link rel="stylesheet" href="style.css?v=85">
   <style>
     /* NUCLEAR OVERRIDE: Forced 1 Row, 3 Columns for Safety Explorer */
     #safety .safety-grid {
@@ -30,7 +30,7 @@
       gap: 20px !important;
       margin-top: 40px !important;
       width: 100% !important;
-      max-width: 1250px !important;
+      max-width: 1300px !important;
       margin-left: auto !important;
       margin-right: auto !important;
       padding: 0 15px !important;
@@ -43,9 +43,10 @@
       flex-direction: column !important;
       height: 100% !important;
       margin: 0 !important;
-      background: rgba(30, 32, 47, 0.7) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
-      backdrop-filter: blur(15px) !important;
+      background: rgba(30, 32, 47, 0.75) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      backdrop-filter: blur(16px) !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
     }
     .crime-incident-item {
       background: rgba(255, 78, 78, 0.1) !important;
@@ -53,12 +54,6 @@
       border-radius: 12px !important;
       padding: 15px !important;
       margin-bottom: 12px !important;
-      transition: all 0.3s ease !important;
-    }
-    .crime-incident-item:hover {
-      background: rgba(255, 78, 78, 0.15) !important;
-      border-color: rgba(255, 78, 78, 0.7) !important;
-      transform: translateY(-2px) !important;
     }
     @media (max-width: 1024px) {
       #safety .safety-grid { grid-template-columns: 1fr !important; }
@@ -2043,7 +2038,7 @@
         if (autoSelectFirst && data[0]) {
           const place = data[0];
           const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
-          selectLocation(place.globalLat, place.lon, name);
+          selectLocation(place.lat, place.lon, name);
           return;
         }
 
@@ -2051,7 +2046,7 @@
           const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
           const state = place.address?.state || '';
           const country = place.address?.country || '';
-          return `<div class="location-result-item" onclick="selectLocation('${place.globalLat}','${place.lon}','${name.replace(/'/g, "\\'")}')">
+          return `<div class="location-result-item" onclick="selectLocation('${place.lat}','${place.lon}','${name.replace(/'/g, "\\'")}')">
             <div class="location-result-name">📍 ${name}</div>
             <div class="location-result-sub">${state}${country ? ', ' + country : ''}</div>
           </div>`;
@@ -2154,7 +2149,7 @@
             async (position) => {
               const { latitude, longitude } = position.coords;
               try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&globalLat=${latitude}&lon=${longitude}`, {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
                   headers: { 'Accept-Language': 'en' }
                 });
                 const data = await res.json();
