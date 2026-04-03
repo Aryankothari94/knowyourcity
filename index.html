@@ -1,4 +1,4 @@
-<!-- Know Your City - Reverted to April 1st Stable Version v1.0.1 -->
+<!-- Know Your City - Final Verified Version v1.1.0 -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -23,30 +23,38 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=50">
+  <link rel="stylesheet" href="style.css?v=60">
   <style>
-    /* Force 3-Column Safety Explorer Row on Desktop */
-    .safety-grid {
+    /* CRITICAL OVERRIDE: 1 Row, 3 Columns for Safety Explorer */
+    #safety .safety-grid {
       display: grid !important;
       grid-template-columns: repeat(3, 1fr) !important;
-      grid-auto-rows: 1fr;
+      grid-auto-rows: min-content !important;
       gap: 24px !important;
-      margin-top: 48px;
+      margin-top: 48px !important;
       width: 100% !important;
+      opacity: 1 !important;
+      transform: none !important;
     }
-    .area-card {
+    #safety .area-card {
       width: 100% !important;
       min-width: 0 !important;
-      max-width: 100% !important;
+      max-width: none !important;
       display: flex !important;
-      flex-direction: column;
+      flex-direction: column !important;
       height: 100% !important;
+      margin: 0 !important;
+    }
+    #safety .recent-activity-container {
+      display: block !important;
+      margin-top: 15px !important;
+      padding: 15px !important;
+      background: rgba(255, 78, 78, 0.05) !important;
+      border: 1px solid rgba(255, 78, 78, 0.4) !important;
+      border-radius: 12px !important;
     }
     @media (max-width: 1024px) {
-      .safety-grid { grid-template-columns: repeat(2, 1fr) !important; }
-    }
-    @media (max-width: 768px) {
-      .safety-grid { grid-template-columns: 1fr !important; }
+      #safety .safety-grid { grid-template-columns: 1fr !important; }
     }
   </style>
   <link rel="icon" href="logo.png" type="image/png" />
