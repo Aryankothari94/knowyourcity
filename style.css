@@ -1550,17 +1550,16 @@ body {
 }
 
 .safety-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
   gap: 24px;
   margin-top: 48px;
+  width: 100%;
 }
 
 .area-card {
-  height: min-content;
-  cursor: pointer;
-  overflow: hidden;
-  display: flex;
+  width: 100%;
+  display: flex !important;
   flex-direction: column;
 }
 
