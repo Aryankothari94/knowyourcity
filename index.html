@@ -23,7 +23,32 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="style.css?v=50">
+  <style>
+    /* Force 3-Column Safety Explorer Row on Desktop */
+    .safety-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      grid-auto-rows: 1fr;
+      gap: 24px !important;
+      margin-top: 48px;
+      width: 100% !important;
+    }
+    .area-card {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      display: flex !important;
+      flex-direction: column;
+      height: 100% !important;
+    }
+    @media (max-width: 1024px) {
+      .safety-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    @media (max-width: 768px) {
+      .safety-grid { grid-template-columns: 1fr !important; }
+    }
+  </style>
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
 
@@ -377,7 +402,7 @@
       const cNum = document.getElementById('cctvCount'); if(cNum) cNum.innerHTML = spinner;
 
       try {
-        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(globalCity)}`);
+        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`);
         const data = await res.json();
         if (!data.infrastructures) throw new Error("Analytics failed");
 
@@ -1190,21 +1215,7 @@
     .hiw-step:nth-child(2) { transition-delay: 0.3s; }
     .hiw-step:nth-child(3) { transition-delay: 0.5s; }
     .hiw-step:nth-child(4) { transition-delay: 0.7s; }
-    .safety-grid {
-      display: grid !important;
-      grid-template-columns: repeat(3, 1fr) !important;
-      grid-auto-rows: 1fr;
-      gap: 24px;
-      margin-top: 48px;
-      width: 100%;
-    }
-
-    .area-card {
-      width: 100% !important;
-      min-width: 0 !important;
-      display: flex !important;
-      flex-direction: column;
-    }
+    .hiw-step:nth-child(5) { transition-delay: 0.9s; }
 
     .hiw-step-indicator {
       display: flex;
