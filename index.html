@@ -23,7 +23,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=17">
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
 
@@ -847,7 +847,7 @@
               analysisDiv.style.display = 'block';
               analysisDiv.innerHTML = '<span style="color: #aaa;">Fetching comprehensive analytics from Wikipedia...</span>';
               
-              fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=4&exlimit=1&titles=${encodeURIComponent(city)}&explaintext=1&formatversion=2&format=json&origin=*`)
+              fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=4&exlimit=1&titles=${encodeURIComponent(globalCity)}&explaintext=1&formatversion=2&format=json&origin=*`)
               .then(wRes => wRes.json())
               .then(wData => {
                  let extract = wData.query?.pages[0]?.extract;
