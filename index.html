@@ -23,7 +23,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=40">
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
 
@@ -249,25 +249,25 @@
   <script>
     var _safetyMap = null;
     // Cache key for safety data
-    function _safetyKey(lat,lng) { return `kyc_safety_${lat.toFixed(2)}_${lng.toFixed(2)}`; }
+    function _safetyKey(globalLat,globalLng) { return `kyc_safety_${globalLat.toFixed(2)}_${globalLng.toFixed(2)}`; }
 
     function initSafetyMap() {
-      const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-      const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const globalLat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const globalLng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
       const city = localStorage.getItem('kyc_userCity') || 'Your Area';
       if (_safetyMap) { _safetyMap.remove(); _safetyMap = null; }
-      _safetyMap = L.map('safetyMap', { scrollWheelZoom: false, zoomControl: true }).setView([lat, lng], 13);
+      _safetyMap = L.map('safetyMap', { scrollWheelZoom: false, zoomControl: true }).setView([globalLat, globalLng], 13);
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri', maxZoom: 18
       }).addTo(_safetyMap);
-      L.circleMarker([lat, lng], { radius: 8, fillColor: '#00e5ff', fillOpacity: 1, color: '#fff', weight: 2 })
+      L.circleMarker([globalLat, globalLng], { radius: 8, fillColor: '#00e5ff', fillOpacity: 1, color: '#fff', weight: 2 })
         .addTo(_safetyMap).bindPopup('📍 You — ' + city).openPopup();
       document.getElementById('policeCount').textContent = '--';
       document.getElementById('hospitalCount').textContent = '--';
       document.getElementById('fireCount').textContent = '--';
       document.getElementById('cctvCount').textContent = '--';
       document.getElementById('safetySummary').innerHTML = '<p>Loading safety data for ' + city + '...</p>';
-      fetchSafetyData(_safetyMap, lat, lng, city);
+      fetchSafetyData(_safetyMap, globalLat, globalLng, city);
     }
 
     function reloadSafetyMap() { initSafetyMap(); }
@@ -286,12 +286,12 @@
       document.getElementById('cctvCount').textContent = cC;
 
       // Draw safety grid heatmap
-      const lat = map.getCenter().lat, lng = map.getCenter().lng;
+      const globalLat = map.getCenter().globalLat, globalLng = map.getCenter().globalLng;
       const step = 0.015;
-      for (let gLat = lat - 0.13; gLat <= lat + 0.13; gLat += step) {
-        for (let gLng = lng - 0.13; gLng <= lng + 0.13; gLng += step) {
+      for (let gLat = globalLat - 0.13; gLat <= globalLat + 0.13; gLat += step) {
+        for (let gLng = globalLng - 0.13; gLng <= globalLng + 0.13; gLng += step) {
           let count = 0;
-          const within = (p) => p.lat >= gLat && p.lat < gLat + step && p.lng >= gLng && p.lng < gLng + step;
+          const within = (p) => p.globalLat >= gLat && p.globalLat < gLat + step && p.globalLng >= gLng && p.globalLng < gLng + step;
           count += police.filter(within).length * 2.5;
           count += hosp.filter(within).length * 1.5;
           count += fire.filter(within).length * 1.5;
@@ -305,10 +305,10 @@
       }
 
       // Plot real markers
-      police.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#00e676', fillOpacity: 0.8, color: '#00e676', weight: 1 }).addTo(map).bindPopup((p.name || 'Police Station')));
-      hosp.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#2196f3', fillOpacity: 0.8, color: '#2196f3', weight: 1 }).addTo(map).bindPopup((p.name || 'Hospital')));
-      fire.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#ff9800', weight: 1 }).addTo(map).bindPopup((p.name || 'Fire Station')));
-      cctv.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#9c27b0', weight: 1 }).addTo(map).bindPopup((p.name || 'CCTV')));
+      police.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 6, fillColor: '#00e676', fillOpacity: 0.8, color: '#00e676', weight: 1 }).addTo(map).bindPopup((p.name || 'Police Station')));
+      hosp.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 6, fillColor: '#2196f3', fillOpacity: 0.8, color: '#2196f3', weight: 1 }).addTo(map).bindPopup((p.name || 'Hospital')));
+      fire.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#ff9800', weight: 1 }).addTo(map).bindPopup((p.name || 'Fire Station')));
+      cctv.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#9c27b0', weight: 1 }).addTo(map).bindPopup((p.name || 'CCTV')));
 
       // Accurate safety summary based on real data
       const tot = police.length + hosp.length + fire.length + cctv.length;
@@ -329,7 +329,7 @@
       let police = [], hosp = [], fire = [], cctv = [];
       const seen = new Set();
       elements.forEach(el => {
-        const elLat = el.lat || el.center?.lat;
+        const elLat = el.globalLat || el.center?.globalLat;
         const elLng = el.lon || el.center?.lon;
         if (!elLat || !elLng) return;
         // Deduplicate
@@ -338,18 +338,18 @@
         seen.add(key);
         const name = el.tags?.name || el.tags?.['name:en'] || '';
         const t = el.tags || {};
-        if (t.amenity === 'police') police.push({lat: elLat, lng: elLng, name: name || 'Police Station'});
-        else if (t.amenity === 'hospital') hosp.push({lat: elLat, lng: elLng, name: name || 'Hospital'});
-        else if (t.amenity === 'clinic') hosp.push({lat: elLat, lng: elLng, name: name || 'Clinic'});
-        else if (t.amenity === 'fire_station') fire.push({lat: elLat, lng: elLng, name: name || 'Fire Station'});
-        else if (t.emergency === 'fire_hydrant') fire.push({lat: elLat, lng: elLng, name: 'Fire Hydrant'});
-        else if (t.man_made === 'surveillance' || t['surveillance:type'] || t.amenity === 'cctv') cctv.push({lat: elLat, lng: elLng, name: name || 'CCTV Camera'});
+        if (t.amenity === 'police') police.push({globalLat: elLat, globalLng: elLng, name: name || 'Police Station'});
+        else if (t.amenity === 'hospital') hosp.push({globalLat: elLat, globalLng: elLng, name: name || 'Hospital'});
+        else if (t.amenity === 'clinic') hosp.push({globalLat: elLat, globalLng: elLng, name: name || 'Clinic'});
+        else if (t.amenity === 'fire_station') fire.push({globalLat: elLat, globalLng: elLng, name: name || 'Fire Station'});
+        else if (t.emergency === 'fire_hydrant') fire.push({globalLat: elLat, globalLng: elLng, name: 'Fire Hydrant'});
+        else if (t.man_made === 'surveillance' || t['surveillance:type'] || t.amenity === 'cctv') cctv.push({globalLat: elLat, globalLng: elLng, name: name || 'CCTV Camera'});
       });
       return { police, hosp, fire, cctv };
     }
 
     // Update area cards with real neighborhood data from Nominatim
-    async function updateAreaCards(lat, lng, city) {
+    async function updateAreaCards(globalLat, globalLng, city) {
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/search?q=tourist+attractions+near+${encodeURIComponent(city)}&format=json&limit=2&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
         const places = await res.json();
@@ -366,7 +366,7 @@
       } catch(e) { console.log('Area cards Nominatim lookup skipped'); }
     }
 
-    async function fetchSafetyData(map, lat, lng, city) {
+    async function fetchSafetyData(map, globalLat, globalLng, city) {
       document.getElementById('safetySummary').innerHTML = '<p>⏳ Fetching authentic safety data for ' + city + '...</p>';
       
       // Show spinning loaders in Map Sidebar
@@ -377,7 +377,7 @@
       const cNum = document.getElementById('cctvCount'); if(cNum) cNum.innerHTML = spinner;
 
       try {
-        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
+        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?globalLat=${globalLat}&globalLng=${globalLng}&city=${encodeURIComponent(city)}`);
         const data = await res.json();
         if (!data.infrastructures) throw new Error("Analytics failed");
 
@@ -393,7 +393,7 @@
         if (summary) summary.innerHTML = `<p>Verified Search Results from ${data.source === 'cache' ? 'Authorized Repository' : 'Live Verified Database'}.</p>`;
         
         renderSafetyOnMap(map, police, hosp, fire, cctv, city, data.source, data.safetyStats);
-        updateAreaCards(lat, lng, city);
+        updateAreaCards(globalLat, globalLng, city);
 
         // Populate Recent Crime Activity for initial city
         if (data.recentIncidents) renderRecentCrimes(data.recentIncidents, 'recentActivityList', 'recentActivityContainer');
@@ -782,14 +782,14 @@
         .then(res => res.json())
         .then(data => {
             if(!data || data.length === 0) throw new Error("Location not found");
-            globalLat = data[0].lat;
+            globalLat = data[0].globalLat;
             globalLng = data[0].lon;
             globalCity = data[0].display_name.split(',')[0];
             
             // Sync map view
             if (typeof _safetyMap !== 'undefined' && _safetyMap) fetchSafetyData(_safetyMap, globalLat, globalLng, globalCity);
 
-            return fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(globalCity)}`);
+            return fetch(`https://knowyourcity.onrender.com/api/safety/insights?globalLat=${globalLat}&globalLng=${globalLng}&city=${encodeURIComponent(globalCity)}`);
         })
         .then(res => res.json())
         .then(data => {
@@ -852,7 +852,7 @@
               .then(wData => {
                  let extract = wData.query?.pages[0]?.extract;
                  if(!extract || extract.trim().endsWith('may refer to:')) {
-                    // fall back to areaName if exact city doesn't exist or is a disambiguation
+                    // fall back to areaName if exact globalCity doesn't exist or is a disambiguation
                     return fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=3&exlimit=1&titles=${encodeURIComponent(areaName)}&explaintext=1&formatversion=2&format=json&origin=*`)
                            .then(r=>r.json()).then(d=>d.query?.pages[0]?.extract);
                  }
@@ -895,7 +895,7 @@
                  ]
                };
                
-               function appendTouristCard(name, type, cityStr, container) {
+               function appendTouristCard(name, type, globalCityStr, container) {
                   const placeDiv = document.createElement('div');
                   placeDiv.style.cssText = 'padding: 14px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; transition: transform 0.2s;';
                   placeDiv.innerHTML = `<strong style="color:#00e5ff; font-size: 1.05rem;">📍 ${name}</strong><br/><span style="color:#888; font-size:0.8rem;">Fetching verified Wikipedia snippet...</span>`;
@@ -939,7 +939,7 @@
                } else {
                   // Show up to 4 major tourist places
                   zones.slice(0, 4).forEach(tz => {
-                     appendTouristCard(tz.name, tz.type, city, tList);
+                     appendTouristCard(tz.name, tz.type, globalCity, tList);
                   });
                }
             }
@@ -955,8 +955,8 @@
             
             // FRONTEND FALLBACK: In case API or DB crashes, this generates realistic baseline stats dynamically based on the city seed
             const city = globalCity || areaName;
-            const lat = globalLat;
-            const lng = globalLng;
+            const globalLat = globalLat;
+            const globalLng = globalLng;
             let hash = 0;
             for (let i = 0; i < city.length; i++) hash = city.charCodeAt(i) + ((hash << 5) - hash);
             const seed = Math.abs(hash);
@@ -1018,7 +1018,7 @@
                    CITY_OVERRIDES[normalizedCity].slice(0, 5).forEach(p => appendTouristCardFallback(p.title, 'Attraction', city, tList));
                } else {
                   tList.innerHTML = '<span style="color:#aaa;">Searching Wikipedia for nearby landmarks...</span>';
-                  fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=10000&gslimit=4&format=json&origin=*`)
+                  fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=4&format=json&origin=*`)
                   .then(r => r.json())
                   .then(geoData => {
                      const places = geoData.query?.geosearch || [];
@@ -1942,10 +1942,10 @@
         document.body.style.overflow = 'hidden';
         return;
       }
-      const lat = localStorage.getItem('kyc_userLat') || '19.0760';
-      const lng = localStorage.getItem('kyc_userLng') || '72.8777';
+      const globalLat = localStorage.getItem('kyc_userLat') || '19.0760';
+      const globalLng = localStorage.getItem('kyc_userLng') || '72.8777';
       const city = localStorage.getItem('kyc_userCity') || 'Your Area';
-      window.location.href = `${page}?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`;
+      window.location.href = `${page}?globalLat=${globalLat}&globalLng=${globalLng}&city=${encodeURIComponent(city)}`;
     }
 
     function toggleLocationDropdown(e) {
@@ -1998,7 +1998,7 @@
         if (autoSelectFirst && data[0]) {
           const place = data[0];
           const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
-          selectLocation(place.lat, place.lon, name);
+          selectLocation(place.globalLat, place.lon, name);
           return;
         }
 
@@ -2006,7 +2006,7 @@
           const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
           const state = place.address?.state || '';
           const country = place.address?.country || '';
-          return `<div class="location-result-item" onclick="selectLocation('${place.lat}','${place.lon}','${name.replace(/'/g, "\\'")}')">
+          return `<div class="location-result-item" onclick="selectLocation('${place.globalLat}','${place.lon}','${name.replace(/'/g, "\\'")}')">
             <div class="location-result-name">📍 ${name}</div>
             <div class="location-result-sub">${state}${country ? ', ' + country : ''}</div>
           </div>`;
@@ -2016,9 +2016,9 @@
       }
     }
 
-    function selectLocation(lat, lng, city) {
-      localStorage.setItem('kyc_userLat', lat);
-      localStorage.setItem('kyc_userLng', lng);
+    function selectLocation(globalLat, globalLng, city) {
+      localStorage.setItem('kyc_userLat', globalLat);
+      localStorage.setItem('kyc_userLng', globalLng);
       localStorage.setItem('kyc_userCity', city);
       // Do NOT show fact popup on city change — only on login
       showToast(`📍 Location set to ${city}. Reloading...`);
@@ -2055,7 +2055,7 @@
           const { latitude, longitude } = position.coords;
           if (results) results.innerHTML = '<div class="location-searching">🔍 Looking up your location...</div>';
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&globalLat=${latitude}&lon=${longitude}`, {
               headers: { 'Accept-Language': 'en' }
             });
             const data = await res.json();
@@ -2109,7 +2109,7 @@
             async (position) => {
               const { latitude, longitude } = position.coords;
               try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&globalLat=${latitude}&lon=${longitude}`, {
                   headers: { 'Accept-Language': 'en' }
                 });
                 const data = await res.json();
