@@ -273,12 +273,19 @@
     function reloadSafetyMap() { initSafetyMap(); }
 
     // Render real data on map and stats panel — NO fake/extrapolated data
-    function renderSafetyOnMap(map, police, hosp, fire, cctv, city, source) {
-      // Update stat counts — REAL numbers only
-      document.getElementById('policeCount').textContent = police.length;
-      document.getElementById('hospitalCount').textContent = hosp.length;
-      document.getElementById('fireCount').textContent = fire.length;
-      document.getElementById('cctvCount').textContent = cctv.length;
+    function renderSafetyOnMap(map, police, hosp, fire, cctv, city, source, stats) {
+      // Update stat counts — Unified with backend safetyStats
+      if (stats) {
+        document.getElementById('policeCount').textContent = stats.policeCount || 0;
+        document.getElementById('hospitalCount').textContent = stats.hospitalCount || 0;
+        document.getElementById('fireCount').textContent = stats.fireCount || 0;
+        document.getElementById('cctvCount').textContent = stats.cctvCount || 0;
+      } else {
+        document.getElementById('policeCount').textContent = police.length;
+        document.getElementById('hospitalCount').textContent = hosp.length;
+        document.getElementById('fireCount').textContent = fire.length;
+        document.getElementById('cctvCount').textContent = cctv.length;
+      }
 
       // Draw safety grid heatmap
       const lat = map.getCenter().lat, lng = map.getCenter().lng;
@@ -362,12 +369,18 @@
     }
 
     async function fetchSafetyData(map, lat, lng, city) {
-      document.getElementById('safetySummary').innerHTML = '<p>⏳ Fetching real-time safety data for ' + city + '...</p>';
+      document.getElementById('safetySummary').innerHTML = '<p>⏳ Fetching authentic safety data for ' + city + '...</p>';
+      
+      // Show spinning loaders in Map Sidebar
+      const spinner = '<div class="spinner-small"></div>';
+      const pNum = document.getElementById('policeCount'); if(pNum) pNum.innerHTML = spinner;
+      const hNum = document.getElementById('hospitalCount'); if(hNum) hNum.innerHTML = spinner;
+      const fNum = document.getElementById('fireCount'); if(fNum) fNum.innerHTML = spinner;
+      const cNum = document.getElementById('cctvCount'); if(cNum) cNum.innerHTML = spinner;
 
       try {
         const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
         const data = await res.json();
-        
         if (!data.infrastructures) throw new Error("Analytics failed");
 
         const police = [], hosp = [], fire = [], cctv = [];
@@ -378,7 +391,8 @@
           else if (el.nodeType === 'surveillance') cctv.push(el);
         });
 
-        renderSafetyOnMap(map, police, hosp, fire, cctv, city, data.source === 'cache' ? 'Verified Repository' : 'Live Verified Data');
+        document.getElementById('safetySummary').innerHTML = `<p>Verified Search Results from ${data.source === 'cache' ? 'Authorized Repository' : 'Live Verified Database'}.</p>`;
+        renderSafetyOnMap(map, police, hosp, fire, cctv, city, data.source, data.safetyStats);
         updateAreaCards(lat, lng, city);
       } catch (e) {
         console.error("Safety Fetch Failed:", e);
