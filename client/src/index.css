@@ -1488,9 +1488,7 @@ body {
     display: flex;
   }
 
-  .safety-grid {
-    grid-template-columns: 1fr;
-  }
+  /* Removed grid-template-columns: 1fr to maintain single line scroll */
 
   .newsletter-form {
     flex-direction: column;
