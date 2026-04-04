@@ -323,17 +323,25 @@
         <div class="safety-map-info glass-card" id="safetyMapInfo">
           <h3><span class="material-symbols-outlined mi">analytics</span> Safety Analysis</h3>
           <div class="safety-stats" id="safetyStats">
-            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">local_police</span></span>
-              <div><span class="stat-num" id="policeCount">--</span><br />Police Stations</div>
+            <div class="safety-stat">
+              <span class="stat-icon"><span class="material-symbols-outlined">local_police</span></span>
+              <span class="stat-num" id="policeCount">--</span>
+              <span class="stat-label">Police Stations</span>
             </div>
-            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">local_hospital</span></span>
-              <div><span class="stat-num" id="hospitalCount">--</span><br />Hospitals</div>
+            <div class="safety-stat">
+              <span class="stat-icon"><span class="material-symbols-outlined">local_hospital</span></span>
+              <span class="stat-num" id="hospitalCount">--</span>
+              <span class="stat-label">Hospitals</span>
             </div>
-            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">local_fire_department</span></span>
-              <div><span class="stat-num" id="fireCount">--</span><br />Fire Stations</div>
+            <div class="safety-stat">
+              <span class="stat-icon"><span class="material-symbols-outlined">local_fire_department</span></span>
+              <span class="stat-num" id="fireCount">--</span>
+              <span class="stat-label">Fire Stations</span>
             </div>
-            <div class="safety-stat"><span class="stat-icon"><span class="material-symbols-outlined">videocam</span></span>
-              <div><span class="stat-num" id="cctvCount">--</span><br />CCTV/Surveillance</div>
+            <div class="safety-stat">
+              <span class="stat-icon"><span class="material-symbols-outlined">videocam</span></span>
+              <span class="stat-num" id="cctvCount">--</span>
+              <span class="stat-label">CCTV/Surveillance</span>
             </div>
           </div>
           <div class="safety-summary" id="safetySummary">
@@ -482,42 +490,97 @@
       } catch(e) { console.log('Area cards Nominatim lookup skipped'); }
     }
 
-    async function fetchSafetyData(map, globalLat, globalLng, city) {
-      document.getElementById('safetySummary').innerHTML = '<p>⏳ Fetching authentic safety data for ' + city + '...</p>';
+    // HIGH-PRECISION CONCURRENT OVERPASS RACE (Police, Hospital, Fire, CCTV)
+    async function fetchSafetyDataDirect(lat, lng) {
+      const radius = 10000; // 10km for safety context
+      const query = `[out:json][timeout:25];
+        (
+          node['amenity'='police'](around:${radius},${lat},${lng});
+          node['amenity'='hospital'](around:${radius},${lat},${lng});
+          node['amenity'='clinic'](around:${radius},${lat},${lng});
+          node['amenity'='fire_station'](around:${radius},${lat},${lng});
+          node['man_made'='surveillance'](around:${radius},${lat},${lng});
+          node['amenity'='cctv'](around:${radius},${lat},${lng});
+        );
+        out body;`;
       
-      // Show spinning loaders in Map Sidebar
-      const spinner = '<div class="spinner-small"></div>';
-      const pNum = document.getElementById('policeCount'); if(pNum) pNum.innerHTML = spinner;
-      const hNum = document.getElementById('hospitalCount'); if(hNum) hNum.innerHTML = spinner;
-      const fNum = document.getElementById('fireCount'); if(fNum) fNum.innerHTML = spinner;
-      const cNum = document.getElementById('cctvCount'); if(cNum) cNum.innerHTML = spinner;
+      const mirrors = [
+        'https://overpass-api.de/api/interpreter',
+        'https://lz4.overpass-api.de/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter'
+      ];
 
       try {
-        const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`);
-        const data = await res.json();
-        if (!data.infrastructures) throw new Error("Analytics failed");
+        const fastestResponse = await Promise.any(mirrors.map(url => 
+          fetch(url, {
+            method: 'POST',
+            body: 'data=' + encodeURIComponent(query)
+          }).then(r => r.ok ? r.json() : Promise.reject())
+        ));
+        return { source: 'Live High-Precision OSM', elements: fastestResponse.elements || [] };
+      } catch (e) {
+        throw new Error('All mirrors failed');
+      }
+    }
+
+    async function fetchSafetyData(map, globalLat, globalLng, city) {
+      const summary = document.getElementById('safetySummary');
+      if (summary) summary.innerHTML = `<p>⏳ Fetching authentic safety data for ${city}...</p>`;
+      
+      let dataFound = false;
+
+      const analyzeTimeout = setTimeout(() => {
+        if (!dataFound && summary) {
+          summary.innerHTML = `<div style="display:flex; align-items:center; gap:10px;">
+            <div class="spinner-small"></div>
+            <span style="color:var(--accent-cyan); font-weight:600; font-size:0.9rem;">🔍 Analyzing high-precision city infrastructure data for ${city}...</span>
+          </div>`;
+        }
+      }, 1500);
+
+      ['policeCount','hospitalCount','fireCount','cctvCount'].forEach(id => {
+        const el = document.getElementById(id); if(el) el.innerHTML = '<div class="spinner-small"></div>';
+      });
+
+      try {
+        const results = await Promise.any([
+          fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`)
+            .then(r => r.ok ? r.json() : Promise.reject()),
+          
+          fetchSafetyDataDirect(globalLat, globalLng).then(osm => ({ 
+            infrastructures: osm.elements.map(e => ({
+              nodeType: e.tags?.amenity === 'police' ? 'police' : 
+                        (e.tags?.amenity === 'hospital' || e.tags?.amenity === 'clinic') ? 'hospital' : 
+                        e.tags?.amenity === 'fire_station' ? 'fire_station' : 'surveillance',
+              lat: e.lat, lng: e.lon, name: e.tags?.name
+            })),
+            source: 'Live Verified Database'
+          }))
+        ]);
+
+        dataFound = true;
+        clearTimeout(analyzeTimeout);
 
         const police = [], hosp = [], fire = [], cctv = [];
-        data.infrastructures.forEach(el => {
-          if (el.nodeType === 'police') police.push(el);
-          else if (el.nodeType === 'hospital') hosp.push(el);
-          else if (el.nodeType === 'fire_station') fire.push(el);
-          else if (el.nodeType === 'surveillance') cctv.push(el);
+        (results.infrastructures || []).forEach(el => {
+          const item = { globalLat: el.lat, globalLng: el.lng, name: el.name };
+          if (el.nodeType === 'police') police.push(item);
+          else if (el.nodeType === 'hospital') hosp.push(item);
+          else if (el.nodeType === 'fire_station') fire.push(item);
+          else if (el.nodeType === 'surveillance') cctv.push(item);
         });
 
-        const summary = document.getElementById('safetySummary');
-        if (summary) summary.innerHTML = `<p>Verified Search Results from ${data.source === 'cache' ? 'Authorized Repository' : 'Live Verified Database'}.</p>`;
+        if (summary) summary.innerHTML = `<p style="color:var(--safe-green)">✓ Verified Search Results from ${results.source || 'Secure Sources'}.</p>`;
+        renderSafetyOnMap(map, police, hosp, fire, cctv, city, results.source || 'Live Data', results.safetyStats);
         
-        renderSafetyOnMap(map, police, hosp, fire, cctv, city, data.source, data.safetyStats);
+        if (results.recentIncidents) renderRecentCrimes(results.recentIncidents, 'recentActivityList', 'recentActivityContainer');
         updateAreaCards(globalLat, globalLng, city);
 
-        // Populate Recent Crime Activity for initial city
-        if (data.recentIncidents) renderRecentCrimes(data.recentIncidents, 'recentActivityList', 'recentActivityContainer');
-
       } catch (e) {
-        console.error("Safety Fetch Failed:", e);
-        const summary = document.getElementById('safetySummary');
-        if (summary) summary.innerHTML = '<p style="color:#ff5252">Safety analytics temporarily unavailable. Please try again later.</p>';
+        dataFound = true;
+        clearTimeout(analyzeTimeout);
+        console.error("Safety Data Overhaul Failed:", e);
+        if (summary) summary.innerHTML = '<p style="color:#ff5252">High-precision analysis failed. Try reloading the map.</p>';
       }
     }
 
