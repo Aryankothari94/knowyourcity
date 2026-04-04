@@ -118,14 +118,18 @@
               </div>
             </a>
           </div>
-          <div id="mobileAccountNav" style="display:none;">
+          <div id="mobileAccountNav" style="display:none;" onclick="this.classList.toggle('active')">
             <div class="mobile-widget-card">
               <div class="mobile-widget-icon" style="background: var(--accent-gradient);">👤</div>
               <div style="flex:1;">
                 <div id="mobileAccountName" style="font-weight:600; font-size:1rem;">Hello, User</div>
                 <div style="font-size:0.75rem; color:var(--safe-green);">Account Active</div>
               </div>
-              <button onclick="handleLogout()" style="background:none; border:none; color:var(--caution-red); font-size:1.2rem;">🚪</button>
+              <button onclick="event.stopPropagation(); handleLogout()" style="background:none; border:none; color:var(--caution-red); font-size:1.2rem;">🚪</button>
+            </div>
+            <!-- Simple mobile account sub-menu -->
+            <div class="mobile-account-info" style="display:none; padding:10px; font-size:0.8rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.05); margin-top:5px;">
+               <p>Your account is synchronized. Click the logout icon to switch users.</p>
             </div>
           </div>
 

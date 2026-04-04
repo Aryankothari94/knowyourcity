@@ -1271,9 +1271,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLoginBtn = e.target.closest('#loginBtn') || e.target.closest('.nav-login') || e.target.closest('#mobileLoginNav');
     const isHamburger = e.target.closest('#hamburger');
     const isCloseBtn = e.target.closest('.modal-close') || e.target.closest('#closeModal');
+    // Mobile widgets and their children
+    const isMobileNav = e.target.closest('#mobileLocationBadge') || e.target.closest('#mobileWeatherBadge') || e.target.closest('#mobileAccountNav');
+    const isDropdown = e.target.closest('.location-dropdown');
 
     // If clicking on anything else, show login modal
-    if (!isAuthModal && !isLogoutModal && !isLoginBtn && !isHamburger && !isCloseBtn) {
+    if (!isAuthModal && !isLogoutModal && !isLoginBtn && !isHamburger && !isCloseBtn && !isMobileNav && !isDropdown) {
       const authModal = document.getElementById('authModal');
       if (authModal && !authModal.classList.contains('active')) {
         e.preventDefault();

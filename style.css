@@ -3834,9 +3834,30 @@ a.floating-card:hover {
     left: 0;
     right: 0;
     width: 100%;
-    max-height: 80vh;
-    border-radius: 20px 20px 0 0;
+    max-height: 85vh;
+    border-radius: 28px 28px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 14, 39, 0.98);
+    backdrop-filter: blur(40px);
     z-index: 10000;
+    display: none;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+    box-shadow: 0 -10px 50px rgba(0,0,0,0.8);
+  }
+
+  .location-dropdown.active {
+    display: flex !important;
+    animation: mobileSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes mobileSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  #mobileAccountNav.active .mobile-account-info {
+    display: block !important;
   }
 
   /* ---- HERO ---- */
