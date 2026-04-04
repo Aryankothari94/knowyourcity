@@ -247,6 +247,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Expose to window for HTML onclick
+  window.logout = logout;
+  window.handleLogout = () => {
+    if (logoutConfirmModal) {
+      logoutConfirmModal.classList.add('active');
+    } else {
+      logout();
+    }
+  };
+
   const updateAuthUI = () => {
     const premiumContent = document.getElementById('premiumAppContent');
     const heroBtn = document.getElementById('heroCtaPrimary');

@@ -3329,23 +3329,25 @@ a.floating-card:hover {
 }
 
 .location-dropdown {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
+    position: fixed;
+    top: 80px;
+    right: 24px;
     width: 320px;
-    background: rgba(15, 18, 35, 0.98);
+    background: rgba(15, 20, 45, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 0;
     display: none;
-    z-index: 9999;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    z-index: 99999;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.6);
     overflow: hidden;
-    animation: dropdownSlide 0.25s ease;
+    animation: dropdownSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(25px);
 }
 
 .location-dropdown.active {
-    display: block;
+    display: flex !important;
+    flex-direction: column;
 }
 
 @keyframes dropdownSlide {
@@ -4650,6 +4652,23 @@ a.floating-card:hover {
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 50px !important;
     font-size: 0.78rem !important;
+  }
+  .nav-logout-btn-mobile {
+    background: rgba(255, 78, 78, 0.1) !important;
+    border: 1px solid rgba(255, 78, 78, 0.2) !important;
+    color: var(--caution-red) !important;
+    padding: 8px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+  }
+  .nav-logout-btn-mobile:hover {
+    background: rgba(255, 78, 78, 0.2) !important;
+    transform: scale(1.05);
   }
 }
 
