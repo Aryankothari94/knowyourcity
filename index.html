@@ -25,33 +25,44 @@
 
   <link rel="stylesheet" href="style.css?v=85">
   <style>
-    /* COMPACT REFINEMENT: Safety Explorer (30% Width, Reduced Page Size) */
+    /* HORIZONTAL LINE REFINEMENT: Safety Explorer (Single Row, Horizontal Scroll) */
     #safety .safety-grid {
-      display: grid !important;
-      grid-template-columns: repeat(3, 1fr) !important;
-      gap: 20px !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      gap: 25px !important;
       margin-top: 30px !important;
+      padding: 0 20px 40px 20px !important;
       width: 100% !important;
-      max-width: 1200px !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
-      padding: 0 15px 30px 15px !important;
+      scroll-behavior: smooth !important;
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    #safety .safety-grid::-webkit-scrollbar {
+      height: 6px !important;
+    }
+    #safety .safety-grid::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15) !important;
+      border-radius: 10px !important;
     }
     #safety .area-card {
-      padding: 24px 20px !important; /* Compressed padding */
+      flex: 0 0 30% !important; /* Exactly 30% as requested */
+      min-width: 320px !important; /* Ensure readability */
+      padding: 24px 20px !important;
       text-align: center !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
       justify-content: flex-start !important;
-      background: rgba(30, 32, 47, 0.4) !important; /* Subtler background */
+      background: rgba(30, 32, 47, 0.4) !important;
       border: 1px solid rgba(255, 255, 255, 0.08) !important;
       border-radius: 16px !important;
       backdrop-filter: blur(20px) !important;
       transition: transform 0.3s ease, box-shadow 0.3s ease !important;
       cursor: pointer;
       height: auto !important;
-      min-height: 320px !important; /* Significantly reduced height */
+      min-height: 380px !important;
     }
     #safety .area-card:hover {
       transform: translateY(-5px) !important;
@@ -63,12 +74,12 @@
       margin-bottom: 12px !important;
     }
     #safety .area-name {
-      font-size: 1.05rem !important; /* Smaller text */
+      font-size: 1.05rem !important;
       font-weight: 700 !important;
       gap: 5px !important;
     }
     #safety .area-name .mi {
-      font-size: 24px !important; /* Smaller icons */
+      font-size: 24px !important;
       width: 44px !important;
       height: 44px !important;
       border-radius: 12px !important;
@@ -79,36 +90,26 @@
     }
     #safety .area-metrics {
       margin-top: 10px !important;
-      gap: 8px !important; /* Tighter gap between bars */
+      gap: 8px !important;
+      width: 100% !important;
+      text-align: left !important;
     }
-    #safety .metric-label {
-      font-size: 0.72rem !important;
-    }
-    #safety .metric-value {
-      font-size: 0.72rem !important;
-    }
-    #safety .metric-bar {
-      height: 5px !important; /* Thinner bars */
-    }
+    #safety .metric-label { font-size: 0.72rem !important; }
+    #safety .metric-value { font-size: 0.72rem !important; }
+    #safety .metric-bar { height: 5px !important; }
+    
     #safety .area-tags {
       margin-top: 15px !important;
       gap: 6px !important;
+      justify-content: center !important;
     }
     #safety .area-tag {
       font-size: 0.65rem !important;
       padding: 3px 8px !important;
     }
-    #safety .area-tag .mi {
-      font-size: 14px !important;
-      width: auto !important;
-      height: auto !important;
-      background: none !important;
-    }
-    @media (max-width: 1024px) {
-      #safety .safety-grid { grid-template-columns: repeat(2, 1fr) !important; }
-    }
-    @media (max-width: 650px) {
-      #safety .safety-grid { grid-template-columns: 1fr !important; }
+    
+    @media (max-width: 900px) {
+      #safety .area-card { flex: 0 0 85% !important; }
     }
   </style>
   <link rel="icon" href="logo.png" type="image/png" />
