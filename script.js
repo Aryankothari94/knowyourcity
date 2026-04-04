@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Weather Module with Hourly Data
   window.kycFetchWeather = (lat, lng) => {
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=temperature_2m,weathercode&forecast_days=1`)
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=temperature_2m,weathercode&past_days=1&forecast_days=2&timezone=auto`)
       .then(res => res.json())
       .then(wData => {
         const weatherBadge = document.getElementById('weatherBadge');
@@ -471,28 +471,48 @@ document.addEventListener('DOMContentLoaded', () => {
           };
           weatherIcon.textContent = iconMap(wData.current_weather.weathercode);
 
-          if (hourlyList && wData.hourly) {
-            const nowHour = new Date().getHours();
-            let hourlyHTML = '';
-            for (let i = 0; i < 24; i++) {
-                // Determine hour formatting
-                if(i < nowHour && new Date().getDate() === new Date(wData.hourly.time[0]).getDate()) continue; // skip past hours today if same day
+          if (hourlyList && wData.hourly && wData.current_weather) {
+            const currentTimeStr = wData.current_weather.time;
+            const currentIndex = wData.hourly.time.findIndex(t => t === currentTimeStr);
+            
+            if (currentIndex !== -1) {
+              const startIndex = Math.max(0, currentIndex - 12);
+              const endIndex = Math.min(wData.hourly.time.length, currentIndex + 13);
+              let hourlyHTML = '';
+              
+              for (let i = startIndex; i < endIndex; i++) {
                 const tDate = new Date(wData.hourly.time[i]);
-                const hString = tDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const timeString = tDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateString = tDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
                 const t = Math.round(wData.hourly.temperature_2m[i]);
                 const c = wData.hourly.weathercode[i];
-                let bg = i === nowHour ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)';
-                let bder = i === nowHour ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid transparent';
+                
+                let bg = i === currentIndex ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+                let bder = i === currentIndex ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid transparent';
+                let label = i === currentIndex ? `<span style="color:var(--accent-cyan); font-size:0.75rem; font-weight:bold;">NOW</span>` : '';
                 
                 hourlyHTML += `
                   <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: ${bg}; border: ${bder}; border-radius: 6px;">
-                    <span style="font-size:0.85rem; color:#ccc;">${hString}</span>
-                    <span style="font-size:1rem;">${iconMap(c)}</span>
-                    <span style="font-size:0.95rem; font-weight:bold;">${t}°C</span>
+                    <div style="display: flex; flex-direction: column; width: 80px;">
+                      ${label}
+                      <span style="font-size:0.85rem; color:#fff;">${timeString}</span>
+                      <span style="font-size:0.65rem; color:#aaa;">${dateString}</span>
+                    </div>
+                    <span style="font-size:1.2rem;">${iconMap(c)}</span>
+                    <span style="font-size:0.95rem; font-weight:bold; width: 40px; text-align:right;">${t}°C</span>
                   </div>
                 `;
+              }
+              hourlyList.innerHTML = hourlyHTML;
+              
+              // Optionally scroll to "NOW" smoothly after render
+              setTimeout(() => {
+                const nowSpan = hourlyList.querySelector('span[style*="var(--accent-cyan)"]');
+                if (nowSpan) nowSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 100);
+            } else {
+              hourlyList.innerHTML = '<div style="color:#aaa; font-size:0.8rem; text-align:center;">Forecast unavailable</div>';
             }
-            hourlyList.innerHTML = hourlyHTML || '<div style="color:#aaa; font-size:0.8rem; text-align:center;">Forecast unavailable</div>';
           }
         }
       }).catch(e => {
