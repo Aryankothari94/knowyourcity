@@ -469,16 +469,24 @@
         crimeList.innerHTML = '';
         
         if (incidents && incidents.length > 0) {
-            incidents.slice(0, 3).forEach(inc => {
-                const date = inc.timestamp ? new Date(inc.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent';
+            incidents.slice(0, 5).forEach(inc => {
+                const dateObj = inc.timestamp ? new Date(inc.timestamp) : new Date();
+                const tsValid = !isNaN(dateObj);
+                const date = tsValid ? dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent';
+                const time = tsValid ? dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute:'2-digit' }) : '';
+                const loc = inc.location || 'Local Area';
+                
                 const item = document.createElement('div');
                 item.className = 'crime-incident-item';
+                item.style.marginBottom = '10px';
                 item.innerHTML = `
-                    <div class="crime-incident-header">
-                        <span class="crime-incident-type">⚠️ ${inc.type || 'Alert'}</span>
-                        <span class="crime-incident-date">${date}</span>
+                    <div class="crime-incident-header" style="cursor:pointer;" onclick="const d=this.nextElementSibling; d.style.display=d.style.display==='none'?'block':'none'">
+                        <div style="color:#ff5252; font-weight:600; text-decoration: underline; font-size:0.9rem;">⚠️ ${inc.type || 'Incident Report'}</div>
+                        <div style="color:#aaa; font-size:0.8rem; margin-top:3px;">📍 ${loc} • ${date} ${time}</div>
                     </div>
-                    <div class="crime-incident-desc">${inc.description || 'Public awareness notice issued for this region.'}</div>
+                    <div class="crime-incident-desc" style="display:none; padding:10px; background:rgba(255,82,82,0.08); border-left:3px solid #ff5252; margin-top:6px; font-size:0.85rem; border-radius:4px; color:#e0e0e0;">
+                        ${inc.description || 'Details unavailable.'}
+                    </div>
                 `;
                 crimeList.appendChild(item);
             });
@@ -571,9 +579,64 @@
             </p>
           </div>
         </div>
+        <!-- Feature 9 -->
+        <div class="feature-card glass-card reveal" onclick="openDiningModal()" style="cursor:pointer">
+          <div class="feature-icon red"><span class="material-symbols-outlined">restaurant</span></div>
+          <div class="feature-text">
+            <h3>Cafes & Restaurants</h3>
+            <p>Explore the best food spots around the city with ratings, contacts, and direct map navigation.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
+
+  <!-- Dining Choice Modal -->
+  <div class="modal" id="diningChoiceModal">
+    <div class="modal-content glass-card" style="max-width: 450px; text-align: center; padding: 40px 20px;">
+      <h2 style="margin-bottom: 20px; font-size: 1.8rem;">What are you looking for?</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 30px;">Select a category to view the best spots in your city.</p>
+      <div style="display: flex; gap: 16px; justify-content: center;">
+        <button class="btn-primary" onclick="openFeaturePage('dining.html?type=cafe')" style="flex: 1; padding: 16px; font-size: 1.1rem; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined" style="font-size: 32px;">local_cafe</span>
+          Cafes
+        </button>
+        <button class="btn-primary" onclick="openFeaturePage('dining.html?type=restaurant')" style="flex: 1; padding: 16px; font-size: 1.1rem; display: flex; flex-direction: column; align-items: center; gap: 8px; background: linear-gradient(135deg, #ff5252, #d32f2f);">
+          <span class="material-symbols-outlined" style="font-size: 32px;">restaurant</span>
+          Restaurants
+        </button>
+      </div>
+      <button onclick="closeDiningModal()" style="margin-top: 24px; background: none; border: none; color: var(--text-secondary); cursor: pointer; text-decoration: underline;">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    function openDiningModal() {
+      event.preventDefault();
+      event.stopPropagation();
+      const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
+      if (!isLoggedIn) { document.getElementById('authModal')?.classList.add('active'); document.body.style.overflow='hidden'; return; }
+      const modal = document.getElementById('diningChoiceModal');
+      // Some standard styles just in case generic modal styles are missing
+      modal.style.position = 'fixed';
+      modal.style.top = '0'; modal.style.left = '0';
+      modal.style.width = '100%'; modal.style.height = '100%';
+      modal.style.background = 'rgba(0,0,0,0.7)';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = '10000';
+    }
+    function closeDiningModal() {
+      document.getElementById('diningChoiceModal').style.display = 'none';
+    }
+    document.getElementById('diningChoiceModal')?.addEventListener('click', function (e) {
+      if (e.target === this) closeDiningModal();
+    });
+    // Start hidden
+    document.getElementById('diningChoiceModal').style.display = 'none';
+  </script>
 
 
   <script>
@@ -590,6 +653,18 @@
   </script>
 
   <!-- ===== SAFETY EXPLORER ===== -->
+  <style>
+    #safetyStats {
+      display: none !important;
+    }
+    @media (min-width: 900px) {
+      .safety-explorer .safety-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 24px !important;
+      }
+    }
+  </style>
   <section class="safety-explorer" id="safety">
     <div class="container">
       <div class="safety-header reveal" style="position: relative; z-index: 99999;">
@@ -1881,6 +1956,14 @@
             <span>I agree to the <a href="terms.html" target="_blank" class="terms-link">Terms & Conditions</a></span>
           </label>
           <div id="termsError" class="auth-error-message"></div>
+        </div>
+        <div class="form-group terms-checkbox-group">
+          <label class="terms-checkbox-label">
+            <input type="checkbox" id="loginPrivacy" />
+            <span class="custom-checkbox"></span>
+            <span>I accept the <a href="privacy.html" target="_blank" class="terms-link">Privacy Policy</a></span>
+          </label>
+          <div id="privacyError" class="auth-error-message"></div>
         </div>
         <button type="submit" class="btn-auth">Login to Your City</button>
         <div class="auth-footer">

@@ -182,6 +182,7 @@
     let journeyInterval = null;
     let journeyMarker = null;
     let pickupData = null, dropData = null;
+    let exactCurrentLocationForPickup = null;
     const defaultLat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
     const defaultLng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
 
@@ -210,6 +211,7 @@
       const input = document.getElementById(inputId);
       const list = document.getElementById(listId);
       input.addEventListener('input', () => {
+        if (inputId === 'pickupInput') exactCurrentLocationForPickup = null;
         clearTimeout(acTimeout);
         const q = input.value.trim();
         if (q.length < 3) { list.innerHTML=''; list.classList.remove('show'); return; }
@@ -263,7 +265,12 @@
       stopJourney();
 
       try {
-        [pickupData, dropData] = await Promise.all([geocode(pickupText), geocode(dropText)]);
+        let pPickup = (exactCurrentLocationForPickup && pickupText.includes('📍'))
+            ? Promise.resolve(exactCurrentLocationForPickup)
+            : geocode(pickupText);
+        let pDrop = geocode(dropText);
+
+        [pickupData, dropData] = await Promise.all([pPickup, pDrop]);
         if (!pickupData) { alert('Pickup location not found.'); return; }
         if (!dropData)   { alert('Drop location not found.'); return; }
 
@@ -506,6 +513,7 @@
     function useCurrentLocationForPickup() {
       const input = document.getElementById('pickupInput');
       input.value = '📍 Detecting...';
+      exactCurrentLocationForPickup = null;
       if (!navigator.geolocation) { alert('Geolocation not supported by your browser.'); input.value=''; return; }
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -514,8 +522,12 @@
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, { headers:{'Accept-Language':'en'} });
             const data = await res.json();
             const name = data.address?.city || data.address?.town || data.address?.suburb || 'Your Location';
-            input.value = name;
-          } catch { input.value = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`; }
+            input.value = "📍 " + name;
+            exactCurrentLocationForPickup = { lat: latitude, lng: longitude, name: name + " (Current)" };
+          } catch { 
+            input.value = `📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`; 
+            exactCurrentLocationForPickup = { lat: latitude, lng: longitude, name: "Current Location" };
+          }
         },
         () => { alert('Could not get your location. Please check permissions.'); input.value=''; }
       );

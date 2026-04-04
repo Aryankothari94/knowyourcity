@@ -145,18 +145,53 @@ router.get('/insights', async (req, res) => {
             crimeCount: incidents.length
         };
 
-        // Fallback Incident Generator: If API returns 0 incidents, generate authentic localized ones
+        // Fallback Incident Generator: If API returns 0 incidents, generate authentic localized ones from Google News RSS
         let processedIncidents = incidents.slice(0, 5).map(inc => ({
             type: inc.incident_offense || 'Incident',
             description: inc.incident_offense_description || 'Police report filed',
-            timestamp: inc.incident_datetime || inc.incident_date
+            timestamp: inc.incident_datetime || inc.incident_date,
+            location: city
         }));
 
         if (processedIncidents.length === 0) {
+            try {
+                const url = `https://news.google.com/rss/search?q=crime+OR+arrest+OR+police+OR+incident+in+${encodeURIComponent(city)}&hl=en-IN&gl=IN&ceid=IN:en`;
+                const newsRes = await fetch(url);
+                if (newsRes.ok) {
+                    const text = await newsRes.text();
+                    // Regex to extract title and pubDate from RSS <item> tags
+                    const matches = [...text.matchAll(/<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<pubDate>(.*?)<\/pubDate>[\s\S]*?<\/item>/gi)];
+                    
+                    if (matches.length > 0) {
+                        processedIncidents = matches.slice(0, 5).map(m => {
+                            let title = m[1].replace(/<!\[CDATA\[|\]\]>/g, '').replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+                            // Split title into tagline and source if possible (usually standard is "News Title - Source")
+                            let typeLine = title;
+                            if (title.includes(' - ')) {
+                                const parts = title.split(' - ');
+                                parts.pop();
+                                typeLine = parts.join(' - ');
+                            }
+                            // Keep it short for the required tagline
+                            const shortType = typeLine.length > 50 ? typeLine.substring(0, 47) + '...' : typeLine;
+
+                            return {
+                                type: shortType,
+                                description: title + `. Read more on Google News or local media. Location: ${city}.`,
+                                timestamp: m[2] ? new Date(m[2]).toISOString() : new Date().toISOString(),
+                                location: city
+                            };
+                        });
+                    }
+                }
+            } catch(e) { console.error('Error fetching news fallback:', e); }
+        }
+
+        if (processedIncidents.length === 0) {
           const fallbacks = [
-            { type: 'Night Patrolling', description: `Increased police patrolling reported near key residential zones in ${city}.` },
-            { type: 'Traffic Awareness', description: `Local authorities conducting a helmet and document verification drive in major junctions.` },
-            { type: 'Public Safety Alert', description: `Regular security audit completed for public CCTV networks in this metropolitan area.` }
+            { type: 'Night Patrolling', description: `Increased police patrolling reported near key residential zones in ${city}.`, location: city },
+            { type: 'Traffic Awareness', description: `Local authorities conducting a helmet and document verification drive in major junctions.`, location: city },
+            { type: 'Public Safety Alert', description: `Regular security audit completed for public CCTV networks in this metropolitan area.`, location: city }
           ];
           processedIncidents = fallbacks.map(f => ({ ...f, timestamp: new Date().toISOString() }));
         }

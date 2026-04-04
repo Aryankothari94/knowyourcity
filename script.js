@@ -302,6 +302,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (termsError) termsError.classList.remove('active');
 
+    const privacyCheckbox = document.getElementById('loginPrivacy');
+    const privacyError = document.getElementById('privacyError');
+    if (privacyCheckbox && !privacyCheckbox.checked) {
+      if (privacyError) {
+        privacyError.textContent = 'Please accept the Privacy Policy to continue.';
+        privacyError.classList.add('active');
+      }
+      return;
+    }
+    if (privacyError) privacyError.classList.remove('active');
+
     if (captchaInput !== currentCaptchaAnswer) {
       showError(loginError, 'Incorrect Captcha. Please try again.');
       generateCaptcha();
