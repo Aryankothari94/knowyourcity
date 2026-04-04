@@ -310,6 +310,10 @@
       <div class="safety-map-wrapper">
         <div class="safety-map-box glass-card">
           <div id="safetyMap" class="safety-map-container"></div>
+          <div id="safetyStatusBadge" class="safety-status-badge">
+            <span class="status-dot"></span>
+            <span class="status-text">Analyzing Area...</span>
+          </div>
           <div class="safety-map-legend">
             <div class="legend-item"><span class="legend-color" style="background:#00e676"></span> Safe Zone</div>
             <div class="legend-item"><span class="legend-color" style="background:#ffab40"></span> Moderate</div>
@@ -436,6 +440,23 @@
 
       // Accurate safety summary based on real data
       const tot = police.length + hosp.length + fire.length + cctv.length;
+      
+      // Update Live Status Badge
+      const badge = document.getElementById('safetyStatusBadge');
+      if (badge) {
+          const dot = badge.querySelector('.status-dot');
+          const text = badge.querySelector('.status-text');
+          if (tot > 20) {
+              badge.className = 'safety-status-badge status-high';
+              text.textContent = 'High Safety Coverage';
+          } else if (tot >= 10) {
+              badge.className = 'safety-status-badge status-mid';
+              text.textContent = 'Moderate Safety coverage';
+          } else {
+              badge.className = 'safety-status-badge status-low';
+              text.textContent = 'Limited Safety Data';
+          }
+      }
       const areaKm2 = Math.PI * 15 * 15; // ~707 km² for 15km radius
       const den = (tot / areaKm2).toFixed(2);
       const lv = tot > 30 ? 'High' : tot > 10 ? 'Moderate' : 'Low';
