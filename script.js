@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Weather Module with Hourly Data
   window.kycFetchWeather = (lat, lng) => {
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=temperature_2m,weathercode&past_days=1&forecast_days=2&timezone=auto`)
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=temperature_2m,weathercode,is_day&past_days=1&forecast_days=2&timezone=auto`)
       .then(res => res.json())
       .then(wData => {
         const weatherBadge = document.getElementById('weatherBadge');
@@ -460,16 +460,16 @@ document.addEventListener('DOMContentLoaded', () => {
           weatherBadge.style.display = 'flex';
           weatherTemp.textContent = `${Math.round(wData.current_weather.temperature)}°C`;
           
-          const iconMap = c => {
-              if (c === 0) return '☀️';
-              if (c <= 3) return '⛅';
+          const iconMap = (c, isDay) => {
+              if (c === 0) return isDay ? '☀️' : '🌙';
+              if (c <= 3) return isDay ? '⛅' : '☁️';
               if (c <= 48) return '🌫️';
               if (c <= 67) return '🌧️';
               if (c <= 77) return '❄️';
               if (c >= 95) return '⛈️';
               return '🌡️';
           };
-          weatherIcon.textContent = iconMap(wData.current_weather.weathercode);
+          weatherIcon.textContent = iconMap(wData.current_weather.weathercode, wData.current_weather.is_day);
 
           if (hourlyList && wData.hourly && wData.current_weather) {
             const currentTimeStr = wData.current_weather.time;
@@ -486,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dateString = tDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
                 const t = Math.round(wData.hourly.temperature_2m[i]);
                 const c = wData.hourly.weathercode[i];
+                const dFlag = wData.hourly.is_day[i];
                 
                 let bg = i === currentIndex ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)';
                 let bder = i === currentIndex ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid transparent';
@@ -498,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       <span style="font-size:0.85rem; color:#fff;">${timeString}</span>
                       <span style="font-size:0.65rem; color:#aaa;">${dateString}</span>
                     </div>
-                    <span style="font-size:1.2rem;">${iconMap(c)}</span>
+                    <span style="font-size:1.2rem;">${iconMap(c, dFlag)}</span>
                     <span style="font-size:0.95rem; font-weight:bold; width: 40px; text-align:right;">${t}°C</span>
                   </div>
                 `;
