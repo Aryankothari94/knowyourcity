@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (hourlyList && wData.hourly && wData.current_weather) {
             const currentTimeStr = wData.current_weather.time;
-            const currentIndex = wData.hourly.time.findIndex(t => t === currentTimeStr);
+            const currentIndex = wData.hourly.time.findIndex(t => t.slice(0, 13) === currentTimeStr.slice(0, 13));
             
             if (currentIndex !== -1) {
               const startIndex = Math.max(0, currentIndex - 12);
