@@ -446,27 +446,59 @@ document.addEventListener('DOMContentLoaded', () => {
   window.isLoggedIn = isLoggedIn;
   console.log('✅ KYC Auth System Initialized. Logged In:', isLoggedIn);
 
-  // Weather Module
-  const fetchLocalWeather = (lat, lng) => {
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`)
+  // Weather Module with Hourly Data
+  window.kycFetchWeather = (lat, lng) => {
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=temperature_2m,weathercode&forecast_days=1`)
       .then(res => res.json())
       .then(wData => {
         const weatherBadge = document.getElementById('weatherBadge');
         const weatherTemp = document.getElementById('weatherTemp');
         const weatherIcon = document.getElementById('weatherIcon');
+        const hourlyList = document.getElementById('hourlyWeatherList');
+
         if (wData && wData.current_weather && weatherBadge && weatherTemp) {
           weatherBadge.style.display = 'flex';
           weatherTemp.textContent = `${Math.round(wData.current_weather.temperature)}°C`;
-          const wcode = wData.current_weather.weathercode;
-          if (wcode === 0) weatherIcon.textContent = '☀️';
-          else if (wcode > 0 && wcode <= 3) weatherIcon.textContent = '⛅';
-          else if (wcode >= 45 && wcode <= 48) weatherIcon.textContent = '🌫️';
-          else if (wcode >= 51 && wcode <= 67) weatherIcon.textContent = '🌧️';
-          else if (wcode >= 71 && wcode <= 77) weatherIcon.textContent = '❄️';
-          else if (wcode >= 95) weatherIcon.textContent = '⛈️';
-          else weatherIcon.textContent = '🌡️';
+          
+          const iconMap = c => {
+              if (c === 0) return '☀️';
+              if (c <= 3) return '⛅';
+              if (c <= 48) return '🌫️';
+              if (c <= 67) return '🌧️';
+              if (c <= 77) return '❄️';
+              if (c >= 95) return '⛈️';
+              return '🌡️';
+          };
+          weatherIcon.textContent = iconMap(wData.current_weather.weathercode);
+
+          if (hourlyList && wData.hourly) {
+            const nowHour = new Date().getHours();
+            let hourlyHTML = '';
+            for (let i = 0; i < 24; i++) {
+                // Determine hour formatting
+                if(i < nowHour && new Date().getDate() === new Date(wData.hourly.time[0]).getDate()) continue; // skip past hours today if same day
+                const tDate = new Date(wData.hourly.time[i]);
+                const hString = tDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const t = Math.round(wData.hourly.temperature_2m[i]);
+                const c = wData.hourly.weathercode[i];
+                let bg = i === nowHour ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+                let bder = i === nowHour ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid transparent';
+                
+                hourlyHTML += `
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: ${bg}; border: ${bder}; border-radius: 6px;">
+                    <span style="font-size:0.85rem; color:#ccc;">${hString}</span>
+                    <span style="font-size:1rem;">${iconMap(c)}</span>
+                    <span style="font-size:0.95rem; font-weight:bold;">${t}°C</span>
+                  </div>
+                `;
+            }
+            hourlyList.innerHTML = hourlyHTML || '<div style="color:#aaa; font-size:0.8rem; text-align:center;">Forecast unavailable</div>';
+          }
         }
-      }).catch(e => console.error("Weather failed", e));
+      }).catch(e => {
+        const hourlyList = document.getElementById('hourlyWeatherList');
+        if(hourlyList) hourlyList.innerHTML = '<div style="color:var(--caution-red); font-size:0.8rem; text-align:center;">Error loading forecast</div>';
+      });
   };
 
   // If already logged in from a previous session, restore the location badge
@@ -479,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedCity && locationBadge && userCityName) {
       locationBadge.style.display = 'flex';
       userCityName.textContent = savedCity;
-      if (savedLat && savedLng) fetchLocalWeather(savedLat, savedLng);
+      if (savedLat && savedLng) window.kycFetchWeather(savedLat, savedLng);
     } else {
       detectUserCity();
     }

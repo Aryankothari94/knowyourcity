@@ -163,9 +163,18 @@
         </li>
 
         <!-- Weather Badge -->
-        <li id="weatherBadge" class="weather-badge" style="display: none; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50px; font-size: 0.85rem; font-weight: 500;">
+        <li id="weatherBadge" class="weather-badge" style="display: none; position: relative; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50px; font-size: 0.85rem; font-weight: 500; cursor: pointer;" onclick="toggleWeatherDropdown(event)">
           <span id="weatherIcon">🌡️</span>
           <span id="weatherTemp">--°C</span>
+          <!-- Weather Dropdown -->
+          <div class="location-dropdown" id="weatherDropdown" onclick="event.stopPropagation()" style="width: 260px; left: auto; right: 0; padding-bottom: 5px;">
+            <div class="location-dropdown-header">
+              <span>⏰ Today's Hourly Forecast</span>
+            </div>
+            <div id="hourlyWeatherList" style="max-height: 250px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+               <div style="color:#aaa; font-size:0.8rem; text-align:center;">Loading hourly forecast...</div>
+            </div>
+          </div>
         </li>
 
         <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
@@ -2064,6 +2073,7 @@
 
     function toggleLocationDropdown(e) {
       e.stopPropagation();
+      document.getElementById('weatherDropdown')?.classList.remove('active');
       const dd = document.getElementById('locationDropdown');
       dd.classList.toggle('active');
       if (dd.classList.contains('active')) {
@@ -2075,7 +2085,15 @@
 
     document.addEventListener('click', () => {
       document.getElementById('locationDropdown')?.classList.remove('active');
+      document.getElementById('weatherDropdown')?.classList.remove('active');
     });
+
+    function toggleWeatherDropdown(e) {
+      e.stopPropagation();
+      document.getElementById('locationDropdown')?.classList.remove('active');
+      const dd = document.getElementById('weatherDropdown');
+      if(dd) dd.classList.toggle('active');
+    }
 
     document.getElementById('locationSearchInput')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') searchLocation();
@@ -2236,22 +2254,9 @@
                 if (typeof reloadSafetyMap === 'function') reloadSafetyMap();
                 showToast(`📍 Location set to ${city}`);
                 // Refresh weather
-                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`)
-                  .then(r=>r.json()).then(w=>{
-                    const wb = document.getElementById('weatherBadge');
-                    const wt = document.getElementById('weatherTemp');
-                    const wi = document.getElementById('weatherIcon');
-                    if(wb && wt && w.current_weather) {
-                       wb.style.display = 'flex';
-                       wt.textContent = `${Math.round(w.current_weather.temperature)}°C`;
-                       const c=w.current_weather.weathercode;
-                       if(c===0) wi.textContent='☀️';
-                       else if(c<=3) wi.textContent='⛅';
-                       else if(c<=48) wi.textContent='🌫️';
-                       else if(c<=67) wi.textContent='🌧️';
-                       else wi.textContent='🌡️';
-                    }
-                  }).catch(()=>{});
+                if (typeof window.kycFetchWeather === 'function') {
+                    window.kycFetchWeather(latitude, longitude);
+                }
               } catch {
                 if (cityEl) cityEl.textContent = 'Set Location';
               }
