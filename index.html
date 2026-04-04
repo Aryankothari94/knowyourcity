@@ -25,7 +25,7 @@
 
   <link rel="stylesheet" href="style.css?v=85">
   <style>
-    /* NUCLEAR OVERRIDE: Forced 1 Row, horizontal scrolling for Safety Explorer */
+    /* NUCLEAR OVERRIDE: Forced 1 Row, 3 cards visible for Safety Explorer */
     #safety .safety-grid {
       display: flex !important;
       flex-wrap: nowrap !important;
@@ -37,9 +37,10 @@
       max-width: 1300px !important;
       margin-left: auto !important;
       margin-right: auto !important;
-      padding: 0 15px 20px 15px !important;
+      padding: 0 15px 30px 15px !important; /* Extra bottom padding for scrollbar */
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 230, 118, 0.5) transparent;
+      -webkit-overflow-scrolling: touch;
     }
     #safety .safety-grid::-webkit-scrollbar {
       height: 8px;
@@ -49,10 +50,10 @@
       border-radius: 4px;
     }
     #safety .area-card {
-      width: calc(33.333% - 14px) !important; /* 3 cards in one line */
+      width: calc(33.333% - 14px) !important; /* Exactly 3 cards in one line */
       flex: 0 0 auto !important;
       scroll-snap-align: start;
-      min-width: 320px !important;
+      min-width: 380px !important; /* Slightly increased for better 3-card layout */
       max-width: none !important;
       display: flex !important;
       flex-direction: column !important;
@@ -70,8 +71,11 @@
       padding: 15px !important;
       margin-bottom: 12px !important;
     }
-    @media (max-width: 1024px) {
-      #safety .safety-grid { grid-template-columns: 1fr !important; }
+    @media (max-width: 1200px) {
+      #safety .area-card { width: calc(50% - 14px) !important; min-width: 340px !important; }
+    }
+    @media (max-width: 768px) {
+      #safety .area-card { width: 85% !important; min-width: 280px !important; }
     }
   </style>
   <link rel="icon" href="logo.png" type="image/png" />
@@ -797,19 +801,6 @@
     });
   </script>
 
-  <!-- ===== SAFETY EXPLORER ===== -->
-  <style>
-    #safetyStats {
-      display: none !important;
-    }
-    @media (min-width: 900px) {
-      .safety-explorer .safety-grid {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 24px !important;
-      }
-    }
-  </style>
   <section class="safety-explorer" id="safety">
     <div class="container">
       <div class="safety-header reveal" style="position: relative; z-index: 99999;">

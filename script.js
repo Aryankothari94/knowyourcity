@@ -1258,6 +1258,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Sync
   syncPageState();
+
+  // ===== GLOBAL LOGIN WALL =====
+  // If user is not logged in, any click on the website (outside the auth modal/login triggers) will prompt login.
+  document.addEventListener('click', (e) => {
+    const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
+    if (isLoggedIn) return;
+
+    // Allowed areas that DON'T trigger the login wall
+    const isAuthModal = e.target.closest('#authModal') || e.target.closest('.auth-modal');
+    const isLogoutModal = e.target.closest('#logoutConfirmModal');
+    const isLoginBtn = e.target.closest('#loginBtn') || e.target.closest('.nav-login') || e.target.closest('#mobileLoginNav');
+    const isHamburger = e.target.closest('#hamburger');
+    const isCloseBtn = e.target.closest('.modal-close') || e.target.closest('#closeModal');
+
+    // If clicking on anything else, show login modal
+    if (!isAuthModal && !isLogoutModal && !isLoginBtn && !isHamburger && !isCloseBtn) {
+      const authModal = document.getElementById('authModal');
+      if (authModal && !authModal.classList.contains('active')) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Use the internal openAuthModal logic
+        if (typeof openAuthModal === 'function') {
+           openAuthModal('login');
+        } else {
+           authModal.classList.add('active');
+           document.body.style.overflow = 'hidden';
+           // If generateCaptcha exists in scope, call it
+           if (typeof generateCaptcha === 'function') generateCaptcha();
+        }
+      }
+    }
+  }, true); // Capture phase is critical to intercept all clicks
 });
 
 
