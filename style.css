@@ -4113,11 +4113,6 @@ a.floating-card:hover {
     border-radius: 12px !important;
   }
 
-  .safety-grid {
-    grid-template-columns: 1fr !important;
-    gap: 14px !important;
-  }
-
   .area-card {
     padding: 18px !important;
   }
