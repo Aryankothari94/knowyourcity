@@ -23,9 +23,9 @@
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
 
-  <link rel="stylesheet" href="style.css?v=86">
+  <link rel="stylesheet" href="style.css?v=87">
   <style>
-    /* HORIZONTAL LINE REFINEMENT: Safety Explorer (Single Row, Horizontal Scroll) */
+    /* HORIZONTAL LINE REFINEMENT: Safety Explorer (Strict 25% Single Row) */
     #safety .safety-grid {
       display: flex !important;
       flex-wrap: nowrap !important;
@@ -40,8 +40,10 @@
       -webkit-overflow-scrolling: touch !important;
     }
     #safety .area-card {
-      flex: 0 0 25% !important; /* Exactly 25% as requested */
-      min-width: 280px !important; /* Ensure readability */
+      flex: 0 0 25% !important;
+      width: 25% !important;
+      max-width: 25% !important;
+      min-width: 280px !important;
       padding: 24px 20px !important;
       text-align: center !important;
       display: flex !important;
@@ -100,8 +102,6 @@
       font-size: 0.65rem !important;
       padding: 3px 8px !important;
     }
-    
-  /* Enforce single line 25% width across all sizes */
   </style>
   <link rel="icon" href="logo.png" type="image/png" />
 </head>

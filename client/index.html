@@ -9,5 +9,31 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Global Access Dropdowns (Shared by Desktop & Mobile) -->
+    <div class="location-dropdown" id="locationDropdown" onclick="event.stopPropagation()">
+      <div class="location-dropdown-header">
+        <span>📍 Change Location</span>
+      </div>
+      <div class="location-search-wrapper">
+        <input type="text" id="locationSearchInput" placeholder="Search city or place..." autocomplete="off" />
+        <button class="location-search-btn" onclick="window.searchLocation()">🔍</button>
+      </div>
+      <button class="location-current-btn" onclick="window.useCurrentLocation()">📍 Use Current Location</button>
+      <div class="location-results" id="locationResults"></div>
+      <div class="location-current" id="locationCurrentInfo">
+        <span class="location-current-label">Current:</span>
+        <span class="location-current-city" id="currentCityDisplay">--</span>
+      </div>
+    </div>
+
+    <div class="location-dropdown" id="weatherDropdown" onclick="event.stopPropagation()" style="width: 320px;">
+      <div class="location-dropdown-header">
+        <span>🌦️ Hourly Forecast</span>
+      </div>
+      <div id="hourlyWeatherList" style="padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto;">
+        <div class="spinner-small" style="margin: 20px auto;"></div>
+      </div>
+    </div>
   </body>
 </html>

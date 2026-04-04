@@ -83,7 +83,7 @@ const SafetyExplorer = () => {
                     </div>
                 </div>
 
-                <div className="safety-grid">
+                <div className="safety-grid" style={{ flexWrap: 'nowrap', display: 'flex' }}>
 
                     {/* Dynamic User City Card */}
                     <div className="area-card glass-card reveal" style={{ transform: isPulsing ? 'scale(1.02)' : 'none', boxShadow: isPulsing ? '0 0 20px rgba(0, 230, 118, 0.4)' : 'none', transition: 'all 0.3s ease' }}>
@@ -164,15 +164,15 @@ const SafetyExplorer = () => {
                         </div>
                         <div className="area-metrics">
                             <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Safety Score</span><span class="metric-value">88/100</span></div>
+                                <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">88/100</span></div>
                                 <div className="metric-bar"><div className="metric-fill green" style={{ width: '88%' }}></div></div>
                             </div>
                             <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Family Friendly</span><span class="metric-value">85/100</span></div>
+                                <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">85/100</span></div>
                                 <div className="metric-bar"><div className="metric-fill green" style={{ width: '85%' }}></div></div>
                             </div>
                             <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Walkability</span><span class="metric-value">92/100</span></div>
+                                <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">92/100</span></div>
                                 <div className="metric-bar"><div className="metric-fill green" style={{ width: '92%' }}></div></div>
                             </div>
                         </div>
@@ -192,11 +192,11 @@ const SafetyExplorer = () => {
                         </div>
                         <div className="area-metrics">
                             <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Safety Score</span><span class="metric-value">94/100</span></div>
+                                <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">94/100</span></div>
                                 <div className="metric-bar"><div className="metric-fill green" style={{ width: '94%' }}></div></div>
                             </div>
                             <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Family Friendly</span><span class="metric-value">96/100</span></div>
+                                <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">96/100</span></div>
                                 <div className="metric-bar"><div className="metric-fill green" style={{ width: '96%' }}></div></div>
                             </div>
                             <div className="metric">

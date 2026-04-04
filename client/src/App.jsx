@@ -19,6 +19,10 @@ function App() {
   const [showToast, setShowToast] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  
+  // Navigation & Location State
+  const [userCity, setUserCity] = useState(localStorage.getItem('kyc_userCity') || 'Detecting...');
+  const [weatherTemp, setWeatherTemp] = useState('--°C');
 
   // Login handler
   const handleLoginSuccess = (name) => {
@@ -74,6 +78,34 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Dropdown Toggles (Direct DOM control to match existing styles)
+  const toggleLocationDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropdown = document.getElementById('locationDropdown');
+    const other = document.getElementById('weatherDropdown');
+    if (other) other.classList.remove('active');
+    if (dropdown) dropdown.classList.toggle('active');
+  };
+
+  const toggleWeatherDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropdown = document.getElementById('weatherDropdown');
+    const other = document.getElementById('locationDropdown');
+    if (other) other.classList.remove('active');
+    if (dropdown) dropdown.classList.toggle('active');
+  };
+
+  // Sync city name from local storage periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const city = localStorage.getItem('kyc_userCity');
+      if (city && city !== userCity) setUserCity(city);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [userCity]);
+
   return (
     <div className="App">
       {/* ===== LOGIN TOAST ====== */}
@@ -128,7 +160,42 @@ function App() {
               </li>
             )}
 
+            {/* Desktop-Only Location/Weather Badges */}
+            {isLoggedIn && (
+              <>
+                <li className="location-badge desktop-only" onClick={toggleLocationDropdown}>
+                  <span>📍</span> {userCity}
+                </li>
+                <li className="weather-badge desktop-only" onClick={toggleWeatherDropdown}>
+                  <span>🌡️</span> {weatherTemp}
+                </li>
+              </>
+            )}
+
             <li><a href="#newsletter" className="nav-cta">Get Started</a></li>
+
+            {/* Mobile-Only Dashboard (Visible inside hamburger) */}
+            <div className="mobile-dashboard mobile-only">
+               <div style={{ padding: '20px 0', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '20px' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Quick Settings</p>
+                  
+                  <div className="mobile-widget-card" onClick={toggleLocationDropdown}>
+                    <div className="mobile-widget-icon">📍</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{userCity}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Tap to change location</div>
+                    </div>
+                  </div>
+
+                  <div className="mobile-widget-card" onClick={toggleWeatherDropdown}>
+                    <div className="mobile-widget-icon">🌡️</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{weatherTemp}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Check hourly forecast</div>
+                    </div>
+                  </div>
+               </div>
+            </div>
           </ul>
 
           <button
