@@ -86,128 +86,150 @@ const SafetyExplorer = () => {
                 <div className="safety-grid" style={{ flexWrap: 'nowrap', display: 'flex' }}>
 
                     {/* Dynamic User City Card */}
-                    <div className="area-card glass-card reveal" style={{ transform: isPulsing ? 'scale(1.02)' : 'none', boxShadow: isPulsing ? '0 0 20px rgba(0, 230, 118, 0.4)' : 'none', transition: 'all 0.3s ease' }}>
+                    <div className={`area-card active-card glass-card reveal`} style={{ transition: 'all 0.4s ease' }}>
                         <div className="area-card-header">
-                            <h3 className="area-name">📍 {searchedCity}</h3>
+                            <div className="area-icon-box">
+                                <span className="material-symbols-outlined">location_city</span>
+                            </div>
+                            <h3 className="area-name">{searchedCity}</h3>
                             <span className={`area-badge ${cityBadge.class}`}>{cityBadge.text}</span>
                         </div>
-                        <div className="area-metrics">
-                            <div className="metric">
-                                <div className="metric-info">
-                                    <span className="metric-label">Safety Score</span>
-                                    <span className="metric-value">{dynamicMetrics.sSafe}/100</span>
+                        
+                        <div className="area-card-content">
+                            <div className="area-metrics">
+                                <div className="metric">
+                                    <div className="metric-info">
+                                        <span className="metric-label">Safety Score</span>
+                                        <span className="metric-value">{dynamicMetrics.sSafe}/100</span>
+                                    </div>
+                                    <div className="metric-bar">
+                                        <div className={`metric-fill ${getColor(dynamicMetrics.sSafe)}`} style={{ width: `${dynamicMetrics.sSafe}%` }}></div>
+                                    </div>
                                 </div>
-                                <div className="metric-bar">
-                                    <div className={`metric-fill ${getColor(dynamicMetrics.sSafe)}`} style={{ width: `${dynamicMetrics.sSafe}%` }}></div>
+                                <div className="metric">
+                                    <div className="metric-info">
+                                        <span className="metric-label">Family Friendly</span>
+                                        <span className="metric-value">{dynamicMetrics.sFam}/100</span>
+                                    </div>
+                                    <div className="metric-bar">
+                                        <div className={`metric-fill ${getColor(dynamicMetrics.sFam)}`} style={{ width: `${dynamicMetrics.sFam}%` }}></div>
+                                    </div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info">
+                                        <span className="metric-label">Walkability</span>
+                                        <span className="metric-value">{dynamicMetrics.sWalk}/100</span>
+                                    </div>
+                                    <div className="metric-bar">
+                                        <div className={`metric-fill ${getColor(dynamicMetrics.sWalk)}`} style={{ width: `${dynamicMetrics.sWalk}%` }}></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info">
-                                    <span className="metric-label">Family Friendly</span>
-                                    <span className="metric-value">{dynamicMetrics.sFam}/100</span>
-                                </div>
-                                <div className="metric-bar">
-                                    <div className={`metric-fill ${getColor(dynamicMetrics.sFam)}`} style={{ width: `${dynamicMetrics.sFam}%` }}></div>
-                                </div>
+                            <div className="area-tags" style={{ marginTop: '20px' }}>
+                                <span className="area-tag">🌳 Parks</span>
+                                <span className="area-tag">🏫 Schools</span>
+                                <span className="area-tag">🏥 Hospital</span>
+                                <span className="area-tag">🛒 Market</span>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info">
-                                    <span className="metric-label">Walkability</span>
-                                    <span className="metric-value">{dynamicMetrics.sWalk}/100</span>
-                                </div>
-                                <div className="metric-bar">
-                                    <div className={`metric-fill ${getColor(dynamicMetrics.sWalk)}`} style={{ width: `${dynamicMetrics.sWalk}%` }}></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="area-tags">
-                            <span className="area-tag">🌳 Parks</span>
-                            <span className="area-tag">🏫 Schools</span>
-                            <span className="area-tag">🏥 Hospital</span>
-                            <span className="area-tag">🛒 Market</span>
                         </div>
                     </div>
 
                     {/* Area Card 2 */}
                     <div className="area-card glass-card reveal">
                         <div className="area-card-header">
-                            <h3 className="area-name">🌊 Marine Drive, Mumbai</h3>
+                            <div className="area-icon-box">
+                                <span className="material-symbols-outlined">waves</span>
+                            </div>
+                            <h3 className="area-name">Marine Drive, Mumbai</h3>
                             <span className="area-badge badge-safe">Very Safe</span>
                         </div>
-                        <div className="area-metrics">
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">96/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '96%' }}></div></div>
+                        <div className="area-card-content">
+                            <div className="area-metrics">
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">96/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '96%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">90/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '90%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">98/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '98%' }}></div></div>
+                                </div>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">90/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '90%' }}></div></div>
+                            <div className="area-tags" style={{ marginTop: '20px' }}>
+                                <span className="area-tag">🌊 Seaface</span>
+                                <span className="area-tag">🍽️ Dining</span>
+                                <span className="area-tag">🏛️ Heritage</span>
+                                <span className="area-tag">👮 High Patrolling</span>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">98/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '98%' }}></div></div>
-                            </div>
-                        </div>
-                        <div className="area-tags">
-                            <span className="area-tag">🌊 Seaface</span>
-                            <span className="area-tag">🍽️ Dining</span>
-                            <span className="area-tag">🏛️ Heritage</span>
-                            <span className="area-tag">👮 High Patrolling</span>
                         </div>
                     </div>
 
                     {/* Area Card 3 */}
                     <div className="area-card glass-card reveal">
                         <div className="area-card-header">
-                            <h3 className="area-name">🌆 Koregaon Park, Pune</h3>
+                            <div className="area-icon-box">
+                                <span className="material-symbols-outlined">forest</span>
+                            </div>
+                            <h3 className="area-name">Koregaon Park, Pune</h3>
                             <span className="area-badge badge-safe">Safe</span>
                         </div>
-                        <div className="area-metrics">
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">88/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '88%' }}></div></div>
+                        <div className="area-card-content">
+                            <div className="area-metrics">
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">88/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '88%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">85/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '85%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">92/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '92%' }}></div></div>
+                                </div>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">85/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '85%' }}></div></div>
+                            <div className="area-tags" style={{ marginTop: '20px' }}>
+                                <span className="area-tag">🌳 Greens</span>
+                                <span className="area-tag">☕ Cafes</span>
+                                <span className="area-tag">🛍️ Boutiques</span>
+                                <span className="area-tag">🛡️ Premium</span>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">92/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '92%' }}></div></div>
-                            </div>
-                        </div>
-                        <div className="area-tags">
-                            <span className="area-tag">🌳 Greens</span>
-                            <span className="area-tag">☕ Cafes</span>
-                            <span className="area-tag">🛍️ Boutiques</span>
-                            <span className="area-tag">🛡️ Premium</span>
                         </div>
                     </div>
 
                     {/* Area Card 4 */}
                     <div className="area-card glass-card reveal">
                         <div className="area-card-header">
-                            <h3 className="area-name">🏡 Jubilee Hills, Hyderabad</h3>
+                            <div className="area-icon-box">
+                                <span className="material-symbols-outlined">cottage</span>
+                            </div>
+                            <h3 className="area-name">Jubilee Hills, Hyderabad</h3>
                             <span className="area-badge badge-safe">Safe</span>
                         </div>
-                        <div className="area-metrics">
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">94/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '94%' }}></div></div>
+                        <div className="area-card-content">
+                            <div className="area-metrics">
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Safety Score</span><span className="metric-value">94/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '94%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">96/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '96%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">60/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill amber" style={{ width: '60%' }}></div></div>
+                                </div>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Family Friendly</span><span className="metric-value">96/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill green" style={{ width: '96%' }}></div></div>
+                            <div className="area-tags" style={{ marginTop: '20px' }}>
+                                <span className="area-tag">🛡️ Security</span>
+                                <span className="area-tag">🏙️ Luxury</span>
+                                <span className="area-tag">🌳 Premium</span>
+                                <span className="area-tag">🎓 Education</span>
                             </div>
-                            <div className="metric">
-                                <div className="metric-info"><span className="metric-label">Walkability</span><span class="metric-value">60/100</span></div>
-                                <div className="metric-bar"><div className="metric-fill amber" style={{ width: '60%' }}></div></div>
-                            </div>
-                        </div>
-                        <div className="area-tags">
-                            <span className="area-tag">🏡 Villas</span>
-                            <span className="area-tag">📹 CCTV</span>
-                            <span className="area-tag">🌇 Views</span>
                         </div>
                     </div>
 

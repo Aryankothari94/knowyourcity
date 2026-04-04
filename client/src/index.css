@@ -823,35 +823,102 @@ body {
   width: 25% !important;
   max-width: 25% !important;
   min-width: 280px;
-  padding: 24px 20px;
+  height: 480px !important; /* Fixed height for uniformity */
+  padding: 30px 24px;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  background: rgba(30, 32, 47, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* Active/Featured card glowing state (as in reference image) */
+.area-card.active-card {
+  border: 1.5px solid rgba(0, 212, 255, 0.6) !important;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.1) !important;
+}
+
+.area-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 .area-card-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.area-icon-box {
+  width: 58px;
+  height: 58px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 20px;
+  font-size: 26px;
+  transition: transform 0.3s ease;
+}
+
+.area-card:hover .area-icon-box {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .area-name {
   font-family: var(--font-heading);
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: white;
 }
 
 .area-badge {
-  padding: 6px 14px;
+  padding: 4px 12px;
   border-radius: 50px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+}
+
+/* Scrollable Content Area */
+.area-card-content {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.area-card-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.area-card-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.area-metrics {
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 /* Account Nav Item */
