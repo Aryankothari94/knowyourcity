@@ -22,26 +22,38 @@
 
   <link rel="stylesheet" href="style.css?v=85">
   <style>
-    /* NUCLEAR OVERRIDE: Forced 1 Row, 3 Columns for Safety Explorer */
+    /* NUCLEAR OVERRIDE: Forced 1 Row, horizontal scrolling for Safety Explorer */
     #safety .safety-grid {
-      display: grid !important;
-      grid-template-columns: repeat(3, 1fr) !important;
-      grid-auto-rows: min-content !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      scroll-snap-type: x mandatory;
       gap: 20px !important;
       margin-top: 40px !important;
       width: 100% !important;
       max-width: 1300px !important;
       margin-left: auto !important;
       margin-right: auto !important;
-      padding: 0 15px !important;
+      padding: 0 15px 20px 15px !important;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 230, 118, 0.5) transparent;
+    }
+    #safety .safety-grid::-webkit-scrollbar {
+      height: 8px;
+    }
+    #safety .safety-grid::-webkit-scrollbar-thumb {
+      background: rgba(0, 230, 118, 0.5);
+      border-radius: 4px;
     }
     #safety .area-card {
-      width: 100% !important;
-      min-width: 0 !important;
+      width: calc(33.333% - 14px) !important; /* 3 cards in one line */
+      flex: 0 0 auto !important;
+      scroll-snap-align: start;
+      min-width: 320px !important;
       max-width: none !important;
       display: flex !important;
       flex-direction: column !important;
-      height: 100% !important;
+      height: auto !important;
       margin: 0 !important;
       background: rgba(30, 32, 47, 0.75) !important;
       border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -634,14 +646,6 @@
             <span class="area-tag"><span class="material-symbols-outlined mi">local_hospital</span> Hospital</span>
             <span class="area-tag"><span class="material-symbols-outlined mi">shopping_cart</span> Market</span>
           </div>
-          <div class="safety-points-list" style="margin-top: 15px;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <span class="badge" style="background: rgba(0,230,118,0.1); color: #00e676; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicPolice"><span class="material-symbols-outlined mi">local_police</span> -- Police Stations</span>
-              <span class="badge" style="background: rgba(33,150,243,0.1); color: #2196f3; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicHosp"><span class="material-symbols-outlined mi">local_hospital</span> -- Hospitals</span>
-              <span class="badge" style="background: rgba(255,152,0,0.1); color: #ff9800; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicFire"><span class="material-symbols-outlined mi">local_fire_department</span> -- Fire Stations</span>
-              <span class="badge" style="background: rgba(156,39,176,0.1); color: #9c27b0; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;" id="dynamicCCTV"><span class="material-symbols-outlined mi">videocam</span> -- CCTV/Surveillance</span>
-            </div>
-          </div>
             <!-- Wikipedia analytics will be injected here -->
           </div>
           <!-- START: Recent Crime Activity -->
@@ -805,14 +809,6 @@
         
         // Show spinning loaders immediately
         const spinner = '<div class="spinner-small"></div>';
-        const pBadge = document.getElementById('dynamicPolice');
-        if(pBadge) pBadge.innerHTML = `<span class="material-symbols-outlined mi">local_police</span> ${spinner} Searching...`;
-        const hBadge = document.getElementById('dynamicHosp');
-        if(hBadge) hBadge.innerHTML = `<span class="material-symbols-outlined mi">local_hospital</span> ${spinner} Searching...`;
-        const fBadge = document.getElementById('dynamicFire');
-        if(fBadge) fBadge.innerHTML = `<span class="material-symbols-outlined mi">local_fire_department</span> ${spinner} Searching...`;
-        const cBadge = document.getElementById('dynamicCCTV');
-        if(cBadge) cBadge.innerHTML = `<span class="material-symbols-outlined mi">videocam</span> ${spinner} Searching...`;
         
         let globalLat = 20;
         let globalLng = 79;
@@ -841,20 +837,6 @@
             const hArr = data.infrastructures.filter(el => el.nodeType === 'hospital').length;
             const fArr = data.infrastructures.filter(el => el.nodeType === 'fire_station').length;
             const cArr = data.infrastructures.filter(el => el.nodeType === 'surveillance').length;
-
-            const pCount = (safetyStats && safetyStats.policeCount !== undefined) ? safetyStats.policeCount : pArr;
-            const hCount = (safetyStats && safetyStats.hospitalCount !== undefined) ? safetyStats.hospitalCount : hArr;
-            const fCount = (safetyStats && safetyStats.fireCount !== undefined) ? safetyStats.fireCount : fArr;
-            const cCount = (safetyStats && safetyStats.cctvCount !== undefined) ? safetyStats.cctvCount : cArr;
-
-            const pBadge = document.getElementById('dynamicPolice');
-            if(pBadge) pBadge.innerHTML = `<span class="material-symbols-outlined mi">local_police</span> ${pCount} Police Stations`;
-            const hBadge = document.getElementById('dynamicHosp');
-            if(hBadge) hBadge.innerHTML = `<span class="material-symbols-outlined mi">local_hospital</span> ${hCount} Hospitals`;
-            const fBadge = document.getElementById('dynamicFire');
-            if(fBadge) fBadge.innerHTML = `<span class="material-symbols-outlined mi">local_fire_department</span> ${fCount} Fire Stations`;
-            const cBadge = document.getElementById('dynamicCCTV');
-            if(cBadge) cBadge.innerHTML = `<span class="material-symbols-outlined mi">videocam</span> ${cCount} CCTV/Surveillance`;
             
             const sSafe = (safetyStats && safetyStats.crimeScore) || 85;
             const sFam = (safetyStats && safetyStats.familyScore) || 80;

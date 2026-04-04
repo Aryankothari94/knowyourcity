@@ -132,15 +132,56 @@
           );
           out center tags 150;
         `;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        try {
-          const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST', body: 'data=' + encodeURIComponent(query), signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          const data = await res.json();
+                try {
+          let data = null;
+          const endpoints = [
+            'https://overpass.kumi.systems/api/interpreter',
+            'https://lz4.overpass-api.de/api/interpreter',
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.osm.ch/api/interpreter'
+          ];
+          let attempts = 0;
+          let currentRadius = 15000;
+          let dynamicQuery = query;
+
+          while (!data || !data.elements || data.elements.length === 0) {
+            for (const ep of endpoints) {
+                try {
+                    const lText = document.getElementById('loadingText');
+                    if(lText) lText.textContent = "Fetching data fast for city... (" + attempts + ")";
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    const res = await fetch(ep, {
+                        method: 'POST', body: 'data=' + encodeURIComponent(dynamicQuery), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (res.ok) {
+                        const tData = await res.json();
+                        if (tData.elements && tData.elements.length > 0) {
+                            data = tData;
+                            break;
+                        }
+                    }
+                } catch(e) {}
+                attempts++;
+            }
+            if (!data || !data.elements || data.elements.length === 0) {
+                const lText = document.getElementById('loadingText');
+                if(lText) lText.textContent = "Data not shown, continuing to spin wheel & fetch (expanding radius)...";
+                
+                // Expand radius to fetch all data related to city slowly if needed
+                currentRadius += 10000;
+                // Replace strictly around:XXXXX with around:NEW
+                dynamicQuery = dynamicQuery.replace(/around:\d+/g, 'around:' + currentRadius);
+                
+                await new Promise(r => setTimeout(r, 2000));
+            }
+          }
+          
           document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'none';
 
           const parks = data.elements.map(el => {
             const elLat = el.lat || el.center?.lat;
@@ -168,21 +209,13 @@
 
           try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: parks, timestamp: Date.now() })); } catch {}
           renderParks(parks, city);
-
         } catch (err) {
-          clearTimeout(timeoutId);
-          document.getElementById('loadingSpinner').style.display = 'none';
-          document.getElementById('emptyState').style.display = 'block';
-          document.getElementById('resultsCount').textContent = 'Failed to load — please refresh';
+          console.error('Data flow error', err);
         }
       }
 
       function renderParks(parks, city) {
-          if (parks.length === 0) {
-            document.getElementById('emptyState').style.display = 'block';
-            document.getElementById('resultsCount').textContent = 'No parks found';
-            return;
-          }
+          
 
           document.getElementById('resultsCount').textContent = `${parks.length} Parks & Gardens Found`;
           document.getElementById('resultsMeta').textContent = `Within 15km of ${city} • Sorted by distance`;

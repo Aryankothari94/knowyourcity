@@ -46,13 +46,6 @@
       </div>
       <div class="results-grid" id="resultsGrid" style="display:none;"></div>
       <div class="empty-state" id="emptyState" style="display:none;">
-        <div class="empty-icon">📭</div>
-        <h3>No Attractions Found</h3>
-        <p>Try a different location.</p>
-        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
-          <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
-          <a href="index.html" class="btn-primary">Go Home</a>
-        </div>
       </div>
     </div>
   </section>
@@ -222,17 +215,46 @@
           out center tags 300;
         `;
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
         try {
-          const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            body: 'data=' + encodeURIComponent(query),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          const data = await res.json();
+          let data = null;
+          const endpoints = [
+            'https://overpass.kumi.systems/api/interpreter',
+            'https://lz4.overpass-api.de/api/interpreter',
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.osm.ch/api/interpreter'
+          ];
+          let attempts = 0;
+          let dynamicQuery = query;
+
+          while (!data || !data.elements || data.elements.length === 0) {
+            for (const ep of endpoints) {
+                try {
+                    const lText = document.getElementById('loadingText');
+                    if(lText) lText.textContent = "Fetching safe spots fast... (" + attempts + ")";
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    const res = await fetch(ep, {
+                        method: 'POST', body: 'data=' + encodeURIComponent(dynamicQuery), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (res.ok) {
+                        const tData = await res.json();
+                        if (tData.elements && tData.elements.length > 0) {
+                            data = tData;
+                            break;
+                        }
+                    }
+                } catch(e) {}
+                attempts++;
+            }
+            if (!data || !data.elements || data.elements.length === 0) {
+                const lText = document.getElementById('loadingText');
+                if(lText) lText.textContent = "Continuing to fetch safe spots... please wait.";
+                await new Promise(r => setTimeout(r, 2000));
+            }
+          }
 
           return data.elements.map(el => {
             const elLat = el.lat || el.center?.lat;
@@ -269,7 +291,6 @@
           }).filter(p => p && p.name);
 
         } catch (err) {
-          clearTimeout(timeoutId);
           throw err;
         }
       }
@@ -414,11 +435,7 @@
       function renderResults(places, city, userLat, userLng, fromCache) {
         document.getElementById('loadingSpinner').style.display = 'none';
 
-        if (!places || places.length === 0) {
-          document.getElementById('emptyState').style.display = 'block';
-          document.getElementById('resultsCount').textContent = 'No attractions found';
-          return;
-        }
+        
 
         // Sort: Wikipedia/Wikidata linked first, then heritage, then by distance
         places.sort((a, b) => {
