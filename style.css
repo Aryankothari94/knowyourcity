@@ -4526,3 +4526,83 @@ a.floating-card:hover {
   overflow: hidden;
   z-index: 1;
 }
+/* Navigation Widgets */
+.nav-widgets {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  gap: 16px;
+  margin-left: auto;
+  margin-right: 20px;
+}
+
+@media (max-width: 900px) {
+  .nav-container {
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .nav-brand {
+    font-size: 1.1rem;
+    margin-right: auto;
+  }
+  .nav-widgets {
+    gap: 8px;
+    margin-right: 12px;
+  }
+  .nav-widgets #userCityName,
+  .nav-widgets #accountName,
+  .nav-widgets .user-greeting svg {
+    display: none !important;
+  }
+  .nav-widgets .location-badge,
+  .nav-widgets .weather-badge,
+  .nav-widgets .account-nav-item,
+  .nav-widgets #loginBtn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-width: unset;
+  }
+  .nav-widgets .weather-badge #weatherTemp {
+    font-size: 0.8rem;
+  }
+}
+
+/* Sidebar Widgets Extension */
+.mobile-nav-widgets {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 0;
+  border-top: 1px solid var(--glass-border);
+  margin-top: 24px;
+}
+
+.nav-links.open .mobile-nav-widgets {
+  display: flex;
+}
+
+.mobile-widget-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: transform 0.2s ease;
+}
+
+.mobile-widget-card:active {
+  transform: scale(0.98);
+}
+
+.mobile-widget-icon {
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}

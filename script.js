@@ -197,34 +197,43 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (navigator.geolocation) {
-      locationBadge.style.display = 'flex';
-      userCityName.textContent = 'Detecting...';
+      if (locationBadge) locationBadge.style.display = 'flex';
+      const mobileLoc = document.getElementById('mobileLocationBadge');
+      if (mobileLoc) mobileLoc.style.display = 'block';
+
+      if (userCityName) userCityName.textContent = 'Detecting...';
+      const mobileCity = document.getElementById('mobileUserCityName');
+      if (mobileCity) mobileCity.textContent = 'Detecting...';
 
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          // Reverse geocode to get city name
           try {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
             const data = await res.json();
             const city = extractCityName(data.address);
-            userCityName.textContent = city;
+            
+            if (userCityName) userCityName.textContent = city;
+            if (mobileCity) mobileCity.textContent = city;
+
             localStorage.setItem('kyc_userCity', city);
             localStorage.setItem('kyc_userLat', latitude);
             localStorage.setItem('kyc_userLng', longitude);
-            if (typeof fetchLocalWeather === 'function') fetchLocalWeather(latitude, longitude);
+            if (typeof window.kycFetchWeather === 'function') window.kycFetchWeather(latitude, longitude);
           } catch {
-            userCityName.textContent = 'Your City';
+            if (userCityName) userCityName.textContent = 'Your City';
+            if (mobileCity) mobileCity.textContent = 'Your City';
           }
         },
         () => {
-          // Permission denied
-          userCityName.textContent = 'Set Location';
+          if (userCityName) userCityName.textContent = 'Set Location';
+          if (mobileCity) mobileCity.textContent = 'Set Location';
         },
         { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
       );
     } else {
-      userCityName.textContent = 'Location N/A';
+      if (userCityName) userCityName.textContent = 'Location N/A';
+      if (mobileCity) mobileCity.textContent = 'Location N/A';
     }
   };
 
@@ -243,16 +252,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroBtn = document.getElementById('heroCtaPrimary');
     const heroSecBtn = document.getElementById('heroCtaSecondary');
     const locationBadge = document.getElementById('locationBadge');
+    const weatherBadge = document.getElementById('weatherBadge');
+    
+    // Mobile Elements
+    const mobileLoginNav = document.getElementById('mobileLoginNav');
+    const mobileAccountNav = document.getElementById('mobileAccountNav');
+    const mobileAccountName = document.getElementById('mobileAccountName');
+    const mobileLocationBadge = document.getElementById('mobileLocationBadge');
+    const mobileWeatherBadge = document.getElementById('mobileWeatherBadge');
 
     if (isLoggedIn) {
       const firstName = localStorage.getItem('kyc_firstName');
 
       if (loginNav) loginNav.style.display = 'none';
+      if (mobileLoginNav) mobileLoginNav.style.display = 'none';
+
       if (accountNav) {
         accountNav.style.display = 'flex';
-        if (accountName && firstName) {
-          accountName.textContent = 'Hello, ' + firstName;
-        }
+        if (accountName && firstName) accountName.textContent = 'Hello, ' + firstName;
+      }
+      if (mobileAccountNav) {
+        mobileAccountNav.style.display = 'block';
+        if (mobileAccountName && firstName) mobileAccountName.textContent = 'Hello, ' + firstName;
       }
       
       if (premiumContent) premiumContent.style.display = 'block';
@@ -263,10 +284,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (heroSecBtn) heroSecBtn.style.display = 'inline-flex';
       if (locationBadge) locationBadge.style.display = 'flex';
+      if (mobileLocationBadge) mobileLocationBadge.style.display = 'block';
+      
+      // Attempt to show weather if we have coords
+      const lat = localStorage.getItem('kyc_userLat');
+      const lng = localStorage.getItem('kyc_userLng');
+      if (lat && lng && typeof window.kycFetchWeather === 'function') {
+        window.kycFetchWeather(lat, lng);
+      }
       
     } else {
       if (accountNav) accountNav.style.display = 'none';
+      if (mobileAccountNav) mobileAccountNav.style.display = 'none';
+      
       if (loginNav) loginNav.style.display = 'block';
+      if (mobileLoginNav) mobileLoginNav.style.display = 'block';
       
       if (premiumContent) premiumContent.style.display = 'none';
       if (heroBtn) {
@@ -276,6 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (heroSecBtn) heroSecBtn.style.display = 'none';
       if (locationBadge) locationBadge.style.display = 'none';
+      if (mobileLocationBadge) mobileLocationBadge.style.display = 'none';
+      if (weatherBadge) weatherBadge.style.display = 'none';
+      if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'none';
     }
   };
   
@@ -455,10 +490,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const weatherTemp = document.getElementById('weatherTemp');
         const weatherIcon = document.getElementById('weatherIcon');
         const hourlyList = document.getElementById('hourlyWeatherList');
+        
+        const mobileWeatherBadge = document.getElementById('mobileWeatherBadge');
+        const mobileWeatherTemp = document.getElementById('mobileWeatherTemp');
+        const mobileWeatherIcon = document.getElementById('mobileWeatherIcon');
 
         if (wData && wData.current_weather && weatherBadge && weatherTemp) {
           weatherBadge.style.display = 'flex';
           weatherTemp.textContent = `${Math.round(wData.current_weather.temperature)}°C`;
+          if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'block';
+          if (mobileWeatherTemp) mobileWeatherTemp.textContent = `${Math.round(wData.current_weather.temperature)}°C`;
           
           const iconMap = (c, isDay) => {
               if (c === 0) return isDay ? '☀️' : '🌙';
@@ -470,6 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
               return '🌡️';
           };
           weatherIcon.textContent = iconMap(wData.current_weather.weathercode, wData.current_weather.is_day);
+          if (mobileWeatherIcon) mobileWeatherIcon.textContent = iconMap(wData.current_weather.weathercode, wData.current_weather.is_day);
 
           if (hourlyList && wData.hourly && wData.current_weather) {
             const currentTimeStr = wData.current_weather.time;

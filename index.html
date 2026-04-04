@@ -109,6 +109,57 @@
         <li><a href="#how-it-works">How It Works</a></li>
 
 
+        <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+        
+        <!-- Mobile Sidebar Widgets (Visible only on small screens inside menu) -->
+        <div class="mobile-nav-widgets">
+          <!-- Login/Account Row -->
+          <div id="mobileLoginNav">
+            <a href="#" class="mobile-widget-card" onclick="openAuthModal('login')">
+              <div class="mobile-widget-icon">🔑</div>
+              <div>
+                <div style="font-weight:600; font-size:1rem;">Login / Sign Up</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Access your saved cities</div>
+              </div>
+            </a>
+          </div>
+          <div id="mobileAccountNav" style="display:none;">
+            <div class="mobile-widget-card">
+              <div class="mobile-widget-icon" style="background: var(--accent-gradient);">👤</div>
+              <div style="flex:1;">
+                <div id="mobileAccountName" style="font-weight:600; font-size:1rem;">Hello, User</div>
+                <div style="font-size:0.75rem; color:var(--safe-green);">Account Active</div>
+              </div>
+              <button onclick="handleLogout()" style="background:none; border:none; color:var(--caution-red); font-size:1.2rem;">🚪</button>
+            </div>
+          </div>
+
+          <!-- Location Row -->
+          <div id="mobileLocationBadge" style="display:none;" onclick="toggleLocationDropdown(event)">
+            <div class="mobile-widget-card">
+              <div class="mobile-widget-icon">📍</div>
+              <div>
+                <div id="mobileUserCityName" style="font-weight:600; font-size:1rem;">Detecting...</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Tap to change location</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weather Row -->
+          <div id="mobileWeatherBadge" style="display:none;" onclick="toggleWeatherDropdown(event)">
+            <div class="mobile-widget-card">
+              <div id="mobileWeatherIcon" class="mobile-widget-icon">🌡️</div>
+              <div>
+                <div id="mobileWeatherTemp" style="font-weight:700; font-size:1.2rem; color:var(--accent-cyan);">--°C</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">View hourly forecast</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ul>
+
+      <!-- Always Visible Widgets -->
+      <ul class="nav-widgets" id="navWidgets">
         <!-- Logged Out View -->
         <li id="loginNav"><a href="#" class="nav-login" id="loginBtn">Login</a></li>
 
@@ -140,10 +191,6 @@
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
           <span id="userCityName">Detecting...</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            style="margin-left:2px;opacity:0.5">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
           <!-- Location Search Dropdown -->
           <div class="location-dropdown" id="locationDropdown" onclick="event.stopPropagation()">
             <div class="location-dropdown-header">
@@ -176,9 +223,8 @@
             </div>
           </div>
         </li>
-
-        <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
       </ul>
+
       <button class="hamburger" id="hamburger" aria-label="Toggle menu">
         <span></span>
         <span></span>
