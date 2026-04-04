@@ -1161,19 +1161,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ===== DYNAMIC COUNTER ANIMATION =====
   const statElements = document.querySelectorAll('.hero-stat h3');
-
-  const counterObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        animateCounter(entry.target);
-        counterObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.5 });
-
   statElements.forEach(el => counterObserver.observe(el));
 
   function animateCounter(el) {
+    if (!el) return;
     const text = el.textContent;
     const match = text.match(/^([\d.]+)(.*)$/);
     if (!match) return;
@@ -1187,7 +1178,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function update(currentTime) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = target * eased;
 
@@ -1200,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (progress < 1) {
         requestAnimationFrame(update);
       } else {
-        el.textContent = text; // Ensure exact final value
+        el.textContent = text;
       }
     }
     requestAnimationFrame(update);
@@ -1211,20 +1201,16 @@ document.addEventListener('DOMContentLoaded', () => {
   tiltCards.forEach(card => {
     card.addEventListener('mousemove', e => {
       const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left; // x position within the element
-      const y = e.clientY - rect.top;  // y position within the element
-
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-
-      const rotateX = ((y - centerY) / centerY) * -10; // Max rotation 10deg
+      const rotateX = ((y - centerY) / centerY) * -10;
       const rotateY = ((x - centerX) / centerX) * 10;
-
       card.style.transform = `perspective(1000px) scale(1.05) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
       card.style.transition = 'none';
       card.style.zIndex = '10';
     });
-
     card.addEventListener('mouseleave', () => {
       card.style.transform = 'perspective(1000px) scale(1) rotateX(0deg) rotateY(0deg)';
       card.style.transition = 'transform 0.5s ease, box-shadow 0.5s ease';
@@ -1232,26 +1218,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-
-
   // ===== HOW IT WORKS ANIMATIONS =====
   const hiwSection = document.getElementById('how-it-works');
   const hiwSteps = document.querySelectorAll('.hiw-step');
-  
   if (hiwSection && hiwSteps.length > 0) {
     const hiwObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           hiwSteps.forEach(step => step.classList.add('active'));
-          // Once animated, we can unobserve
           hiwObserver.unobserve(hiwSection);
         }
       });
     }, { threshold: 0.2 });
-    
     hiwObserver.observe(hiwSection);
   }
 
+  // ===== NAVIGATION & STATE SYNC (MULTI-PAGE) =====
+  function syncPageState() {
+    updateAuthUI();
+    const savedCity = localStorage.getItem('kyc_userCity');
+    const cityEl = document.getElementById('userCityName');
+    const mobileCityEl = document.getElementById('mobileUserCityName');
+    const currentDisplay = document.getElementById('currentCityDisplay');
+    
+    if (savedCity) {
+      if (cityEl) cityEl.textContent = savedCity;
+      if (mobileCityEl) mobileCityEl.textContent = savedCity;
+      if (currentDisplay) currentDisplay.textContent = savedCity;
+      
+      const lat = localStorage.getItem('kyc_userLat');
+      const lng = localStorage.getItem('kyc_userLng');
+      if (lat && lng && typeof window.kycFetchWeather === 'function') {
+        window.kycFetchWeather(lat, lng);
+      }
+    } else {
+      detectUserCity();
+    }
+  }
+
+  // Initial Sync
+  syncPageState();
 });
 
 

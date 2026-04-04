@@ -494,5 +494,49 @@
       }
     });
   </script>
+  <!-- ===== SCHOOLS & PARKS CHOICE MODAL ===== -->
+  <div class="modal-overlay" id="choiceModal">
+    <div class="confirm-modal glass-card" style="text-align:center; max-width:380px;">
+      <h4 style="margin-bottom:6px;">What are you looking for?</h4>
+      <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:18px;">Choose one to see nearby results</p>
+      <div class="confirm-actions" style="gap:12px;">
+        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem;" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('schools.html')"><span class="material-symbols-outlined mi">school</span> Schools</button>
+        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem; background:linear-gradient(135deg,#00e676,#00bfa5);" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('parks.html')"><span class="material-symbols-outlined mi">park</span> Parks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AUTH MODAL ===== -->
+  <div class="modal-overlay" id="authModal">
+    <div class="auth-modal glass-card">
+      <button class="modal-close" id="closeModal">&times;</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="signup">Sign Up</button>
+      </div>
+      <form class="auth-form active" id="loginForm">
+        <div id="loginError" class="auth-error-message"></div>
+        <div class="form-group"><label for="loginEmail">Email Address</label><input type="email" id="loginEmail" placeholder="rahul@example.com" required /></div>
+        <div class="form-group"><label for="loginPassword">Password</label><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="••••••••" required /><button type="button" class="toggle-password" data-target="loginPassword">👁️</button></div></div>
+        <div class="form-group captcha-group"><label id="captchaLabel" for="loginCaptcha">Loading captcha...</label><input type="text" id="loginCaptcha" placeholder="Enter answer" required /></div>
+        <button type="submit" class="btn-auth">Login to Your City</button>
+        <div class="auth-footer">Don't have an account? <a href="#" data-switch="signup">Sign Up</a></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== LOGOUT CONFIRMATION MODAL ===== -->
+  <div class="modal-overlay" id="logoutConfirmModal">
+    <div class="confirm-modal glass-card">
+      <h4>Are you sure you want to logout?</h4>
+      <p>You will need to log in again to access neighborhood insights.</p>
+      <div class="confirm-actions">
+        <button id="cancelLogoutBtn" class="btn-secondary">Cancel</button>
+        <button id="confirmLogoutBtn" class="btn-primary" style="background: var(--caution-red); box-shadow: none;">Yes, Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js?v=85"></script>
 </body>
 </html>
