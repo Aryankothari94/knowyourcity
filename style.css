@@ -4603,17 +4603,32 @@ a.floating-card:hover {
 
 @media (max-width: 900px) {
   .nav-container {
-    padding: 0 16px;
+    padding: 0 12px;
     gap: 8px;
     justify-content: space-between;
   }
   .nav-brand {
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin-right: auto;
   }
-  /* Hide desktop widgets entirely on mobile to clear the top bar */
+  /* Show only the weather/temperature badge at the top on mobile */
   .nav-widgets {
+    display: flex !important;
+    margin-right: 10px;
+    gap: 0;
+  }
+  .nav-widgets #loginNav,
+  .nav-widgets #accountNav,
+  .nav-widgets .location-badge {
     display: none !important;
+  }
+  .nav-widgets .weather-badge {
+    display: flex !important;
+    padding: 4px 10px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 50px !important;
+    font-size: 0.78rem !important;
   }
 }
 
