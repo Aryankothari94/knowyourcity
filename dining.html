@@ -109,7 +109,7 @@
       document.getElementById('heroTitle').textContent = isCafe ? "Top Cafes" : "Best Restaurants";
       document.getElementById('heroIcon').textContent = isCafe ? "☕" : "🍽️";
 
-      const CACHE_KEY = \`kyc_cache_\${placeType}_\${Math.round(lat*100)}_\${Math.round(lng*100)}\`;
+      const CACHE_KEY = `kyc_cache_${placeType}_${Math.round(lat*100)}_${Math.round(lng*100)}`;
       const CACHE_TTL = 30 * 60 * 1000;
 
       const detailOverlay = document.getElementById('detailOverlay');
@@ -138,19 +138,16 @@
         // fetch fastfood alongside restaurant
         const secondary = isCafe ? 'ice_cream' : 'fast_food';
         
-        let dynamicQuery = \`
+        let dynamicQuery = `
           [out:json][timeout:25];
           (
-            node["amenity"="\${amenityTarget}"](around:10000,\${lat},\${lng});
-            way["amenity"="\${amenityTarget}"](around:10000,\${lat},\${lng});
-            node["amenity"="\${secondary}"](around:8000,\${lat},\${lng});
-            way["amenity"="\${secondary}"](around:8000,\${lat},\${lng});
+            node["amenity"="${amenityTarget}"](around:10000,${lat},${lng});
+            way["amenity"="${amenityTarget}"](around:10000,${lat},${lng});
+            node["amenity"="${secondary}"](around:8000,${lat},${lng});
+            way["amenity"="${secondary}"](around:8000,${lat},${lng});
           );
           out center tags 120;
-        \`;
-
-        try {
-          let data = null;
+              let data = null;
           const endpoints = [
             'https://overpass-api.de/api/interpreter',
             'https://lz4.overpass-api.de/api/interpreter',
@@ -158,38 +155,48 @@
           ];
           
           let attempts = 0;
-          let currentRadius = 10000;
+          let currentRadius = 6000; // Start smaller for much faster indexing
 
           while (!data || !data.elements || data.elements.length === 0) {
-            for (const ep of endpoints) {
-                try {
-                    const lText = document.getElementById('loadingText');
-                    if(lText) lText.textContent = "Connecting to APIs... (" + attempts + ")";
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const res = await fetch(ep, {
-                        method: 'POST', body: 'data=' + encodeURIComponent(dynamicQuery), signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    if (res.ok) {
-                        const tData = await res.json();
-                        if (tData.elements && tData.elements.length > 0) {
-                            data = tData;
-                            break;
-                        }
-                    }
-                } catch(e) {}
-                attempts++;
+            const lText = document.getElementById('loadingText');
+            if(lText) lText.textContent = "Racing APIs for fastest response... (" + attempts + ")";
+            
+            try {
+                // Fetch concurrently from all endpoints to bypass slow servers
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000); // Strict timeout
+
+                const fetchPromises = endpoints.map(ep => 
+                    fetch(ep, {
+                        method: 'POST', 
+                        body: 'data=' + encodeURIComponent(dynamicQuery), 
+                        signal: controller.signal
+                    }).then(res => {
+                        if (!res.ok) throw new Error('Bad response');
+                        return res.json();
+                    }).then(tData => {
+                        if (tData.elements && tData.elements.length > 0) return tData;
+                        throw new Error('Empty elements');
+                    })
+                );
+
+                data = await Promise.any(fetchPromises);
+                clearTimeout(timeoutId);
+            } catch(e) {
+                // All endpoints failed or timed out
             }
+            
+            attempts++;
+
             if (!data || !data.elements || data.elements.length === 0) {
                 const lText = document.getElementById('loadingText');
                 if(lText) lText.textContent = "Expanding search radius for better results...";
                 currentRadius += 10000;
-                dynamicQuery = dynamicQuery.replace(/around:\\d+/g, 'around:' + currentRadius);
-                await new Promise(r => setTimeout(r, 2000));
+                if (currentRadius > 30000) break; // Circuit breaker
+                dynamicQuery = dynamicQuery.replace(/around:\d+/g, 'around:' + currentRadius);
+                await new Promise(r => setTimeout(r, 1000));
             }
+          }          }
           }
           
           document.getElementById('loadingSpinner').style.display = 'none';
@@ -237,53 +244,57 @@
       }
 
       function renderPlaces(places, city) {
-          document.getElementById('resultsCount').textContent = \`\${places.length} \${isCafe ? 'Cafes' : 'Restaurants'} Found\`;
-          document.getElementById('resultsMeta').textContent = \`Within 10km of \${city} • Sorted by distance\`;
+          const displayPlaces = places.slice(0, 24); // Cap rendering to massively speed up Wikipedia image scraping
+          document.getElementById('resultsCount').textContent = `${displayPlaces.length} ${isCafe ? 'Cafes' : 'Restaurants'} Found`;
+          document.getElementById('resultsMeta').textContent = `Within 10km of ${city} • Sorted by distance`;
           document.getElementById('resultsGrid').style.display = 'grid';
 
           const grid = document.getElementById('resultsGrid');
-          places.forEach((spot, i) => {
+          displayPlaces.forEach((spot, i) => {
             const { stars, count } = generateAuthenticGoogleRating(spot.id);
             const card = document.createElement('div');
             card.className = 'result-card glass-card clickable-card';
-            card.style.animationDelay = \`\${i * 0.05}s\`;
+            card.style.animationDelay = `${i * 0.05}s`;
             
-            const cuisineTag = spot.cuisine ? \` <span class="result-cuisine-badge">\${spot.cuisine.split(';')[0].replace(/_/g, ' ').toUpperCase()}</span>\` : '';
+            const cuisineTag = spot.cuisine ? ` <span class="result-cuisine-badge">${spot.cuisine.split(';')[0].replace(/_/g, ' ').toUpperCase()}</span>` : '';
             const openTag = spot.opening ? '<span style="color:#00e676;font-size:0.8rem; margin-left:6px;">● Open</span>' : '';
 
             // Map static fallback colors
             const fallbackBg = isCafe ? '%232A1B16' : '%231A0B0B';
             const fallbackEmoji = isCafe ? '☕' : '🍽️';
 
-            card.innerHTML = \`
+            card.innerHTML = `
               <div class="card-image-wrapper">
-                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='\${fallbackBg}' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>\${fallbackEmoji}</text></svg>" 
-                     alt="\${spot.name}" class="card-image" id="spotImg\${i}">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='${fallbackBg}' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>${fallbackEmoji}</text></svg>" 
+                     alt="${spot.name}" class="card-image" id="spotImg${i}">
                 <div class="card-image-overlay">
-                  <span class="result-badge result-badge-green">\${spot.distance.toFixed(1)} km</span>
-                  <span class="result-type-badge">\${spot.type}</span>
+                  <span class="result-badge result-badge-green">${spot.distance.toFixed(1)} km</span>
+                  <span class="result-type-badge">${spot.type}</span>
                 </div>
               </div>
               <div class="card-content">
-                <h3 class="result-title" style="margin-bottom: 6px;">\${spot.name}\${cuisineTag}</h3>
+                <h3 class="result-title" style="margin-bottom: 6px;">${spot.name}${cuisineTag}</h3>
                 <div class="card-rating" style="margin-bottom: 8px;">
-                    \${renderStars(stars)} <span class="rating-num">\${stars.toFixed(1)}</span>
-                    <span style="color:var(--text-secondary); font-size: 0.8rem">(\${count} Google Reviews)</span>
+                    ${renderStars(stars)} <span class="rating-num">${stars.toFixed(1)}</span>
+                    <span style="color:var(--text-secondary); font-size: 0.8rem">(${count} Google Reviews)</span>
                 </div>
                 <div class="result-details">
-                  \${spot.phone ? \`<div class="result-detail"><span class="detail-icon">📞</span>\${spot.phone}</div>\` : \`<div class="result-detail"><span class="detail-icon">📞</span>Contact Unavailable</div>\`}
-                  \${spot.outdoor === 'yes' ? \`<div class="result-detail"><span class="detail-icon">🌳</span>Outdoor Seating</div>\` : ''}
+                  ${spot.phone ? `<div class="result-detail"><span class="detail-icon">📞</span>${spot.phone}</div>` : `<div class="result-detail"><span class="detail-icon">📞</span>Contact Unavailable</div>`}
+                  ${spot.outdoor === 'yes' ? `<div class="result-detail"><span class="detail-icon">🌳</span>Outdoor Seating</div>` : ''}
                 </div>
                 <div class="card-actions" style="margin-top: 15px;">
-                  <a href="https://www.google.com/maps/dir/?api=1&destination=\${spot.lat},\${spot.lng}" target="_blank" class="btn-direction" style="background: var(--accent-cyan); color:#000" onclick="event.stopPropagation()">Get Directions ↗</a>
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}" target="_blank" class="btn-direction" style="background: var(--accent-cyan); color:#000" onclick="event.stopPropagation()">Get Directions ↗</a>
                 </div>
               </div>
-            \`;
+            `;
             
-            card.addEventListener('click', () => openDetail(spot, stars, count, \`spotImg\${i}\`));
+            card.addEventListener('click', () => openDetail(spot, stars, count, `spotImg${i}`));
             grid.appendChild(card);
 
-            fetchUniversalImage(spot.name, city, isCafe ? 'cafe inside' : 'restaurant food', \`spotImg\${i}\`);
+            // Fetch image in background seamlessly
+            setTimeout(() => {
+                fetchUniversalImage(spot.name, city, isCafe ? 'cafe inside' : 'restaurant food', `spotImg${i}`);
+            }, i * 150); // Stagger image requests to prevent Wikimedia rate limit blocking
           });
       }
 
@@ -302,41 +313,41 @@
         const imgObj = document.getElementById(imgIdStr);
         const imgSrc = imgObj ? imgObj.src : '';
 
-        detailBody.innerHTML = \`
-          \${imgSrc ? \`<img src="\${imgSrc}" alt="\${spot.name}" class="detail-hero-image" style="max-height: 250px; object-fit: cover;">\` : ''}
-          <h2 style="margin-top:20px;">\${spot.name}</h2>
-          <div class="detail-type-badge" style="display:inline-block; margin-bottom: 10px;">\${spot.type}</div>
+        detailBody.innerHTML = `
+          ${imgSrc ? `<img src="${imgSrc}" alt="${spot.name}" class="detail-hero-image" style="max-height: 250px; object-fit: cover;">` : ''}
+          <h2 style="margin-top:20px;">${spot.name}</h2>
+          <div class="detail-type-badge" style="display:inline-block; margin-bottom: 10px;">${spot.type}</div>
           
           <div class="detail-rating" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-              \${renderStars(stars)} 
-              <span class="rating-num" style="color:var(--text-primary); font-size:1.2rem; font-weight:700;">\${stars.toFixed(1)}</span> 
-              <span class="rating-label" style="color:var(--text-secondary);">(\${count} Google Reviews)</span>
+              ${renderStars(stars)} 
+              <span class="rating-num" style="color:var(--text-primary); font-size:1.2rem; font-weight:700;">${stars.toFixed(1)}</span> 
+              <span class="rating-label" style="color:var(--text-secondary);">(${count} Google Reviews)</span>
           </div>
           
           <div class="detail-section">
             <h4>📋 Information</h4>
             <div class="detail-info-grid">
-              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>\${spot.distance.toFixed(2)} km</span></div>
-              <div class="detail-info-item"><span class="detail-label">📞 Contact</span><span>\${spot.phone || 'Walk-in only'}</span></div>
-              \${spot.cuisine ? \`<div class="detail-info-item"><span class="detail-label">🍲 Cuisine</span><span style="text-transform:capitalize;">\${spot.cuisine.replace(/;/g, ', ').replace(/_/g, ' ')}</span></div>\` : ''}
-              \${spot.opening ? \`<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>\${spot.opening}</span></div>\` : ''}
-              \${spot.outdoor === 'yes' ? \`<div class="detail-info-item"><span class="detail-label">🌳 Seating</span><span>Outdoor Available</span></div>\` : ''}
-              \${spot.delivery === 'yes' ? \`<div class="detail-info-item"><span class="detail-label">🛵 Delivery</span><span>Available</span></div>\` : ''}
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${spot.distance.toFixed(2)} km</span></div>
+              <div class="detail-info-item"><span class="detail-label">📞 Contact</span><span>${spot.phone || 'Walk-in only'}</span></div>
+              ${spot.cuisine ? `<div class="detail-info-item"><span class="detail-label">🍲 Cuisine</span><span style="text-transform:capitalize;">${spot.cuisine.replace(/;/g, ', ').replace(/_/g, ' ')}</span></div>` : ''}
+              ${spot.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>${spot.opening}</span></div>` : ''}
+              ${spot.outdoor === 'yes' ? `<div class="detail-info-item"><span class="detail-label">🌳 Seating</span><span>Outdoor Available</span></div>` : ''}
+              ${spot.delivery === 'yes' ? `<div class="detail-info-item"><span class="detail-label">🛵 Delivery</span><span>Available</span></div>` : ''}
             </div>
           </div>
           <div class="detail-actions" style="margin-top: 25px;">
-            <a href="https://www.google.com/maps/dir/?api=1&destination=\${spot.lat},\${spot.lng}" target="_blank" class="btn-direction" style="font-size: 1.1rem; padding: 14px; text-align: center; width: 100%; background: var(--accent-cyan); color:#000;">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}" target="_blank" class="btn-direction" style="font-size: 1.1rem; padding: 14px; text-align: center; width: 100%; background: var(--accent-cyan); color:#000;">
                 📍 Start Google Maps Navigation
             </a>
-            \${spot.website ? \`<a href="\${spot.website}" target="_blank" class="btn-direction btn-secondary-action" style="margin-top: 10px;">🌐 Visit Official Website</a>\` : ''}
+            ${spot.website ? `<a href="${spot.website}" target="_blank" class="btn-direction btn-secondary-action" style="margin-top: 10px;">🌐 Visit Official Website</a>` : ''}
           </div>
-        \`;
+        `;
       }
 
       async function fetchUniversalImage(name, city, category, imgId) {
         try { 
           // Wikimedia Commons Image Search
-          let r = await fetch(\`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=\${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*\`);
+          let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
           let d = await r.json();
           if (d.query && d.query.pages) { 
               const pageId = Object.keys(d.query.pages)[0]; 
@@ -344,7 +355,7 @@
               if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; } 
           }
           // If direct name search fails, try a generic search for the city + category
-          r = await fetch(\`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=\${encodeURIComponent(city + ' ' + category)}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*\`);
+          r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(city + ' ' + category)}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
           d = await r.json();
           if (d.query && d.query.pages) { 
               const pages = Object.values(d.query.pages); 
