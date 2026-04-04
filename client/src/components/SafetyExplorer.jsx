@@ -83,10 +83,10 @@ const SafetyExplorer = () => {
                     </div>
                 </div>
 
-                <div className="safety-grid" style={{ flexWrap: 'nowrap', display: 'flex' }}>
+                <div className="safety-grid">
 
                     {/* Dynamic User City Card */}
-                    <div className={`area-card active-card glass-card reveal`} style={{ transition: 'all 0.4s ease' }}>
+                    <div className={`area-card active-card glass-card reveal`}>
                         <div className="area-card-header">
                             <div className="area-icon-box">
                                 <span className="material-symbols-outlined">location_city</span>

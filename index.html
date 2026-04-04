@@ -31,16 +31,21 @@
       display: flex !important;
       flex-wrap: nowrap !important;
       overflow-x: auto !important;
-      gap: 20px !important;
+      gap: 12px !important;
       padding: 0 15px 40px 15px !important;
       width: 100% !important;
       scroll-behavior: smooth !important;
       -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important; /* Hide scrollbar Firefox */
+      -ms-overflow-style: none !important;  /* Hide scrollbar IE/Edge */
+    }
+    #safety .safety-grid::-webkit-scrollbar {
+      display: none !important; /* Hide scrollbar Chrome/Safari */
     }
     #safety .area-card {
-      flex: 0 0 25% !important;
-      width: 25% !important;
-      max-width: 25% !important;
+      flex: 0 0 calc(25% - 12px) !important;
+      width: calc(25% - 12px) !important;
+      max-width: calc(25% - 12px) !important;
       min-width: 280px !important;
       height: 480px !important;
       padding: 30px 24px !important;
@@ -130,6 +135,16 @@
       justify-content: center !important;
       display: flex !important;
       flex-wrap: wrap !important;
+    }
+
+    /* Mobile Responsiveness for Safety Explorer */
+    @media (max-width: 768px) {
+      #safety .area-card {
+        flex: 0 0 85% !important;
+        width: 85% !important;
+        max-width: 85% !important;
+        min-width: unset !important;
+      }
     }
   </style>
   <link rel="icon" href="logo.png" type="image/png" />

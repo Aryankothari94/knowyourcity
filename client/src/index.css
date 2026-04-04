@@ -819,9 +819,9 @@ body {
 }
 
 .area-card {
-  flex: 0 0 25% !important;
-  width: 25% !important;
-  max-width: 25% !important;
+  flex: 0 0 calc(25% - 12px) !important;
+  width: calc(25% - 12px) !important;
+  max-width: calc(25% - 12px) !important;
   min-width: 280px;
   height: 480px !important; /* Fixed height for uniformity */
   padding: 30px 24px;
@@ -836,6 +836,31 @@ body {
   border-radius: 20px;
   backdrop-filter: blur(20px);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* Hide horizontal scrollbar for safety grid */
+.safety-grid {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  gap: 12px !important;
+  width: 100% !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.safety-grid::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .area-card {
+    flex: 0 0 85% !important;
+    width: 85% !important;
+    max-width: 85% !important;
+    min-width: unset !important;
+  }
 }
 
 /* Active/Featured card glowing state (as in reference image) */
