@@ -3550,11 +3550,12 @@ a.floating-card:hover {
     color: var(--text-primary);
 }
 
-.safety-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
+#mapSafetyStats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+    margin-bottom: 24px;
+    width: 100%;
 }
 
 .safety-stat {
@@ -3888,9 +3889,9 @@ a.floating-card:hover {
     max-height: none;
   }
 
-  .safety-stats {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+  #mapSafetyStats {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
   }
 
   .safety-stat {
