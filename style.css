@@ -4605,30 +4605,15 @@ a.floating-card:hover {
   .nav-container {
     padding: 0 16px;
     gap: 8px;
+    justify-content: space-between;
   }
   .nav-brand {
     font-size: 1.1rem;
     margin-right: auto;
   }
+  /* Hide desktop widgets entirely on mobile to clear the top bar */
   .nav-widgets {
-    gap: 8px;
-    margin-right: 12px;
-  }
-  .nav-widgets #userCityName,
-  .nav-widgets #accountName,
-  .nav-widgets .user-greeting svg {
     display: none !important;
-  }
-  .nav-widgets .location-badge,
-  .nav-widgets .weather-badge,
-  .nav-widgets .account-nav-item,
-  .nav-widgets #loginBtn {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    min-width: unset;
-  }
-  .nav-widgets .weather-badge #weatherTemp {
-    font-size: 0.8rem;
   }
 }
 
