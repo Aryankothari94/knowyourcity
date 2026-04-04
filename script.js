@@ -212,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('kyc_userCity', city);
             localStorage.setItem('kyc_userLat', latitude);
             localStorage.setItem('kyc_userLng', longitude);
+            if (typeof fetchLocalWeather === 'function') fetchLocalWeather(latitude, longitude);
           } catch {
             userCityName.textContent = 'Your City';
           }
@@ -445,14 +446,40 @@ document.addEventListener('DOMContentLoaded', () => {
   window.isLoggedIn = isLoggedIn;
   console.log('✅ KYC Auth System Initialized. Logged In:', isLoggedIn);
 
+  // Weather Module
+  const fetchLocalWeather = (lat, lng) => {
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`)
+      .then(res => res.json())
+      .then(wData => {
+        const weatherBadge = document.getElementById('weatherBadge');
+        const weatherTemp = document.getElementById('weatherTemp');
+        const weatherIcon = document.getElementById('weatherIcon');
+        if (wData && wData.current_weather && weatherBadge && weatherTemp) {
+          weatherBadge.style.display = 'flex';
+          weatherTemp.textContent = `${Math.round(wData.current_weather.temperature)}°C`;
+          const wcode = wData.current_weather.weathercode;
+          if (wcode === 0) weatherIcon.textContent = '☀️';
+          else if (wcode > 0 && wcode <= 3) weatherIcon.textContent = '⛅';
+          else if (wcode >= 45 && wcode <= 48) weatherIcon.textContent = '🌫️';
+          else if (wcode >= 51 && wcode <= 67) weatherIcon.textContent = '🌧️';
+          else if (wcode >= 71 && wcode <= 77) weatherIcon.textContent = '❄️';
+          else if (wcode >= 95) weatherIcon.textContent = '⛈️';
+          else weatherIcon.textContent = '🌡️';
+        }
+      }).catch(e => console.error("Weather failed", e));
+  };
+
   // If already logged in from a previous session, restore the location badge
   if (isLoggedIn) {
     const savedCity = localStorage.getItem('kyc_userCity');
+    const savedLat = localStorage.getItem('kyc_userLat');
+    const savedLng = localStorage.getItem('kyc_userLng');
     const locationBadge = document.getElementById('locationBadge');
     const userCityName = document.getElementById('userCityName');
     if (savedCity && locationBadge && userCityName) {
       locationBadge.style.display = 'flex';
       userCityName.textContent = savedCity;
+      if (savedLat && savedLng) fetchLocalWeather(savedLat, savedLng);
     } else {
       detectUserCity();
     }

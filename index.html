@@ -162,6 +162,12 @@
           </div>
         </li>
 
+        <!-- Weather Badge -->
+        <li id="weatherBadge" class="weather-badge" style="display: none; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50px; font-size: 0.85rem; font-weight: 500;">
+          <span id="weatherIcon">🌡️</span>
+          <span id="weatherTemp">--°C</span>
+        </li>
+
         <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
       </ul>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu">
@@ -2227,9 +2233,25 @@
                 localStorage.setItem('kyc_userCity', city);
                 if (cityEl) cityEl.textContent = city;
                 if (currentDisplay) currentDisplay.textContent = city;
-                // Reload safety map with detected location
                 if (typeof reloadSafetyMap === 'function') reloadSafetyMap();
                 showToast(`📍 Location set to ${city}`);
+                // Refresh weather
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`)
+                  .then(r=>r.json()).then(w=>{
+                    const wb = document.getElementById('weatherBadge');
+                    const wt = document.getElementById('weatherTemp');
+                    const wi = document.getElementById('weatherIcon');
+                    if(wb && wt && w.current_weather) {
+                       wb.style.display = 'flex';
+                       wt.textContent = `${Math.round(w.current_weather.temperature)}°C`;
+                       const c=w.current_weather.weathercode;
+                       if(c===0) wi.textContent='☀️';
+                       else if(c<=3) wi.textContent='⛅';
+                       else if(c<=48) wi.textContent='🌫️';
+                       else if(c<=67) wi.textContent='🌧️';
+                       else wi.textContent='🌡️';
+                    }
+                  }).catch(()=>{});
               } catch {
                 if (cityEl) cityEl.textContent = 'Set Location';
               }
