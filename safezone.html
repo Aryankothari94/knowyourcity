@@ -202,11 +202,41 @@
       document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
       detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
 
-      // Check cache first
+      // ===== SAFE ZONE KNOWLEDGE BASE (PREMIUM RESIDENTIAL & PUBLIC AREAS) =====
+      const SAFE_ZONE_KNOWLEDGE_BASE = {
+        'solapur': [
+          { name: 'Civil Lines', type: 'Residential', description: 'Elite residential area with wide roads and high security presence.', lat: 17.6599, lng: 75.9064 },
+          { name: 'Siddheshwar Temple Area', type: 'Public Safety', description: 'Highly monitored religious zone with 24/7 CCTV and police post.', lat: 17.6715, lng: 75.9102 },
+          { name: 'Saddu Basti', type: 'Residential', description: 'Quiet family-oriented neighbourhood near the lake.', lat: 17.6655, lng: 75.9188 }
+        ],
+        'mumbai': [
+          { name: 'Juhu Scheme', type: 'Residential', description: 'High-end residential zone with excellent private security and lighting.', lat: 19.1075, lng: 72.8263 },
+          { name: 'Marine Drive Promenade', type: 'Public Safety', description: 'Verified safe night-walk zone with constant PCR patrolling.', lat: 18.9438, lng: 72.8231 },
+          { name: 'Hiranandani Gardens, Powai', type: 'Residential', description: 'Planned community with integrated surveillance and gated security.', lat: 19.1176, lng: 72.9060 }
+        ],
+        'pune': [
+          { name: 'Koregaon Park', type: 'Residential', description: 'Premium residential and social hub with high surveillance.', lat: 18.5362, lng: 73.8885 },
+          { name: 'Amanora Park Town', type: 'Residential', description: 'Gated township with centralized security monitoring.', lat: 18.5186, lng: 73.9351 }
+        ]
+      };
+
+      // Check cache or Knowledge Base first
       const cached = getCachedData(CACHE_KEY);
+      const normalizedCity = city.toLowerCase().trim();
+
       if (cached) {
         document.getElementById('loadingText').textContent = 'Loading from cache...';
         setTimeout(() => renderResults(cached, city, lat, lng, true), 100);
+      } else if (SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity]) {
+        document.getElementById('loadingText').textContent = 'Loading curated safe zones...';
+        setTimeout(() => {
+           const curated = SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity].map(p => ({
+             ...p,
+             typeIcon: getTypeIcon(p.type),
+             distance: getDistance(lat, lng, p.lat, p.lng)
+           }));
+           renderResults(curated, city, lat, lng, false);
+        }, 500);
       } else {
         fetchAllAttractions(lat, lng, city);
       }
