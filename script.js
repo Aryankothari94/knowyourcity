@@ -1410,4 +1410,110 @@ document.addEventListener('DOMContentLoaded', () => {
   }, true); // Capture phase is critical to intercept all clicks
 });
 
+// ===== CITY SCOUT CHATBOT LOGIC =====
+class CityScout {
+  constructor() {
+    this.chatToggle = document.getElementById('chatbotToggle');
+    this.chatWindow = document.getElementById('chatbotWindow');
+    this.chatClose = document.getElementById('chatbotClose');
+    this.chatMessages = document.getElementById('chatbotMessages');
+    this.chatInput = document.getElementById('chatbotInput');
+    this.chatSend = document.getElementById('chatbotSend');
+    this.history = [];
+    
+    this.init();
+  }
+
+  init() {
+    if(!this.chatToggle) return;
+
+    this.chatToggle.addEventListener('click', () => this.toggleWindow());
+    this.chatClose.addEventListener('click', () => this.toggleWindow());
+    
+    this.chatSend.addEventListener('click', () => this.handleSendMessage());
+    this.chatInput.addEventListener('keypress', (e) => {
+      if(e.key === 'Enter') this.handleSendMessage();
+    });
+
+    // Global quick chat function
+    window.sendQuickChat = (msg) => {
+      this.chatInput.value = msg;
+      this.handleSendMessage();
+    };
+  }
+
+  toggleWindow() {
+    this.chatWindow.classList.toggle('active');
+    if(this.chatWindow.classList.contains('active')) {
+      this.chatInput.focus();
+    }
+  }
+
+  appendMessage(role, text) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${role}-message`;
+    msgDiv.innerHTML = text.replace(/\n/g, '<br/>');
+    this.chatMessages.appendChild(msgDiv);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    
+    // Manage history for Gemini (limited to last 10 exchanges)
+    this.history.push({ role: role === 'ai' ? 'model' : 'user', parts: [{ text }] });
+    if(this.history.length > 20) this.history.shift();
+  }
+
+  showTyping() {
+    const indicator = document.createElement('div');
+    indicator.id = 'typingIndicator';
+    indicator.className = 'typing-indicator ai-message';
+    indicator.innerHTML = '<span></span><span></span><span></span>';
+    this.chatMessages.appendChild(indicator);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+  }
+
+  hideTyping() {
+    const indicator = document.getElementById('typingIndicator');
+    if(indicator) indicator.remove();
+  }
+
+  async handleSendMessage() {
+    const message = this.chatInput.value.trim();
+    if(!message) return;
+
+    this.chatInput.value = '';
+    this.appendMessage('user', message);
+    this.showTyping();
+
+    const userContext = {
+      city: localStorage.getItem('kyc_userCity') || 'Unknown',
+      lat: localStorage.getItem('kyc_userLat') || null,
+      lng: localStorage.getItem('kyc_userLng') || null
+    };
+
+    try {
+      const response = await fetch('https://knowyourcity.onrender.com/api/chat/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          userContext,
+          history: this.history.slice(0, -1) // Send history excluding the last user message
+        })
+      });
+
+      const data = await response.json();
+      this.hideTyping();
+      this.appendMessage('ai', data.response || "I'm sorry, I couldn't process that. Please try again.");
+    } catch (error) {
+      this.hideTyping();
+      this.appendMessage('ai', "I'm having trouble connecting to my city database. Please ensure your internet is active and try again.");
+      console.error('Chat Error:', error);
+    }
+  }
+}
+
+// Initialize on DOM Load
+document.addEventListener('DOMContentLoaded', () => {
+  window.cityScout = new CityScout();
+});
+
 

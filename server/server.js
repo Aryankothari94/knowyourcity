@@ -48,6 +48,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const mapRoutes = require('./routes/map');
 const contactRoutes = require('./routes/contact');
+const chatbotRoutes = require('./routes/chatbot');
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Know Your City API is running!' });
@@ -68,6 +69,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/safety', mapRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/chat', chatbotRoutes);
 
 // 4. START SERVER - THE RENDER FIX
 // Adding '0.0.0.0' allows Render to detect the open port

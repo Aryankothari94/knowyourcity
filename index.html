@@ -2789,5 +2789,44 @@
       <div class="spinner-small" style="margin: 20px auto;"></div>
     </div>
   </div>
+  <!-- ===== CITY SCOUT CHATBOT ===== -->
+  <div id="cityScoutChat" class="chatbot-wrapper">
+    <button id="chatbotToggle" class="chatbot-toggle" title="Chat with City Scout">
+      <span class="material-symbols-outlined chatbot-icon">smart_toy</span>
+      <span class="chatbot-tooltip">Ask City Scout!</span>
+    </button>
+
+    <div id="chatbotWindow" class="chatbot-window">
+      <div class="chatbot-header">
+        <div class="chatbot-header-info">
+          <div class="chatbot-avatar">🤖</div>
+          <div>
+            <div class="chatbot-name">City Scout <span class="online-dot"></span></div>
+            <div class="chatbot-desc">AI City Assistant</div>
+          </div>
+        </div>
+        <button id="chatbotClose" class="chatbot-close-btn">&times;</button>
+      </div>
+
+      <div id="chatbotMessages" class="chatbot-messages">
+        <!-- AI Welcome Message -->
+        <div class="message ai-message">
+          Hello! I'm <strong>City Scout</strong>, your Know Your City assistant. I can help you find safe areas, local cafes, police stations, and more. What would you like to explore today?
+        </div>
+        <div class="chatbot-suggestions">
+          <button class="suggest-btn" onclick="sendQuickChat('Suggest safe cafes near me')">☕ Best Cafes?</button>
+          <button class="suggest-btn" onclick="sendQuickChat('How safe is it here?')">🛡️ Safety Check</button>
+          <button class="suggest-btn" onclick="sendQuickChat('Nearby Police Stations')">👮 Police Stations</button>
+        </div>
+      </div>
+
+      <div class="chatbot-input-area">
+        <input type="text" id="chatbotInput" placeholder="Ask about safety, cafes, etc..." />
+        <button id="chatbotSend" class="chatbot-send-btn">
+          <span class="material-symbols-outlined">send</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
