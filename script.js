@@ -369,14 +369,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (weatherBadge) weatherBadge.style.display = 'none';
       if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'none';
 
-      // Strict Auth Enforcement
+      // Strict Auth Enforcement: Hide close capabilities and force modal
       if (closeModal) closeModal.style.display = 'none';
       const appContent = document.getElementById('mainAppContent');
       if (appContent) appContent.style.filter = 'blur(10px)';
       const heroSec = document.getElementById('hero');
       if (heroSec) heroSec.style.filter = 'blur(10px)';
+      const navBar = document.getElementById('navbar');
+      if (navBar) navBar.style.filter = 'blur(8px)';
       
-      openAuthModal('login');
+      // Delay slightly to ensure DOM & scripts are fully settled
+      setTimeout(() => {
+        if (!isLoggedIn) openAuthModal('login');
+      }, 500);
     }
   };
   
