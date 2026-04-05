@@ -176,6 +176,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Global exposure for mobile HTML onclicks
+  window.handleLogout = () => {
+    logoutConfirmModal.classList.add('active');
+  };
+
+  window.closeMobileMenu = () => {
+    const ham = document.getElementById('hamburger');
+    const links = document.getElementById('navLinks');
+    if (ham && links) {
+       ham.classList.remove('active');
+       links.classList.remove('open');
+       document.body.style.overflow = ''; // Ensure overflow is reset
+    }
+  };
+
   closeModal.addEventListener('click', closeAuthModal);
   authModal.addEventListener('click', (e) => {
     if (e.target === authModal && isLoggedIn) closeAuthModal();
@@ -1084,6 +1099,22 @@ document.addEventListener('DOMContentLoaded', () => {
       navLinks.classList.remove('open');
     });
   });
+
+  // Mobile Click Handlers for new button-wrapped widgets
+  const mobLoc = document.getElementById('mobileLocationBadge');
+  const mobLogin = document.getElementById('mobileLoginNav');
+
+  if (mobLoc) {
+    mobLoc.addEventListener('click', () => {
+      window.closeMobileMenu();
+    });
+  }
+
+  if (mobLogin) {
+    mobLogin.addEventListener('click', () => {
+      window.closeMobileMenu();
+    });
+  }
 
   // ===== SMOOTH SCROLL =====
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
