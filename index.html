@@ -160,6 +160,14 @@
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: none !important; /* Prevent the modal itself from blurring */
     }
+    /* Compact Form Styling */
+    .auth-modal { padding: 24px !important; max-width: 450px !important; }
+    .auth-tabs { margin-bottom: 20px !important; }
+    .form-group { margin-bottom: 12px !important; }
+    .form-group label { margin-bottom: 5px !important; font-size: 0.85rem !important; }
+    .form-group input { padding: 10px 14px !important; }
+    .btn-auth { padding: 12px !important; }
+    .auth-footer { margin-top: 10px !important; font-size: 0.85rem !important; }
   </style>
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
@@ -194,54 +202,54 @@
       <!-- Login Form -->
       <form class="auth-form active" id="loginForm">
         <div id="loginError" class="auth-error-message"></div>
-        <div class="form-group">
-          <label for="loginEmail">Email Address</label>
-          <input type="email" id="loginEmail" placeholder="rahul@example.com" required />
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">Password</label>
-          <div class="password-wrapper">
-            <input type="password" id="loginPassword" placeholder="••••••••" required />
-            <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Toggle password">
-              <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" style="display:none">
-                <path
-                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                </path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            </button>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="loginEmail">Email Address</label>
+            <input type="email" id="loginEmail" placeholder="rahul@example.com" required />
+          </div>
+          <div class="form-group half">
+            <label for="loginPassword">Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="loginPassword" placeholder="••••••••" required />
+              <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Toggle password">
+                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" style="display:none">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                  </path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="form-group captcha-group">
-          <label id="captchaLabel" for="loginCaptcha">What is 0 + 0?</label>
-          <input type="text" id="loginCaptcha" placeholder="Enter answer" required />
+        <div class="form-row">
+          <div class="form-group half captcha-group" style="margin-top:0;">
+            <label id="captchaLabel" for="loginCaptcha">What is 0 + 0?</label>
+            <input type="text" id="loginCaptcha" placeholder="Answer" required />
+          </div>
+          <div class="form-group half" style="display:flex; flex-direction:column; justify-content:center; gap:8px; margin-top:5px;">
+            <label class="terms-checkbox-label" style="margin:0;">
+              <input type="checkbox" id="loginTerms" />
+              <span class="custom-checkbox"></span>
+              <span style="font-size:0.75rem;">I agree to <a href="terms.html" target="_blank" class="terms-link">Terms</a></span>
+            </label>
+            <label class="terms-checkbox-label" style="margin:0;">
+              <input type="checkbox" id="loginPrivacy" />
+              <span class="custom-checkbox"></span>
+              <span style="font-size:0.75rem;">I accept <a href="privacy.html" target="_blank" class="terms-link">Privacy</a></span>
+            </label>
+          </div>
         </div>
-        <div class="form-group terms-checkbox-group">
-          <label class="terms-checkbox-label">
-            <input type="checkbox" id="loginTerms" />
-            <span class="custom-checkbox"></span>
-            <span>I agree to the <a href="terms.html" target="_blank" class="terms-link">Terms & Conditions</a></span>
-          </label>
-          <div id="termsError" class="auth-error-message"></div>
-        </div>
-        <div class="form-group terms-checkbox-group">
-          <label class="terms-checkbox-label">
-            <input type="checkbox" id="loginPrivacy" />
-            <span class="custom-checkbox"></span>
-            <span>I accept the <a href="privacy.html" target="_blank" class="terms-link">Privacy Policy</a></span>
-          </label>
-          <div id="privacyError" class="auth-error-message"></div>
-        </div>
-        <button type="submit" class="btn-auth">Login to Your City</button>
-        <div class="auth-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
-          <span>Don't have an account? <a href="#" data-switch="signup">Sign Up</a></span>
-          <a href="#" id="switchToAdmin" style="color:var(--accent-cyan); font-size:0.8rem; font-weight:600; text-decoration:none;">Admin Login</a>
+        <button type="submit" class="btn-auth" style="margin-top:10px;">Login to Your City</button>
+        <div class="auth-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+          <span>Need account? <a href="#" data-switch="signup">Sign Up</a></span>
+          <a href="#" id="switchToAdmin" style="color:var(--accent-cyan); font-size:0.75rem; font-weight:600; text-decoration:none;">Admin</a>
         </div>
       </form>
 
@@ -258,13 +266,15 @@
             <input type="text" id="signupLastName" placeholder="Sharma" required />
           </div>
         </div>
-        <div class="form-group">
-          <label for="signupPhone">Phone Number</label>
-          <input type="tel" id="signupPhone" placeholder="+91 98765 43210" required />
-        </div>
-        <div class="form-group">
-          <label for="signupEmail">Email Address</label>
-          <input type="email" id="signupEmail" placeholder="rahul@example.com" required />
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="signupPhone">Phone Number</label>
+            <input type="tel" id="signupPhone" placeholder="+91 98765 43210" required />
+          </div>
+          <div class="form-group half">
+            <label for="signupEmail">Email Address</label>
+            <input type="email" id="signupEmail" placeholder="rahul@example.com" required />
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group half">
@@ -293,7 +303,7 @@
           </div>
         </div>
         <button type="submit" class="btn-auth">Create Account</button>
-        <div class="auth-footer">
+        <div class="auth-footer" style="margin-top:12px;">
           Already have an account? <a href="#" data-switch="login">Login</a>
         </div>
       </form>
