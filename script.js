@@ -375,6 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (appContent) appContent.style.filter = 'blur(10px)';
       const heroSec = document.getElementById('hero');
       if (heroSec) heroSec.style.filter = 'blur(10px)';
+      
+      openAuthModal('login');
     }
   };
   
