@@ -299,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateAuthUI = () => {
+    const currentlyLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
     const premiumContent = document.getElementById('premiumAppContent');
     const heroBtn = document.getElementById('heroCtaPrimary');
     const heroSecBtn = document.getElementById('heroCtaSecondary');
@@ -312,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileLocationBadge = document.getElementById('mobileLocationBadge');
     const mobileWeatherBadge = document.getElementById('mobileWeatherBadge');
 
-    if (isLoggedIn) {
+    if (currentlyLoggedIn) {
       const firstName = localStorage.getItem('kyc_firstName');
 
       if (loginNav) loginNav.style.display = 'none';
@@ -349,6 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (appContent) appContent.style.filter = 'none';
       const heroSec = document.getElementById('hero');
       if (heroSec) heroSec.style.filter = 'none';
+      const navBar = document.getElementById('navbar');
+      if (navBar) navBar.style.filter = 'none';
       
     } else {
       if (accountNav) accountNav.style.display = 'none';
@@ -370,7 +373,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'none';
 
       // Strict Auth Enforcement: Hide close capabilities and force modal
-      if (closeModal) closeModal.style.display = 'none';
+      if (closeModal) closeModal.style.setProperty('display', 'none', 'important');
+      
       const appContent = document.getElementById('mainAppContent');
       if (appContent) appContent.style.filter = 'blur(10px)';
       const heroSec = document.getElementById('hero');
@@ -378,10 +382,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const navBar = document.getElementById('navbar');
       if (navBar) navBar.style.filter = 'blur(8px)';
       
-      // Delay slightly to ensure DOM & scripts are fully settled
+      // Delay slightly to ensure DOM & styles are fully settled
       setTimeout(() => {
-        if (!isLoggedIn) openAuthModal('login');
-      }, 500);
+        if (!localStorage.getItem('kyc_isLoggedIn') || localStorage.getItem('kyc_isLoggedIn') === 'false') {
+          openAuthModal('login');
+          // Double verify strictly visible
+          if (authModal) {
+            authModal.classList.add('active');
+            authModal.style.display = 'flex';
+            authModal.style.zIndex = '100000';
+          }
+        }
+      }, 600);
     }
   };
   

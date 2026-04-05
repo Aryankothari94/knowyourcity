@@ -146,6 +146,20 @@
         min-width: unset !important;
       }
     }
+    /* Mandatory Authentication Gate Styling */
+    .modal-overlay.active {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      z-index: 100000 !important;
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: none !important; /* Prevent the modal itself from blurring */
+    }
   </style>
   <link rel="icon" href="logo.png" type="image/png" />
 </head>
@@ -161,11 +175,150 @@
     </div>
   </div>
 
-  <!-- Background Orbs -->
   <div class="bg-orbs" aria-hidden="true">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ===== AUTH MODAL ===== -->
+  <div class="modal-overlay" id="authModal">
+    <div class="auth-modal glass-card">
+      <button class="modal-close" id="closeModal">&times;</button>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="signup">Sign Up</button>
+      </div>
+
+      <!-- Login Form -->
+      <form class="auth-form active" id="loginForm">
+        <div id="loginError" class="auth-error-message"></div>
+        <div class="form-group">
+          <label for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" placeholder="rahul@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="loginPassword" placeholder="••••••••" required />
+            <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Toggle password">
+              <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" style="display:none">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                </path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="form-group captcha-group">
+          <label id="captchaLabel" for="loginCaptcha">What is 0 + 0?</label>
+          <input type="text" id="loginCaptcha" placeholder="Enter answer" required />
+        </div>
+        <div class="form-group terms-checkbox-group">
+          <label class="terms-checkbox-label">
+            <input type="checkbox" id="loginTerms" />
+            <span class="custom-checkbox"></span>
+            <span>I agree to the <a href="terms.html" target="_blank" class="terms-link">Terms & Conditions</a></span>
+          </label>
+          <div id="termsError" class="auth-error-message"></div>
+        </div>
+        <div class="form-group terms-checkbox-group">
+          <label class="terms-checkbox-label">
+            <input type="checkbox" id="loginPrivacy" />
+            <span class="custom-checkbox"></span>
+            <span>I accept the <a href="privacy.html" target="_blank" class="terms-link">Privacy Policy</a></span>
+          </label>
+          <div id="privacyError" class="auth-error-message"></div>
+        </div>
+        <button type="submit" class="btn-auth">Login to Your City</button>
+        <div class="auth-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+          <span>Don't have an account? <a href="#" data-switch="signup">Sign Up</a></span>
+          <a href="#" id="switchToAdmin" style="color:var(--accent-cyan); font-size:0.8rem; font-weight:600; text-decoration:none;">Admin Login</a>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form class="auth-form" id="signupForm">
+        <div id="signupError" class="auth-error-message"></div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="signupFirstName">First Name</label>
+            <input type="text" id="signupFirstName" placeholder="Rahul" required />
+          </div>
+          <div class="form-group half">
+            <label for="signupLastName">Last Name</label>
+            <input type="text" id="signupLastName" placeholder="Sharma" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="signupPhone">Phone Number</label>
+          <input type="tel" id="signupPhone" placeholder="+91 98765 43210" required />
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email Address</label>
+          <input type="email" id="signupEmail" placeholder="rahul@example.com" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="signupDOB">Date of Birth</label>
+            <input type="date" id="signupDOB" required />
+          </div>
+          <div class="form-group half">
+            <label for="signupPassword">Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="signupPassword" placeholder="••••••••" required />
+              <button type="button" class="toggle-password" data-target="signupPassword" aria-label="Toggle password">
+                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" style="display:none">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                  </path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn-auth">Create Account</button>
+        <div class="auth-footer">
+          Already have an account? <a href="#" data-switch="login">Login</a>
+        </div>
+      </form>
+      
+      <!-- Admin Login Form -->
+      <form class="auth-form" id="adminLoginForm">
+        <h3 style="text-align:center; margin-bottom:15px; color:var(--accent-cyan);">Restricted Admin Access</h3>
+        <div id="adminLoginError" class="auth-error-message"></div>
+        <div class="form-group">
+          <label for="adminEmail">Administrator Email</label>
+          <input type="email" id="adminEmail" placeholder="admin@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="adminPassword">Admin Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="adminPassword" placeholder="••••••••" required />
+            <button type="button" class="toggle-password" data-target="adminPassword">👁️</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-auth" style="background:linear-gradient(135deg, #00e5ff, #0a0b1a);">Unlock Admin Dashboard</button>
+        <div class="auth-footer">
+          Are you a regular user? <a href="#" data-switch="login">Go back to Login</a>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- ===== NAVBAR ===== -->
@@ -2229,145 +2382,8 @@
     </div>
   </div>
 
-  <!-- ===== AUTH MODAL ===== -->
-  <div class="modal-overlay" id="authModal">
-    <div class="auth-modal glass-card">
-      <button class="modal-close" id="closeModal">&times;</button>
 
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">Login</button>
-        <button class="auth-tab" data-tab="signup">Sign Up</button>
-      </div>
 
-      <!-- Login Form -->
-      <form class="auth-form active" id="loginForm">
-        <div id="loginError" class="auth-error-message"></div>
-        <div class="form-group">
-          <label for="loginEmail">Email Address</label>
-          <input type="email" id="loginEmail" placeholder="rahul@example.com" required />
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">Password</label>
-          <div class="password-wrapper">
-            <input type="password" id="loginPassword" placeholder="••••••••" required />
-            <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Toggle password">
-              <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" style="display:none">
-                <path
-                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                </path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div class="form-group captcha-group">
-          <label id="captchaLabel" for="loginCaptcha">What is 0 + 0?</label>
-          <input type="text" id="loginCaptcha" placeholder="Enter answer" required />
-        </div>
-        <div class="form-group terms-checkbox-group">
-          <label class="terms-checkbox-label">
-            <input type="checkbox" id="loginTerms" />
-            <span class="custom-checkbox"></span>
-            <span>I agree to the <a href="terms.html" target="_blank" class="terms-link">Terms & Conditions</a></span>
-          </label>
-          <div id="termsError" class="auth-error-message"></div>
-        </div>
-        <div class="form-group terms-checkbox-group">
-          <label class="terms-checkbox-label">
-            <input type="checkbox" id="loginPrivacy" />
-            <span class="custom-checkbox"></span>
-            <span>I accept the <a href="privacy.html" target="_blank" class="terms-link">Privacy Policy</a></span>
-          </label>
-          <div id="privacyError" class="auth-error-message"></div>
-        </div>
-        <button type="submit" class="btn-auth">Login to Your City</button>
-        <div class="auth-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
-          <span>Don't have an account? <a href="#" data-switch="signup">Sign Up</a></span>
-          <a href="#" id="switchToAdmin" style="color:var(--accent-cyan); font-size:0.8rem; font-weight:600; text-decoration:none;">Admin Login</a>
-        </div>
-      </form>
-
-      <!-- Signup Form -->
-      <form class="auth-form" id="signupForm">
-        <div id="signupError" class="auth-error-message"></div>
-        <div class="form-row">
-          <div class="form-group half">
-            <label for="signupFirstName">First Name</label>
-            <input type="text" id="signupFirstName" placeholder="Rahul" required />
-          </div>
-          <div class="form-group half">
-            <label for="signupLastName">Last Name</label>
-            <input type="text" id="signupLastName" placeholder="Sharma" required />
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="signupPhone">Phone Number</label>
-          <input type="tel" id="signupPhone" placeholder="+91 98765 43210" required />
-        </div>
-        <div class="form-group">
-          <label for="signupEmail">Email Address</label>
-          <input type="email" id="signupEmail" placeholder="rahul@example.com" required />
-        </div>
-        <div class="form-row">
-          <div class="form-group half">
-            <label for="signupDOB">Date of Birth</label>
-            <input type="date" id="signupDOB" required />
-          </div>
-          <div class="form-group half">
-            <label for="signupPassword">Password</label>
-            <div class="password-wrapper">
-              <input type="password" id="signupPassword" placeholder="••••••••" required />
-              <button type="button" class="toggle-password" data-target="signupPassword" aria-label="Toggle password">
-                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" style="display:none">
-                  <path
-                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                  </path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        <button type="submit" class="btn-auth">Create Account</button>
-        <div class="auth-footer">
-          Already have an account? <a href="#" data-switch="login">Login</a>
-        </div>
-      </form>
-      
-      <!-- Admin Login Form -->
-      <form class="auth-form" id="adminLoginForm">
-        <h3 style="text-align:center; margin-bottom:15px; color:var(--accent-cyan);">Restricted Admin Access</h3>
-        <div id="adminLoginError" class="auth-error-message"></div>
-        <div class="form-group">
-          <label for="adminEmail">Administrator Email</label>
-          <input type="email" id="adminEmail" placeholder="admin@example.com" required />
-        </div>
-        <div class="form-group">
-          <label for="adminPassword">Admin Password</label>
-          <div class="password-wrapper">
-            <input type="password" id="adminPassword" placeholder="••••••••" required />
-            <button type="button" class="toggle-password" data-target="adminPassword">👁️</button>
-          </div>
-        </div>
-        <button type="submit" class="btn-auth" style="background:linear-gradient(135deg, #00e5ff, #0a0b1a);">Unlock Admin Dashboard</button>
-        <div class="auth-footer">
-          Are you a regular user? <a href="#" data-switch="login">Go back to Login</a>
-        </div>
-      </form>
-    </div>
-  </div>
 
   </div> <!-- End of premiumAppContent -->
 
