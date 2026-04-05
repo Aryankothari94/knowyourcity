@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const closeAuthModal = () => {
+    if (!isLoggedIn) return; // Strict auth gate
     authModal.classList.remove('active');
     document.body.style.overflow = '';
   };
@@ -177,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   closeModal.addEventListener('click', closeAuthModal);
   authModal.addEventListener('click', (e) => {
-    if (e.target === authModal) closeAuthModal();
+    if (e.target === authModal && isLoggedIn) closeAuthModal();
   });
 
   if (logoutConfirmModal) {
@@ -342,6 +343,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lat && lng && typeof window.kycFetchWeather === 'function') {
         window.kycFetchWeather(lat, lng);
       }
+
+      if (closeModal) closeModal.style.display = 'block';
+      const appContent = document.getElementById('mainAppContent');
+      if (appContent) appContent.style.filter = 'none';
+      const heroSec = document.getElementById('hero');
+      if (heroSec) heroSec.style.filter = 'none';
       
     } else {
       if (accountNav) accountNav.style.display = 'none';
@@ -361,6 +368,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (mobileLocationBadge) mobileLocationBadge.style.display = 'none';
       if (weatherBadge) weatherBadge.style.display = 'none';
       if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'none';
+
+      // Strict Auth Enforcement
+      if (closeModal) closeModal.style.display = 'none';
+      const appContent = document.getElementById('mainAppContent');
+      if (appContent) appContent.style.filter = 'blur(10px)';
+      const heroSec = document.getElementById('hero');
+      if (heroSec) heroSec.style.filter = 'blur(10px)';
+      
+      openAuthModal('login');
     }
   };
   
