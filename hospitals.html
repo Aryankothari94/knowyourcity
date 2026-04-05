@@ -10,16 +10,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=14">
   <link rel="icon" href="logo.png" type="image/png" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 </head>
 <body>
   <nav class="navbar" id="navbar">
     <div class="container">
-      <a href="#" class="nav-brand">
+      <a href="index.html" class="nav-brand">
         <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
         <div class="nav-brand-text">Know<span>Your</span>City</div>
       </a>
       <ul class="nav-links" id="navLinks">
 
+        <li><a href="index.html" id="navHome">Home</a></li>
         <li><a href="#features" class="active" id="navFeatures">Features</a></li>
         <li><a href="#safety">Safety</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
@@ -155,6 +157,9 @@
         <div class="feature-icon-large">🏥</div>
         <h1>Hospitals Near <span class="gradient-text" id="cityName">Your Area</span></h1>
         <p>Find hospitals, clinics, and healthcare centers within 15km with contact info, specialities, emergency status, and directions. Data from OpenStreetMap.</p>
+        <a href="index.html" class="btn-primary" style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s;">
+          <span class="material-symbols-outlined" style="font-size: 20px;">home</span> Back to Home
+        </a>
       </div>
     </div>
   </section>

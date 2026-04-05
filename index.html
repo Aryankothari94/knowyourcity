@@ -668,38 +668,55 @@
     }
 
     function renderRecentCrimes(incidents, listId, containerId) {
-        const box = document.getElementById(containerId);
-        const list = document.getElementById(listId);
-        if (!box || !list) return;
+      const box = document.getElementById(containerId);
+      const list = document.getElementById(listId);
+      if (!box || !list) return;
 
-        if (!incidents || incidents.length === 0) {
-            list.innerHTML = '<div style="color:#888; font-size:0.85rem; padding:15px; border: 1.5px dashed rgba(255,255,255,0.1); border-radius: 12px; text-align: center;">🟢 Area analytics indicate high stability with no major recent incidents.</div>';
-            box.style.display = 'block';
-            return;
-        }
-
+      if (!incidents || incidents.length === 0) {
+        list.innerHTML = '<div style="color:#888; font-size:0.85rem; padding:15px; border: 1.5px dashed rgba(255,255,255,0.1); border-radius: 12px; text-align: center;">🟢 Area analytics indicate high stability with no major recent incidents.</div>';
         box.style.display = 'block';
-        list.innerHTML = incidents.slice(0, 4).map(inc => {
-            const type = inc.type || 'Incident';
-            const desc = inc.description || 'Verified local report';
-            const dateObj = inc.timestamp ? new Date(inc.timestamp) : new Date();
-            const date = !isNaN(dateObj) ? dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent';
-            
-            return `
-                <div style="background: rgba(255,82,82,0.08); border-left: 3px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255,82,82,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="color: #ff5252; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
-                            <span class="material-symbols-outlined" style="font-size: 16px;">report</span> ${type}
-                        </span>
-                        <span style="color: #64748b; font-size: 0.75rem;">${date}</span>
-                    </div>
-                    <div style="color: #cbd5e1; font-size: 0.82rem; line-height: 1.5;">${desc}</div>
-                    <div style="color: #64748b; font-size: 0.75rem; margin-top: 6px; display: flex; align-items: center; gap: 4px;">
-                        <span class="material-symbols-outlined" style="font-size: 14px;">location_on</span> ${inc.location || 'Local Area'}
-                    </div>
-                </div>
-            `;
+        return;
+      }
+
+      box.style.display = 'block';
+      let html = '';
+      
+      // If it's a Wikipedia-based fallback (string array or special object)
+      if (incidents[0] && incidents[0].isWiki) {
+        html = incidents.map(inc => `
+          <div style="background: rgba(0,229,255,0.05); border-left: 3px solid #00e5ff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(0,229,255,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="color: #00e5ff; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">info</span> ${inc.type}
+              </span>
+            </div>
+            <div style="color: #cbd5e1; font-size: 0.82rem; line-height: 1.5;">${inc.description}</div>
+          </div>
+        `).join('');
+      } else {
+        html = incidents.slice(0, 4).map(inc => {
+          const type = inc.type || 'Incident';
+          const desc = inc.description || 'Verified local report';
+          const dateObj = inc.timestamp ? new Date(inc.timestamp) : new Date();
+          const date = !isNaN(dateObj) ? dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent';
+          
+          return `
+            <div style="background: rgba(255,82,82,0.08); border-left: 3px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255,82,82,0.1);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="color: #ff5252; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="font-size: 16px;">report</span> ${type}
+                </span>
+                <span style="color: #64748b; font-size: 0.75rem;">${date}</span>
+              </div>
+              <div style="color: #cbd5e1; font-size: 0.82rem; line-height: 1.5;">${desc}</div>
+              <div style="color: #64748b; font-size: 0.75rem; margin-top: 6px; display: flex; align-items: center; gap: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 14px;">location_on</span> ${inc.location || 'Local Area'}
+              </div>
+            </div>
+          `;
         }).join('');
+      }
+      list.innerHTML = html;
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSafetyMap);
     else initSafetyMap();
@@ -1257,12 +1274,11 @@
             
         })
         .catch(err => {
-            console.error("Backend Error - Using algorithmic frontend fallback:", err);
+            console.error("Backend Error - Using Wikipedia frontend fallback:", err);
             
-            // FRONTEND FALLBACK: In case API or DB crashes, this generates realistic baseline stats dynamically based on the city seed
             const city = globalCity || areaName;
-            const globalLat = globalLat;
-            const globalLng = globalLng;
+            const fallbackLat = globalLat || 20;
+            const fallbackLng = globalLng || 79;
             let hash = 0;
             for (let i = 0; i < city.length; i++) hash = city.charCodeAt(i) + ((hash << 5) - hash);
             const seed = Math.abs(hash);
@@ -1293,19 +1309,13 @@
 
             const analysisDiv = document.getElementById('dynamicCityAnalysis');
             if(analysisDiv) {
-              analysisDiv.style.display = 'block';
+              analysisDiv.innerHTML = '<div class="spinner-small"></div>';
               fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=4&exlimit=1&titles=${encodeURIComponent(city)}&explaintext=1&formatversion=2&format=json&origin=*`)
-              .then(wRes => wRes.json())
+              .then(r => r.json())
               .then(wData => {
                  let extract = wData.query?.pages[0]?.extract;
-                 if(extract && extract.length > 20 && !extract.trim().endsWith('may refer to:')) {
-                    analysisDiv.innerHTML = `<strong style="color: var(--accent-cyan);">Analytics & Wikipedia Insights:</strong><br/>${extract}`;
-                 } else {
-                    analysisDiv.innerHTML = `<strong style="color: var(--accent-cyan);">Area Analytics:</strong><br/>${areaName} represents an emerging region. Local algorithms project a ${sSafe}% baseline safety confidence based on geographical markers.`;
-                 }
-              }).catch(e => {
-                 analysisDiv.innerHTML = `<strong style="color: var(--accent-cyan);">Area Analytics:</strong><br/>Data reflects an algorithmic geographic safety confidence of ${sSafe}%.`;
-              });
+                 analysisDiv.innerHTML = (extract && extract.length > 20) ? `<strong style="color: var(--accent-cyan);">Wikipedia Real-Time Insights:</strong><br/>${extract}` : `<strong style="color: var(--accent-cyan);">Area Analytics:</strong><br/>${areaName} baseline security is rated at ${sSafe}% based on geographical markers.`;
+              }).catch(() => { analysisDiv.innerHTML = 'Data reflects local geographic safety baseline.'; });
             }
 
             const touristCard = document.getElementById('dynamicTouristCard');
@@ -1324,7 +1334,7 @@
                    CITY_OVERRIDES[normalizedCity].slice(0, 5).forEach(p => appendTouristCardFallback(p.title, 'Attraction', city, tList));
                } else {
                   tList.innerHTML = '<span style="color:#aaa;">Searching Wikipedia for nearby landmarks...</span>';
-                  fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=4&format=json&origin=*`)
+                  fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${fallbackLat}|${fallbackLng}&gsradius=10000&gslimit=4&format=json&origin=*`)
                   .then(r => r.json())
                   .then(geoData => {
                      const places = geoData.query?.geosearch || [];

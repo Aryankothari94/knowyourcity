@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=12">
   <link rel="icon" href="logo.png" type="image/png" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
   <style>
     /* Add any custom UI specifics for dining cards (overriding or extending CSS) */
     .card-rating .star { color: #ffb400; font-size: 1.1rem; }
@@ -18,20 +19,12 @@
   </style>
 </head>
 <body>
-  <nav class="navbar" id="navbar">
-    <div class="container">
-      <a href="#" class="nav-brand">
-        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
-        <div class="nav-brand-text">Know<span>Your</span>City</div>
-      </a>
       <ul class="nav-links" id="navLinks">
-
-        <li><a href="#features" class="active" id="navFeatures">Features</a></li>
+        <li><a href="index.html" id="navHome">Home</a></li>
         <li><a href="#safety">Safety</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
-
-
         <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+      </ul>
         
         <!-- Mobile Sidebar Widgets (Visible only on small screens inside menu) -->
         <div class="mobile-nav-widgets">
@@ -161,6 +154,9 @@
         <div class="feature-icon-large" id="heroIcon">🍽️</div>
         <h1><span class="gradient-text" id="heroTitle">Best Restaurants</span> in <span id="cityName">Your Area</span></h1>
         <p>Discover top-rated spots within 10km featuring authentic ratings, contact info, and fast directions.</p>
+        <a href="index.html" class="btn-primary" style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s;">
+          <span class="material-symbols-outlined" style="font-size: 20px;">home</span> Back to Home
+        </a>
       </div>
     </div>
   </section>
@@ -258,38 +254,38 @@
       fetchPlaces(lat, lng, isCafe);
 
       async function fetchPlaces(lat, lng, isCafe) {
-        // Build Overpass amenity specific query
         const amenityTarget = isCafe ? 'cafe' : 'restaurant';
-        // fetch fastfood alongside restaurant
         const secondary = isCafe ? 'ice_cream' : 'fast_food';
         
+        let radius = 10000;
         let dynamicQuery = `
           [out:json][timeout:25];
           (
-            node["amenity"="${amenityTarget}"](around:10000,${lat},${lng});
-            way["amenity"="${amenityTarget}"](around:10000,${lat},${lng});
-            node["amenity"="${secondary}"](around:8000,${lat},${lng});
-            way["amenity"="${secondary}"](around:8000,${lat},${lng});
+            node["amenity"="${amenityTarget}"](around:${radius},${lat},${lng});
+            way["amenity"="${amenityTarget}"](around:${radius},${lat},${lng});
+            node["amenity"="${secondary}"](around:${radius-2000},${lat},${lng});
+            way["amenity"="${secondary}"](around:${radius-2000},${lat},${lng});
           );
           out center tags 120;
-              let data = null;
+        `;
+
+        try {
           const endpoints = [
             'https://overpass-api.de/api/interpreter',
             'https://lz4.overpass-api.de/api/interpreter',
             'https://overpass.kumi.systems/api/interpreter'
           ];
           
+          let data = null;
           let attempts = 0;
-          let currentRadius = 6000; // Start smaller for much faster indexing
 
           while (!data || !data.elements || data.elements.length === 0) {
             const lText = document.getElementById('loadingText');
-            if(lText) lText.textContent = "Racing APIs for fastest response... (" + attempts + ")";
+            if(lText) lText.textContent = "Searching local food spots... (" + (attempts + 1) + ")";
             
             try {
-                // Fetch concurrently from all endpoints to bypass slow servers
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000); // Strict timeout
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 const fetchPromises = endpoints.map(ep => 
                     fetch(ep, {
@@ -301,36 +297,40 @@
                         return res.json();
                     }).then(tData => {
                         if (tData.elements && tData.elements.length > 0) return tData;
-                        throw new Error('Empty elements');
+                        throw new Error('No results from this mirror');
                     })
                 );
 
                 data = await Promise.any(fetchPromises);
                 clearTimeout(timeoutId);
             } catch(e) {
-                // All endpoints failed or timed out
+                console.warn('Mirror set failed or timed out, expanding radius if possible');
             }
             
-            attempts++;
+            if (data && data.elements && data.elements.length > 0) break;
 
-            if (!data || !data.elements || data.elements.length === 0) {
-                const lText = document.getElementById('loadingText');
-                if(lText) lText.textContent = "Expanding search radius for better results...";
-                currentRadius += 10000;
-                if (currentRadius > 30000) break; // Circuit breaker
-                dynamicQuery = dynamicQuery.replace(/around:\d+/g, 'around:' + currentRadius);
-                await new Promise(r => setTimeout(r, 1000));
-            }
+            attempts++;
+            if (attempts >= 3) break; // Don't loop forever
+
+            radius += 10000;
+            dynamicQuery = dynamicQuery.replace(/around:\d+/g, 'around:' + radius);
+            await new Promise(r => setTimeout(r, 1000));
           }
           
           document.getElementById('loadingSpinner').style.display = 'none';
+
+          if (!data || !data.elements || data.elements.length === 0) {
+            document.getElementById('emptyState').style.display = 'flex';
+            return;
+          }
+
           document.getElementById('emptyState').style.display = 'none';
 
           const places = data.elements.map(el => {
             const elLat = el.lat || el.center?.lat;
             const elLng = el.lon || el.center?.lon;
             const name = el.tags?.name || el.tags?.['name:en'] || '';
-            if(!name) return null; // skip unnamed places
+            if(!name) return null;
 
             return {
               id: el.id,

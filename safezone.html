@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safe Tourist Zones — KnowYourCity</title>
+  <title>Safe Neighbourhoods — KnowYourCity</title>
   <meta name="description" content="Discover safe, family-friendly tourist attractions and heritage sites near your location." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,12 +14,13 @@
 <body>
   <nav class="navbar" id="navbar">
     <div class="container">
-      <a href="#" class="nav-brand">
+      <a href="index.html" class="nav-brand">
         <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
         <div class="nav-brand-text">Know<span>Your</span>City</div>
       </a>
       <ul class="nav-links" id="navLinks">
 
+        <li><a href="index.html" id="navHome">Home</a></li>
         <li><a href="#features" class="active" id="navFeatures">Features</a></li>
         <li><a href="#safety">Safety</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
@@ -153,8 +154,11 @@
     <div class="container">
       <div class="feature-hero-content">
         <div class="feature-icon-large">🛡️</div>
-        <h1>Safe Zones in <span class="gradient-text" id="cityName">Your Area</span></h1>
-        <p>Discover safe, family-friendly tourist attractions, temples, forts, museums, parks, and heritage sites with photos, ratings, and details. Data from OpenStreetMap & Wikipedia.</p>
+        <h1>Safe <span class="gradient-text">Neighbourhoods</span> in <span id="cityName">Your Area</span></h1>
+        <p>Discover safe, family-friendly pockets, residential zones, and community hotspots with live data from OpenStreetMap & Wikipedia.</p>
+        <a href="index.html" class="btn-primary" style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s;">
+          <span class="material-symbols-outlined" style="font-size: 20px;">home</span> Back to Home
+        </a>
       </div>
     </div>
   </section>
@@ -294,92 +298,76 @@
         const query = `
           [out:json][timeout:25];
           (
-            // Tourism attractions
-            node["tourism"="attraction"](around:${mainRadius},${lat},${lng});
-            way["tourism"="attraction"](around:${mainRadius},${lat},${lng});
-            node["tourism"="museum"](around:${mainRadius},${lat},${lng});
-            way["tourism"="museum"](around:${mainRadius},${lat},${lng});
-            node["tourism"="viewpoint"](around:${mainRadius},${lat},${lng});
-            node["tourism"="zoo"](around:${mainRadius},${lat},${lng});
-            way["tourism"="zoo"](around:${mainRadius},${lat},${lng});
-            node["tourism"="theme_park"](around:${mainRadius},${lat},${lng});
-            way["tourism"="theme_park"](around:${mainRadius},${lat},${lng});
-            node["tourism"="gallery"](around:${secondaryRadius},${lat},${lng});
-            way["tourism"="gallery"](around:${secondaryRadius},${lat},${lng});
-            node["tourism"="aquarium"](around:${mainRadius},${lat},${lng});
-            way["tourism"="aquarium"](around:${mainRadius},${lat},${lng});
-            node["tourism"="picnic_site"](around:${secondaryRadius},${lat},${lng});
-
-            // Historic sites — forts, monuments, memorials
+            // Residential Neighborhoods
+            node["place"~"suburb|neighbourhood|quarter"](around:${mainRadius},${lat},${lng});
+            way["place"~"suburb|neighbourhood|quarter"](around:${mainRadius},${lat},${lng});
+            
+            // Safe Public Spaces & Parks
+            node["leisure"~"park|garden"](around:${secondaryRadius},${lat},${lng});
+            way["leisure"~"park|garden"](around:${secondaryRadius},${lat},${lng});
+            node["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium"](around:${mainRadius},${lat},${lng});
+            way["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium"](around:${mainRadius},${lat},${lng});
+            
+            // Historic sites
             node["historic"](around:${mainRadius},${lat},${lng});
             way["historic"](around:${mainRadius},${lat},${lng});
-            relation["historic"](around:${mainRadius},${lat},${lng});
-
-            // Places of worship (famous temples, mosques, churches)
-            node["amenity"="place_of_worship"]["name"](around:${secondaryRadius},${lat},${lng});
-            way["amenity"="place_of_worship"]["name"](around:${secondaryRadius},${lat},${lng});
-
-            // Parks & gardens
-            node["leisure"="park"]["name"](around:${secondaryRadius},${lat},${lng});
-            way["leisure"="park"]["name"](around:${secondaryRadius},${lat},${lng});
-            node["leisure"="garden"]["name"](around:${secondaryRadius},${lat},${lng});
-            way["leisure"="garden"]["name"](around:${secondaryRadius},${lat},${lng});
-            node["leisure"="nature_reserve"]["name"](around:${mainRadius},${lat},${lng});
-            way["leisure"="nature_reserve"]["name"](around:${mainRadius},${lat},${lng});
-
-            // Natural landmarks
-            node["natural"="peak"](around:${mainRadius},${lat},${lng});
-            node["natural"="waterfall"](around:${mainRadius},${lat},${lng});
-            node["natural"="hot_spring"](around:${mainRadius},${lat},${lng});
-            node["natural"="cave_entrance"](around:${mainRadius},${lat},${lng});
-
-            // Famous marketplaces
-            node["amenity"="marketplace"]["name"](around:${secondaryRadius},${lat},${lng});
-            way["amenity"="marketplace"]["name"](around:${secondaryRadius},${lat},${lng});
+            
+            // Places of worship
+            node["amenity"="place_of_worship"](around:${secondaryRadius},${lat},${lng});
           );
-          out center tags 300;
+          out center tags 200;
         `;
 
         try {
-          let data = null;
           const endpoints = [
-            'https://overpass.kumi.systems/api/interpreter',
-            'https://lz4.overpass-api.de/api/interpreter',
             'https://overpass-api.de/api/interpreter',
+            'https://lz4.overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter',
             'https://overpass.osm.ch/api/interpreter'
           ];
+          
+          let data = null;
           let attempts = 0;
-          let dynamicQuery = query;
+          let currentRadius = mainRadius;
 
           while (!data || !data.elements || data.elements.length === 0) {
-            for (const ep of endpoints) {
-                try {
-                    const lText = document.getElementById('loadingText');
-                    if(lText) lText.textContent = "Fetching safe spots fast... (" + attempts + ")";
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const res = await fetch(ep, {
-                        method: 'POST', body: 'data=' + encodeURIComponent(dynamicQuery), signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    if (res.ok) {
-                        const tData = await res.json();
-                        if (tData.elements && tData.elements.length > 0) {
-                            data = tData;
-                            break;
-                        }
-                    }
-                } catch(e) {}
-                attempts++;
+            const lText = document.getElementById('loadingText');
+            if(lText) lText.textContent = "Scanning safe zones... (" + (attempts + 1) + ")";
+            
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const fetchPromises = endpoints.map(ep => 
+                    fetch(ep, {
+                        method: 'POST', 
+                        body: 'data=' + encodeURIComponent(query.replace(/around:\${mainRadius}/g, `around:${currentRadius}`)), 
+                        signal: controller.signal
+                    }).then(res => {
+                        if (!res.ok) throw new Error('Bad response');
+                        return res.json();
+                    }).then(tData => {
+                        if (tData.elements && tData.elements.length > 0) return tData;
+                        throw new Error('No results');
+                    })
+                );
+
+                data = await Promise.any(fetchPromises);
+                clearTimeout(timeoutId);
+            } catch(e) {
+                console.warn('Mirrors busy, retrying...');
             }
-            if (!data || !data.elements || data.elements.length === 0) {
-                const lText = document.getElementById('loadingText');
-                if(lText) lText.textContent = "Continuing to fetch safe spots... please wait.";
-                await new Promise(r => setTimeout(r, 2000));
-            }
+            
+            if (data && data.elements && data.elements.length > 0) break;
+
+            attempts++;
+            if (attempts >= 2) break; 
+
+            currentRadius += 15000;
+            await new Promise(r => setTimeout(r, 1000));
           }
+
+          if (!data || !data.elements) return [];
 
           return data.elements.map(el => {
             const elLat = el.lat || el.center?.lat;
@@ -416,7 +404,8 @@
           }).filter(p => p && p.name);
 
         } catch (err) {
-          throw err;
+          console.error('SafeNeighbourhood fetch error:', err);
+          return [];
         }
       }
 
