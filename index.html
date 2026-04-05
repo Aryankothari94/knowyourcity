@@ -657,7 +657,13 @@
       try {
         const results = await Promise.any([
           fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`)
-            .then(r => r.ok ? r.json() : Promise.reject()),
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(data => {
+              if (data.safetyStats && data.safetyStats.policeCount === 0 && data.safetyStats.hospitalCount === 0) {
+                return Promise.reject("Backend API returned 0 limits, deferring to client-side Live Data");
+              }
+              return data;
+            }),
           
           fetchSafetyDataDirect(globalLat, globalLng).then(osm => ({ 
             infrastructures: osm.elements.map(e => ({
