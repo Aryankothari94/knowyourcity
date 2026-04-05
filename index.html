@@ -354,7 +354,17 @@
 
   <!-- ===== NAVBAR ===== -->
   <nav class="navbar" id="navbar">
-    <div class="container">
+      <a href="#" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features" class="active" id="navFeatures">Features</a></li>
+        <li><a href="#safety">Safety</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+
         <!-- Mobile Sidebar Widgets (Nesting in <li> for semantic correctness) -->
         <li class="mobile-nav-li">
           <div class="mobile-nav-widgets">
@@ -2740,7 +2750,7 @@
         }
     }
   </script>
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=4"></script>
   <script>
     // Trigger fact popup ONCE after location is set successfully
     (function checkFactTrigger() {
