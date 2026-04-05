@@ -2739,6 +2739,12 @@ a.floating-card:hover {
     padding: 12px 0;
 }
 
+.feature-navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .feature-nav-right {
     display: flex;
     align-items: center;
@@ -3490,13 +3496,51 @@ a.floating-card:hover {
     display: grid;
     grid-template-columns: 70% 30%;
     gap: 20px;
-    align-items: start;
+    align-items: stretch;
+}
+
+.safety-map-info {
+    max-height: 520px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+}
+
+/* Scrollbar for safety analysis card */
+.safety-map-info::-webkit-scrollbar {
+    width: 6px;
+}
+
+.safety-map-info::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.safety-map-info::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .safety-map-box {
     padding: 0;
     overflow: hidden;
     border-radius: 16px;
+}
+
+.safety-info-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Custom Scrollbar for Info Panel */
+.safety-info-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.safety-info-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
 }
 
 .safety-map-container {

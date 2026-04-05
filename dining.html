@@ -18,133 +18,20 @@
     .result-cuisine-badge { background: rgba(255,82,82,0.15); color: #ff5252; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
   </style>
 </head>
-<body>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html" id="navHome">Home</a></li>
-        <li><a href="#safety">Safety</a></li>
-        <li><a href="#how-it-works">How It Works</a></li>
-        <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
-      </ul>
-        
-        <!-- Mobile Sidebar Widgets (Visible only on small screens inside menu) -->
-        <div class="mobile-nav-widgets">
-          <!-- Login/Account Row -->
-          <div id="mobileLoginNav">
-            <a href="#" class="mobile-widget-card" onclick="openAuthModal('login')">
-              <div class="mobile-widget-icon">🔑</div>
-              <div>
-                <div style="font-weight:600; font-size:1rem;">Login / Sign Up</div>
-                <div style="font-size:0.75rem; color:var(--text-muted);">Access your saved cities</div>
-              </div>
-            </a>
-          </div>
-          <div id="mobileAccountNav" style="display:none;">
-            <div class="mobile-widget-card">
-              <div class="mobile-widget-icon" style="background: var(--accent-gradient);">👤</div>
-              <div style="flex:1;">
-                <div id="mobileAccountName" style="font-weight:600; font-size:1rem;">Hello, User</div>
-                <div style="font-size:0.75rem; color:var(--safe-green);">Account Active</div>
-              </div>
-              <button onclick="handleLogout()" style="background:none; border:none; color:var(--caution-red); font-size:1.2rem;">🚪</button>
-            </div>
-          </div>
-
-          <!-- Location Row -->
-          <div id="mobileLocationBadge" style="display:none;" onclick="toggleLocationDropdown(event)">
-            <div class="mobile-widget-card">
-              <div class="mobile-widget-icon">📍</div>
-              <div>
-                <div id="mobileUserCityName" style="font-weight:600; font-size:1rem;">Detecting...</div>
-                <div style="font-size:0.75rem; color:var(--text-muted);">Tap to change location</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Weather Row -->
-          <div id="mobileWeatherBadge" style="display:none;" onclick="toggleWeatherDropdown(event)">
-            <div class="mobile-widget-card">
-              <div id="mobileWeatherIcon" class="mobile-widget-icon">🌡️</div>
-              <div>
-                <div id="mobileWeatherTemp" style="font-weight:700; font-size:1.2rem; color:var(--accent-cyan);">--°C</div>
-                <div style="font-size:0.75rem; color:var(--text-muted);">View hourly forecast</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ul>
-
-      <!-- Always Visible Widgets -->
-      <ul class="nav-widgets" id="navWidgets">
-        <!-- Logged Out View -->
-        <li id="loginNav"><a href="#" class="nav-login" id="loginBtn">Login</a></li>
-
-        <!-- Logged In View (Account) -->
-        <li id="accountNav" style="display: none;" class="account-nav-item">
-          <div class="user-greeting">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <span id="accountName">Hello, Name</span>
-          </div>
-          <button id="logoutBtn" class="nav-logout-icon" title="Logout">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-          </button>
-        </li>
-
-        <!-- Location Badge (visible after login + geolocation) -->
-        <li id="locationBadge" class="location-badge" style="display: none;" onclick="toggleLocationDropdown(event)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-            <circle cx="12" cy="10" r="3"></circle>
-          </svg>
-          <span id="userCityName">Detecting...</span>
-          <!-- Location Search Dropdown -->
-          <div class="location-dropdown" id="locationDropdown" onclick="event.stopPropagation()">
-            <div class="location-dropdown-header">
-              <span>📍 Change Location</span>
-            </div>
-            <div class="location-search-wrapper">
-              <input type="text" id="locationSearchInput" placeholder="Search city or place..." autocomplete="off" />
-              <button class="location-search-btn" onclick="searchLocation()">🔍</button>
-            </div>
-            <button class="location-current-btn" onclick="useCurrentLocation()">📍 Use Current Location</button>
-            <div class="location-results" id="locationResults"></div>
-            <div class="location-current" id="locationCurrentInfo">
-              <span class="location-current-label">Current:</span>
-              <span class="location-current-city" id="currentCityDisplay">--</span>
-            </div>
-          </div>
-        </li>
-
-        <!-- Weather Badge -->
-        <li id="weatherBadge" class="weather-badge" style="display: none; position: relative; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50px; font-size: 0.85rem; font-weight: 500; cursor: pointer;" onclick="toggleWeatherDropdown(event)">
-          <span id="weatherIcon">🌡️</span>
-          <span id="weatherTemp">--°C</span>
-          <!-- Weather Dropdown -->
-          <div class="location-dropdown" id="weatherDropdown" onclick="event.stopPropagation()" style="width: 260px; left: auto; right: 0; padding-bottom: 5px;">
-            <div class="location-dropdown-header">
-              <span>⏰ Today's Hourly Forecast</span>
-            </div>
-            <div id="hourlyWeatherList" style="max-height: 250px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-               <div style="color:#aaa; font-size:0.8rem; text-align:center;">Loading hourly forecast...</div>
-            </div>
-          </div>
-        </li>
-      </ul>
-
-      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+<body class="feature-page">
+  <!-- ===== NAVBAR ===== -->
+  <nav class="feature-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+        <div class="nav-brand-text">Know<span>Your</span>City</div>
+      </a>
+      <div class="feature-nav-right">
+        <a href="index.html" class="btn-back">
+          <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 18px; margin-right: 4px;">arrow_back</span>
+          Back to Home
+        </a>
+      </div>
     </div>
   </nav>
 
@@ -154,9 +41,6 @@
         <div class="feature-icon-large" id="heroIcon">🍽️</div>
         <h1><span class="gradient-text" id="heroTitle">Best Restaurants</span> in <span id="cityName">Your Area</span></h1>
         <p>Discover top-rated spots within 10km featuring authentic ratings, contact info, and fast directions.</p>
-        <a href="index.html" class="btn-primary" style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s;">
-          <span class="material-symbols-outlined" style="font-size: 20px;">home</span> Back to Home
-        </a>
       </div>
     </div>
   </section>
@@ -226,6 +110,7 @@
       const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
       const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
       
+      document.title = isCafe ? "Best Cafes in " + city + " — KnowYourCity" : "Best Restaurants in " + city + " — KnowYourCity";
       document.getElementById('cityName').textContent = city;
       document.getElementById('heroTitle').textContent = isCafe ? "Top Cafes" : "Best Restaurants";
       document.getElementById('heroIcon').textContent = isCafe ? "☕" : "🍽️";
@@ -282,14 +167,18 @@
           const wikiData = await wikiResponse.json();
           const p = wikiData.query?.geosearch || [];
           
-          // Filter for terms like "Hotel", "Restaurant", "Cafe" in titles
+          // Categorized Wikipedia Fallback (Strict Filtering)
           const diningSpots = p.filter(place => {
             const t = place.title.toLowerCase();
-            return t.includes('hotel') || t.includes('restaurant') || t.includes('cafe') || t.includes('bakery');
+            if (isCafe) {
+                return t.includes('cafe') || t.includes('coffee') || t.includes('bakery') || t.includes('patisserie');
+            } else {
+                return t.includes('restaurant') || t.includes('hotel') || t.includes('diner') || t.includes('bistro') || t.includes('bar & grill');
+            }
           }).map(place => ({
             id: place.pageid,
             name: place.title,
-            type: place.title.toLowerCase().includes('cafe') ? 'Cafe' : 'Restaurant',
+            type: isCafe ? 'Cafe' : 'Restaurant',
             cuisine: 'Local Landmark',
             lat: place.lat, lng: place.lon,
             distance: getDistance(lat, lng, place.lat, place.lon),
@@ -551,17 +440,6 @@
       }
     });
   </script>
-  <!-- ===== SCHOOLS & PARKS CHOICE MODAL ===== -->
-  <div class="modal-overlay" id="choiceModal">
-    <div class="confirm-modal glass-card" style="text-align:center; max-width:380px;">
-      <h4 style="margin-bottom:6px;">What are you looking for?</h4>
-      <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:18px;">Choose one to see nearby results</p>
-      <div class="confirm-actions" style="gap:12px;">
-        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem;" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('schools.html')"><span class="material-symbols-outlined mi">school</span> Schools</button>
-        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem; background:linear-gradient(135deg,#00e676,#00bfa5);" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('parks.html')"><span class="material-symbols-outlined mi">park</span> Parks</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ===== AUTH MODAL ===== -->
   <div class="modal-overlay" id="authModal">

@@ -387,42 +387,46 @@
           </div>
         </div>
         <div class="safety-map-info glass-card" id="safetyMapInfo">
-          <h3><span class="material-symbols-outlined mi">analytics</span> Safety Analysis</h3>
-          <div class="safety-stats" id="mapSafetyStats">
-            <div class="safety-stat">
-              <span class="stat-icon"><span class="material-symbols-outlined">local_police</span></span>
-              <span class="stat-num" id="policeCount">--</span>
-              <span class="stat-label">Police Stations</span>
-            </div>
-            <div class="safety-stat">
-              <span class="stat-icon"><span class="material-symbols-outlined">local_hospital</span></span>
-              <span class="stat-num" id="hospitalCount">--</span>
-              <span class="stat-label">Hospitals</span>
-            </div>
-            <div class="safety-stat">
-              <span class="stat-icon"><span class="material-symbols-outlined">local_fire_department</span></span>
-              <span class="stat-num" id="fireCount">--</span>
-              <span class="stat-label">Fire Stations</span>
-            </div>
-            <div class="safety-stat">
-              <span class="stat-icon"><span class="material-symbols-outlined">videocam</span></span>
-              <span class="stat-num" id="cctvCount">--</span>
-              <span class="stat-label">CCTV/Surveillance</span>
-            </div>
+          <div class="safety-info-header">
+            <h3><span class="material-symbols-outlined mi">analytics</span> Safety Analysis</h3>
           </div>
-          <div class="safety-summary" id="safetySummary">
-            <p>Loading safety data for your city...</p>
-          </div>
-          <div class="safety-tip"
-            style="margin-top:12px; padding:12px; font-size:0.78rem; color:var(--text-secondary); background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:10px;">
-            <span class="material-symbols-outlined mi">lightbulb</span> <strong>How it works:</strong> We analyze the density of safety infrastructure (police, hospitals, fire
-            stations, CCTV) in each grid cell. Green = high coverage, Orange = moderate, Red = low coverage.
-          </div>
-          <div id="topMapProTips" style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);">
-            <strong style="color: #00e676; font-size: 0.9rem; letter-spacing: 0.5px;"><span class="material-symbols-outlined mi">star</span> PRO TIPS</strong>
-            <ul id="topMapProTipsList" style="margin: 8px 0 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
-              <li style="color:#aaa;">Analyzing regional facts...</li>
-            </ul>
+          <div class="safety-info-scrollable">
+            <div class="safety-stats" id="mapSafetyStats">
+              <div class="safety-stat">
+                <span class="stat-icon"><span class="material-symbols-outlined">local_police</span></span>
+                <span class="stat-num" id="policeCount">--</span>
+                <span class="stat-label">Police Stations</span>
+              </div>
+              <div class="safety-stat">
+                <span class="stat-icon"><span class="material-symbols-outlined">local_hospital</span></span>
+                <span class="stat-num" id="hospitalCount">--</span>
+                <span class="stat-label">Hospitals</span>
+              </div>
+              <div class="safety-stat">
+                <span class="stat-icon"><span class="material-symbols-outlined">local_fire_department</span></span>
+                <span class="stat-num" id="fireCount">--</span>
+                <span class="stat-label">Fire Stations</span>
+              </div>
+              <div class="safety-stat">
+                <span class="stat-icon"><span class="material-symbols-outlined">videocam</span></span>
+                <span class="stat-num" id="cctvCount">--</span>
+                <span class="stat-label">CCTV/Surveillance</span>
+              </div>
+            </div>
+            <div class="safety-summary" id="safetySummary">
+              <p>Loading safety data for your city...</p>
+            </div>
+            <div class="safety-tip"
+              style="margin-top:12px; padding:12px; font-size:0.78rem; color:var(--text-secondary); background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:10px;">
+              <span class="material-symbols-outlined mi">lightbulb</span> <strong>How it works:</strong> We analyze the density of safety infrastructure (police, hospitals, fire
+              stations, CCTV) in each grid cell. Green = high coverage, Orange = moderate, Red = low coverage.
+            </div>
+            <div id="topMapProTips" style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);">
+              <strong style="color: #00e676; font-size: 0.9rem; letter-spacing: 0.5px;"><span class="material-symbols-outlined mi">star</span> PRO TIPS</strong>
+              <ul id="topMapProTipsList" style="margin: 8px 0 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+                <li style="color:#aaa;">Analyzing regional facts...</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -473,6 +477,16 @@
       document.getElementById('hospitalCount').textContent = hC;
       document.getElementById('fireCount').textContent = fC;
       document.getElementById('cctvCount').textContent = cC;
+
+      // Sync with search cards if elements exist
+      const dP = document.getElementById('searchPoliceCount');
+      if(dP) dP.textContent = pC;
+      const dH = document.getElementById('searchHospitalCount');
+      if(dH) dH.textContent = hC;
+      const dF = document.getElementById('searchFireCount');
+      if(dF) dF.textContent = fC;
+      const dC = document.getElementById('searchCctvCount');
+      if(dC) dC.textContent = cC;
 
       // Draw safety grid heatmap
       const c = map.getCenter();
@@ -966,6 +980,29 @@
               <span class="area-tag"><span class="material-symbols-outlined mi">school</span> Schools</span>
               <span class="area-tag"><span class="material-symbols-outlined mi">local_hospital</span> Hospital</span>
               <span class="area-tag"><span class="material-symbols-outlined mi">shopping_cart</span> Market</span>
+            </div>
+
+            <!-- Live Safety Infrastructure Sync -->
+            <div class="area-safety-info" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px; font-weight: 500;">Live Safety Infrastructure:</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
+                  <span class="material-symbols-outlined" style="font-size: 16px; color: #00e676;">local_police</span>
+                  Police: <span id="searchPoliceCount" style="color: #fff; font-weight: 600;">--</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
+                  <span class="material-symbols-outlined" style="font-size: 16px; color: #2196f3;">local_hospital</span>
+                  Hospitals: <span id="searchHospitalCount" style="color: #fff; font-weight: 600;">--</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
+                  <span class="material-symbols-outlined" style="font-size: 16px; color: #ff9800;">local_fire_department</span>
+                  Fire: <span id="searchFireCount" style="color: #fff; font-weight: 600;">--</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
+                  <span class="material-symbols-outlined" style="font-size: 16px; color: #9c27b0;">videocam</span>
+                  CCTV: <span id="searchCctvCount" style="color: #fff; font-weight: 600;">--</span>
+                </div>
+              </div>
             </div>
 
             <!-- START: Recent Crime Activity -->
