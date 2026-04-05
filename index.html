@@ -2353,7 +2353,8 @@
       const globalLat = localStorage.getItem('kyc_userLat') || '19.0760';
       const globalLng = localStorage.getItem('kyc_userLng') || '72.8777';
       const city = localStorage.getItem('kyc_userCity') || 'Your Area';
-      window.location.href = `${page}?globalLat=${globalLat}&globalLng=${globalLng}&city=${encodeURIComponent(city)}`;
+      const separator = page.includes('?') ? '&' : '?';
+      window.location.href = `${page}${separator}lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`;
     }
 
     function toggleLocationDropdown(e) {
