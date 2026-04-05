@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Contact = require('../models/Contact');
 
 // ADMIN LOGIN - Hardcoded specific credentials for the admin
 router.post('/login', async (req, res) => {
@@ -34,7 +35,7 @@ router.get('/users', async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Reserved for administrator only.' });
         }
 
-        const users = await User.find({}, { password: 0 }); // Fetch all users, excluding passwords for privacy
+        const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 }); // Fetch all users, excluding passwords for privacy
         res.status(200).json({ 
             success: true, 
             count: users.length,
@@ -42,6 +43,25 @@ router.get('/users', async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving user list', error: err.message });
+    }
+});
+
+// GET ALL FEEDBACK - RESTRICTED TO ADMIN
+router.get('/feedback', async (req, res) => {
+    try {
+        const adminToken = req.headers['x-admin-token'];
+        if (adminToken !== 'kyc_admin_authorized_session') {
+            return res.status(403).json({ message: 'Access denied. Reserved for administrator only.' });
+        }
+
+        const feedbacks = await Contact.find().sort({ createdAt: -1 }); 
+        res.status(200).json({ 
+            success: true, 
+            count: feedbacks.length,
+            feedbacks: feedbacks 
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error retrieving feedback list', error: err.message });
     }
 });
 

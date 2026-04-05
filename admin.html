@@ -180,8 +180,11 @@
             <span>🛡️</span> Admin Panel
         </div>
         <nav>
-            <a href="#" class="admin-nav-item active">
+            <a href="#" class="admin-nav-item active" id="navUsers">
                 <span>👥</span> All Users
+            </a>
+            <a href="#" class="admin-nav-item" id="navFeedback">
+                <span>💬</span> User Feedback
             </a>
             <a href="index.html" class="admin-nav-item">
                 <span>🏠</span> View Website
@@ -191,35 +194,65 @@
     </div>
 
     <main class="admin-main">
-        <h1>User Management</h1>
-        <p style="color: #888; margin-bottom: 30px;">Overview of all registered citizens on Know Your City.</p>
+        <div id="usersSection">
+            <h1>User Management</h1>
+            <p style="color: #888; margin-bottom: 30px;">Overview of all registered citizens on Know Your City.</p>
 
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="totalUsersCount">0</div>
-                <div class="stat-label">Total Registered Users</div>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalUsersCount">0</div>
+                    <div class="stat-label">Total Registered Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">Active</div>
+                    <div class="stat-label">System Status</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">Active</div>
-                <div class="stat-label">System Status</div>
+
+            <div class="table-container">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email Address</th>
+                            <th>Phone</th>
+                            <th>Date of Birth</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="table-container">
-            <table id="usersTable">
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Email Address</th>
-                        <th>Phone</th>
-                        <th>Date of Birth</th>
-                        <th>Joined</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody">
-                    <!-- Dynamic Rows -->
-                </tbody>
-            </table>
+        <div id="feedbackSection" style="display:none;">
+            <h1>User Feedback & Inquiries</h1>
+            <p style="color: #888; margin-bottom: 30px;">Messages submitted through the platform's contact form.</p>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalFeedbackCount">0</div>
+                    <div class="stat-label">Total Messages Received</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="feedbackTable">
+                    <thead>
+                        <tr>
+                            <th>Sender</th>
+                            <th>Subject & Message</th>
+                            <th>Status</th>
+                            <th>Date Received</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feedbackTableBody">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
@@ -236,6 +269,17 @@
             }
 
             fetchUsers();
+            fetchFeedback();
+
+            document.getElementById('navUsers').addEventListener('click', (e) => {
+                e.preventDefault();
+                switchAdminTab('users');
+            });
+
+            document.getElementById('navFeedback').addEventListener('click', (e) => {
+                e.preventDefault();
+                switchAdminTab('feedback');
+            });
 
             document.getElementById('adminLogout').addEventListener('click', () => {
                 localStorage.removeItem('kyc_isAdmin');
@@ -283,6 +327,64 @@
                     <td style="color:#aaa;">${user.phone}</td>
                     <td style="color:#aaa;">${new Date(user.dob).toLocaleDateString()}</td>
                     <td style="color:#888; font-size:0.85rem;">${new Date(user.createdAt).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function switchAdminTab(tab) {
+            document.getElementById('navUsers').classList.toggle('active', tab === 'users');
+            document.getElementById('navFeedback').classList.toggle('active', tab === 'feedback');
+            
+            document.getElementById('usersSection').style.display = tab === 'users' ? 'block' : 'none';
+            document.getElementById('feedbackSection').style.display = tab === 'feedback' ? 'block' : 'none';
+        }
+
+        async function fetchFeedback() {
+            const adminToken = localStorage.getItem('kyc_adminToken');
+            try {
+                const res = await fetch(`${API_BASE}/admin/feedback`, {
+                    headers: { 'X-Admin-Token': adminToken }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    renderFeedback(data.feedbacks);
+                    document.getElementById('totalFeedbackCount').textContent = data.count;
+                }
+            } catch (err) {
+                console.error('Error fetching feedback:', err);
+            }
+        }
+
+        function renderFeedback(feedbacks) {
+            const tbody = document.getElementById('feedbackTableBody');
+            tbody.innerHTML = feedbacks.map(item => `
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div class="user-avatar" style="background:linear-gradient(135deg, #ff9a9e, #fecfef); color:#333;">
+                                ${item.name[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;">${item.name}</div>
+                                <div style="font-size:0.85rem; color:#aaa;">${item.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600; margin-bottom:4px; text-transform:capitalize;">${item.subject}</div>
+                        <div style="font-size:0.85rem; color:#aaa; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            ${item.message}
+                        </div>
+                    </td>
+                    <td>
+                        <span style="background:${item.status === 'pending' ? 'rgba(255,165,0,0.2)' : 'rgba(0,255,0,0.2)'}; 
+                                     color:${item.status === 'pending' ? '#ffa500' : '#00e676'}; 
+                                     padding:4px 8px; border-radius:4px; font-size:0.8rem; text-transform:capitalize;">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td style="color:#888; font-size:0.85rem;">${new Date(item.createdAt).toLocaleDateString()}</td>
                 </tr>
             `).join('');
         }
