@@ -1390,14 +1390,14 @@
         .then(res => res.json())
         .then(data => {
             if(!data || data.length === 0) throw new Error("Location not found");
-            globalLat = data[0].globalLat;
+            globalLat = data[0].lat;
             globalLng = data[0].lon;
             globalCity = data[0].display_name.split(',')[0];
             
             // Sync map view
             if (typeof _safetyMap !== 'undefined' && _safetyMap) fetchSafetyData(_safetyMap, globalLat, globalLng, globalCity);
 
-            return fetch(`https://knowyourcity.onrender.com/api/safety/insights?globalLat=${globalLat}&globalLng=${globalLng}&city=${encodeURIComponent(globalCity)}`);
+            return fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(globalCity)}`);
         })
         .then(res => res.json())
         .then(data => {
