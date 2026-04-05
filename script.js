@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Captcha Elements
   const captchaLabel = document.getElementById('captchaLabel');
   const loginCaptcha = document.getElementById('loginCaptcha');
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  const adminLoginError = document.getElementById('adminLoginError');
+  const switchToAdmin = document.getElementById('switchToAdmin');
   let currentCaptchaAnswer = 0;
 
   const loginNav = document.getElementById('loginNav');
@@ -111,6 +114,43 @@ document.addEventListener('DOMContentLoaded', () => {
     loginBtn.addEventListener('click', (e) => {
       e.preventDefault();
       openAuthModal();
+    });
+  }
+
+  // Admin Switch Link
+  if (switchToAdmin) {
+    switchToAdmin.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchTab('adminLogin');
+    });
+  }
+
+  // Admin Login Submission
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const errorEl = document.getElementById('adminLoginError');
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          localStorage.setItem('kyc_isAdmin', 'true');
+          localStorage.setItem('kyc_adminToken', data.token);
+          window.location.href = 'admin.html';
+        } else {
+          showError(errorEl, data.message || 'Access Denied.');
+        }
+      } catch (err) {
+        showError(errorEl, 'Server connection failed.');
+      }
     });
   }
 

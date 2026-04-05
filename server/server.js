@@ -45,6 +45,7 @@ app.use((req, res, next) => {
 
 // 3. ROUTES
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 const mapRoutes = require('./routes/map');
 const contactRoutes = require('./routes/contact');
 
@@ -64,6 +65,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/safety', mapRoutes);
 app.use('/api/contact', contactRoutes);
 

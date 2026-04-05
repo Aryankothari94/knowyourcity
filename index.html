@@ -2266,8 +2266,9 @@
           <div id="privacyError" class="auth-error-message"></div>
         </div>
         <button type="submit" class="btn-auth">Login to Your City</button>
-        <div class="auth-footer">
-          Don't have an account? <a href="#" data-switch="signup">Sign Up</a>
+        <div class="auth-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+          <span>Don't have an account? <a href="#" data-switch="signup">Sign Up</a></span>
+          <a href="#" id="switchToAdmin" style="color:var(--accent-cyan); font-size:0.8rem; font-weight:600; text-decoration:none;">Admin Login</a>
         </div>
       </form>
 
@@ -2321,6 +2322,27 @@
         <button type="submit" class="btn-auth">Create Account</button>
         <div class="auth-footer">
           Already have an account? <a href="#" data-switch="login">Login</a>
+        </div>
+      </form>
+      
+      <!-- Admin Login Form -->
+      <form class="auth-form" id="adminLoginForm">
+        <h3 style="text-align:center; margin-bottom:15px; color:var(--accent-cyan);">Restricted Admin Access</h3>
+        <div id="adminLoginError" class="auth-error-message"></div>
+        <div class="form-group">
+          <label for="adminEmail">Administrator Email</label>
+          <input type="email" id="adminEmail" placeholder="admin@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="adminPassword">Admin Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="adminPassword" placeholder="••••••••" required />
+            <button type="button" class="toggle-password" data-target="adminPassword">👁️</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-auth" style="background:linear-gradient(135deg, #00e5ff, #0a0b1a);">Unlock Admin Dashboard</button>
+        <div class="auth-footer">
+          Are you a regular user? <a href="#" data-switch="login">Go back to Login</a>
         </div>
       </form>
     </div>
