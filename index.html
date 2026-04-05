@@ -413,7 +413,7 @@
             </button>
   
             <!-- Weather Row -->
-            <div id="mobileWeatherBadge" style="display:none;" onclick="toggleWeatherDropdown(event)">
+            <div id="mobileWeatherBadge" style="display:none;" onclick="toggleWeatherDropdown(event); closeMobileMenu();">
               <div class="mobile-widget-card">
                 <div id="mobileWeatherIcon" class="mobile-widget-icon">🌡️</div>
                 <div>
@@ -2750,7 +2750,7 @@
         }
     }
   </script>
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
   <script>
     // Trigger fact popup ONCE after location is set successfully
     (function checkFactTrigger() {
