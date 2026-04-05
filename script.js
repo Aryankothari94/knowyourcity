@@ -1490,7 +1490,7 @@ class CityScout {
     };
 
     try {
-      const response = await fetch('https://knowyourcity.onrender.com/api/chat/query', {
+      const response = await fetch('https://knowyourcity-1.onrender.com/api/chat/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

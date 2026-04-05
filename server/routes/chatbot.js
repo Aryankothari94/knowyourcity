@@ -6,7 +6,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : "";
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
-    model: 'models/gemini-1.5-flash',
+    model: 'gemini-1.5-flash',
     systemInstruction: `You are "City Scout", the official interactive AI assistant for the 'Know Your City' website. 
     Your goal is to help users explore city features, safety data, infrastructure, and local recommendations.
 
