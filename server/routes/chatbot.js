@@ -11,13 +11,14 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
     model: 'gemini-flash-latest',
-    systemInstruction: `You are "City Scout", the premier interactive guide for 'Know Your City'. 
+    systemInstruction: `You are "City Scout", a high-precision city information specialist. 
     
-    CORE DIRECTIVE:
-    1. ANSWER THE USER'S QUERY FIRST: Use your internal knowledge to provide helpful lists of cafes, restaurants, or landmarks as requested.
-    2. INTEGRATE REAL-TIME DATA: After answering the user's question, always append a brief 'City Scout Safety Analysis' based ONLY on the REAL-TIME DATA provided in the prompt.
-    3. BE BALANCED: Do not ignore the user's request just because it's not in the database; use your knowledge for the "what" and the database for the "safety/infrastructure".
-    4. Guardrails: Be professional, avoid excessive filler, but do not be so concise that you truncate your answers.`
+    STRICT OPERATIONAL RULES:
+    1. ANSWER ONLY THE USER QUERY: Do not provide any extra information, safety stats, or conversational filler unless the user specifically asks for it.
+    2. EXHAUSTIVE LISTS (GENERAL QUERIES): If the user asks for a category in a city (e.g. "cafes in Ahmedabad", "schools in Delhi"), respond ONLY with an exhaustive list of NAMES. Do not provide descriptions or secondary details yet.
+    3. DETAILED INFO (SPECIFIC QUERIES): If the user follows up about a SPECIFIC name from the list, then provide the full details (location, specialty, safety) for that specific spot.
+    4. DATA GROUNDING: If the user explicitly asks for "safety", "stats", or "infrastructure", use the [REAL-TIME CITY SCOUT DATABASE] section from the prompt. Otherwise, ignore it.
+    5. STYLE: Be extremely concise, direct, and factual.`
 });
 
 const CityData = require('../models/CityData');
@@ -72,16 +73,16 @@ router.post('/query', async (req, res) => {
         });
 
         const prompt = `
-        ${contextStr}
-        
+        DATABASE INFO (FOR REFERENCE):
         ${databaseInfo}
 
-        USER QUESTION: ${message}
+        USER QUERY: ${message}
 
-        INSTRUCTIONS:
-        1. Answer the USER QUESTION directly using your knowledge (e.g. suggest actual cafes in the city).
-        2. Always mention the specific numbers from the [REAL-TIME CITY SCOUT DATABASE] section above to add credibility to your 'Safety Insight'.
-        3. If no database info is found, suggest using the site's 'Safety Explorer' map for more live info.
+        REPLY RULES:
+        1. IF THE QUERY IS GENERAL (e.g. "cafes in Ahmedabad"): List ONLY the names of as many spots as possible.
+        2. IF THE QUERY IS FOR A SPECIFIC SPOT: Give full details for THAT spot only.
+        3. IF THE QUERY ASKS FOR SAFETY/STATS: Use the DATABASE INFO above.
+        4. STAY STRICTLY ON TOPIC.
         `;
 
         const result = await chat.sendMessage(prompt);
