@@ -42,7 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastTitle = document.getElementById('toastTitle');
 
   // Database and State
-  const API_BASE = 'https://knowyourcity.onrender.com/api'; // Change this to your backend URL
+  // Dynamic API Base URL
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
+    ? 'http://localhost:10000/api' 
+    : 'https://knowyourcity.onrender.com/api'; 
+
   let isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
   let usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
   let crimeMap;
@@ -1508,7 +1512,7 @@ class CityScout {
       let errorMsg = "I'm having trouble connecting to my city database. ";
       
       if (error.message.includes('Failed to fetch')) {
-        errorMsg += "This is likely a CORS block or the backend is offline. Please check your Render logs.";
+        errorMsg += "This is likely a CORS block or the backend is offline. Please make sure your local server is running on port 10000.";
       } else {
         errorMsg += `(Error: ${error.message}). Please ensure your backend is reachable at ${API_BASE}.`;
       }

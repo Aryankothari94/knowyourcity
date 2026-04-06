@@ -10,7 +10,7 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     systemInstruction: `You are "City Scout", the official interactive AI assistant for the 'Know Your City' website. 
     Your goal is to help users explore city features, safety data, infrastructure, and local recommendations.
 
@@ -25,30 +25,71 @@ const model = genAI.getGenerativeModel({
     5. Always be professional, helpful, and concise.`
 });
 
+const CityData = require('../models/CityData');
+
 // POST /api/chat/query
 router.post('/query', async (req, res) => {
+    console.log('--- Chatbot /query hit! ---');
     try {
         const { message, userContext, history } = req.body;
         if (!message) return res.status(400).json({ message: 'Message is required' });
 
+        // GROUNDING: Look for city data in the database
+        let databaseInfo = "";
+        const cityToSearch = userContext?.city || message; // Try to extract city from message if context is missing
+        
+        try {
+            // Find city data (case-insensitive)
+            const cityInfo = await CityData.findOne({ 
+                cityName: new RegExp('^' + cityToSearch.trim() + '$', 'i') 
+            });
+
+            if (cityInfo) {
+                databaseInfo = `
+                REAL-TIME DATA FROM OUR DATABASE FOR ${cityInfo.cityName.toUpperCase()}:
+                - Police Stations: ${cityInfo.safetyStats.policeCount}
+                - Hospitals: ${cityInfo.safetyStats.hospitalCount}
+                - Fire Stations: ${cityInfo.safetyStats.fireCount}
+                - CCTV Cameras: ${cityInfo.safetyStats.cctvCount}
+                - Overall Safety Score: ${cityInfo.safetyStats.totalScore}%
+                
+                Top Nearby Landmarks/Zones:
+                ${cityInfo.touristZones.slice(0, 3).map(z => `- ${z.name} (Safety: ${z.safetyScore}/100)`).join('\n')}
+                `;
+            } else {
+                databaseInfo = "No specific data for this city found in our latest records. Suggesting general neighborhood explorer tips.";
+            }
+        } catch (dbError) {
+            console.error('Database grounding error:', dbError.message);
+            databaseInfo = "Currently unable to reach the live city database, providing general assistance.";
+        }
+
         // Build context string
         const contextStr = userContext ? 
             `User is currently in ${userContext.city} (Lat: ${userContext.lat}, Lng: ${userContext.lng}). ` : 
-            "User location is currently unknown.";
+            "User location is unknown.";
 
         // Start chat with history
         const chat = model.startChat({
             history: history || [],
-            generationConfig: {
-                maxOutputTokens: 500,
-            },
+            generationConfig: { maxOutputTokens: 600 },
         });
 
-        const result = await chat.sendMessage(`${contextStr}\n\nUser Question: ${message}`);
+        const prompt = `
+        ${contextStr}
+        ${databaseInfo}
+        
+        User Question: ${message}
+        
+        CRITICAL: If database info is provided above, USE the numbers and facts from it to answer specifically. If no data was found, acknowledge that we are still mapping that area.
+        `;
+
+        const result = await chat.sendMessage(prompt);
         const response = await result.response;
         const text = response.text();
 
         res.json({ response: text });
+
     } catch (error) {
         console.error('--- Gemini Chat Error Detail ---');
         console.error('Message:', error.message);

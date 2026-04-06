@@ -10,9 +10,19 @@ const app = express(); // Move this to the top!
 const PORT = process.env.PORT || 10000; 
 const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI)
+if (MONGO_URI) {
+    mongoose.connect(MONGO_URI, {
+        serverSelectionTimeoutMS: 5000 // Fast fail for local DNS issues
+    })
     .then(() => console.log('✅ MongoDB connected successfully'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
+    .catch(err => {
+        console.error('❌ MongoDB connection error (Backend will stay online):');
+        console.error(err.message);
+    });
+} else {
+    console.warn('⚠️ MONGO_URI missing, database features will be disabled.');
+}
+
 
 // 2. MIDDLEWARE
 app.use(express.json());
@@ -50,6 +60,14 @@ const mapRoutes = require('./routes/map');
 const contactRoutes = require('./routes/contact');
 const chatbotRoutes = require('./routes/chatbot');
 
+// Move API routes BEFORE the root route for better matching
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/safety', mapRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/chat', chatbotRoutes);
+
+
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Know Your City API is running!' });
 });
@@ -65,11 +83,6 @@ app.get('/', (req, res) => {
     `);
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/safety', mapRoutes);
-app.use('/api/contact', contactRoutes);
-app.use('/api/chat', chatbotRoutes);
 
 // 4. START SERVER - THE RENDER FIX
 // Adding '0.0.0.0' allows Render to detect the open port

@@ -10,7 +10,10 @@ const SafetyExplorer = () => {
     const [landmarks, setLandmarks] = useState([]);
     const [isPulsing, setIsPulsing] = useState(false);
 
-    const API_BASE = 'https://knowyourcity.onrender.com/api';
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:10000/api' 
+        : 'https://knowyourcity.onrender.com/api'; 
+
 
     useEffect(() => {
         fetchCityInsights(defaultCity);
