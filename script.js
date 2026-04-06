@@ -43,9 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Database and State
   // Dynamic API Base URL
-  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
-    ? 'http://localhost:10000/api' 
-    : 'https://knowyourcity.onrender.com/api'; 
+  const API_BASE = 'https://knowyourcity-1.onrender.com/api';
 
   let isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
   let usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
