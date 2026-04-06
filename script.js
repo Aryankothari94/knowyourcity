@@ -1505,7 +1505,15 @@ class CityScout {
       this.appendMessage('ai', data.response || "I'm sorry, I couldn't process that. Please try again.");
     } catch (error) {
       this.hideTyping();
-      this.appendMessage('ai', "I'm having trouble connecting to my city database. Please ensure your internet is active and try again.");
+      let errorMsg = "I'm having trouble connecting to my city database. ";
+      
+      if (error.message.includes('Failed to fetch')) {
+        errorMsg += "This is likely a CORS block or the backend is offline. Please check your Render logs.";
+      } else {
+        errorMsg += `(Error: ${error.message}). Please ensure your backend is reachable at ${API_BASE}.`;
+      }
+      
+      this.appendMessage('ai', errorMsg);
       console.error('Chat Error:', error);
     }
   }
