@@ -83,13 +83,29 @@ router.post('/query', async (req, res) => {
         2. IF THE QUERY IS FOR A SPECIFIC SPOT: Give full details for THAT spot only.
         3. IF THE QUERY ASKS FOR SAFETY/STATS: Use the DATABASE INFO above.
         4. STAY STRICTLY ON TOPIC.
+        5. OUTPUT FORMAT: Respond ONLY with a valid JSON object in this format:
+           {
+             "response": "the text of your answer here",
+             "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
+           }
+        Ensure the suggestions are relevant follow-ups to the user's current query.
         `;
 
         const result = await chat.sendMessage(prompt);
         const response = await result.response;
-        const text = response.text();
+        let text = response.text().trim();
+        
+        // Clean up potential markdown code blocks if Gemini adds them
+        if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '');
+        if (text.startsWith('```')) text = text.replace(/^```/, '').replace(/```$/, '');
 
-        res.json({ response: text });
+        try {
+            const parsed = JSON.parse(text);
+            res.json(parsed);
+        } catch (e) {
+            // Fallback for non-JSON responses
+            res.json({ response: text, suggestions: ["Tell me more about this", "Suggest safety stats", "Nearby attractions"] });
+        }
 
     } catch (error) {
         console.error('--- Gemini Chat Error Detail ---');
