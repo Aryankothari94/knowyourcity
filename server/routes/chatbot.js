@@ -11,14 +11,13 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
     model: 'gemini-flash-latest',
-    systemInstruction: `You are "City Scout", a high-efficiency city data assistant. 
-    Your goal is to provide DIRECT, impactful information about cities, cafes, and safety.
-
-    RESPONSE STYLE:
-    1. CONCISION IS KEY: Provide the data/list immediately. Avoid "Hello!", "How can I help?", or "Sure, here is the information" unless essential.
-    2. DATA-FIRST: If the user asks for cafes, restaurants, or city stats, return a structured list or a concise summary first.
-    3. DATA GROUNDING: Use the 'REAL-TIME DATA' provided in the prompt below as your primary source.
-    4. Guardrails: Only discuss city features. Politely refuse unrelated topics via a single, brief sentence.`
+    systemInstruction: `You are "City Scout", the premier interactive guide for 'Know Your City'. 
+    
+    CORE DIRECTIVE:
+    1. ANSWER THE USER'S QUERY FIRST: Use your internal knowledge to provide helpful lists of cafes, restaurants, or landmarks as requested.
+    2. INTEGRATE REAL-TIME DATA: After answering the user's question, always append a brief 'City Scout Safety Analysis' based ONLY on the REAL-TIME DATA provided in the prompt.
+    3. BE BALANCED: Do not ignore the user's request just because it's not in the database; use your knowledge for the "what" and the database for the "safety/infrastructure".
+    4. Guardrails: Be professional, avoid excessive filler, but do not be so concise that you truncate your answers.`
 });
 
 const CityData = require('../models/CityData');
@@ -42,42 +41,47 @@ router.post('/query', async (req, res) => {
 
             if (cityInfo) {
                 databaseInfo = `
-                REAL-TIME DATA FROM OUR DATABASE FOR ${cityInfo.cityName.toUpperCase()}:
+                [REAL-TIME CITY SCOUT DATABASE FOR ${cityInfo.cityName.toUpperCase()}]:
                 - Police Stations: ${cityInfo.safetyStats.policeCount}
                 - Hospitals: ${cityInfo.safetyStats.hospitalCount}
                 - Fire Stations: ${cityInfo.safetyStats.fireCount}
                 - CCTV Cameras: ${cityInfo.safetyStats.cctvCount}
                 - Overall Safety Score: ${cityInfo.safetyStats.totalScore}%
-                
-                Top Nearby Landmarks/Zones:
-                ${cityInfo.touristZones.slice(0, 3).map(z => `- ${z.name} (Safety: ${z.safetyScore}/100)`).join('\n')}
+                - Density: ${cityInfo.safetyStats.densityPerKm} per km
                 `;
             } else {
-                databaseInfo = "No specific data for this city found in our latest records. Suggesting general neighborhood explorer tips.";
+                databaseInfo = "[DATABASE STATUS]: No live mapping data available for this specific city yet.";
             }
         } catch (dbError) {
             console.error('Database grounding error:', dbError.message);
-            databaseInfo = "Currently unable to reach the live city database, providing general assistance.";
+            databaseInfo = "[DATABASE STATUS]: Unable to reach primary city stats database.";
         }
 
         // Build context string
         const contextStr = userContext ? 
-            `User is currently in ${userContext.city} (Lat: ${userContext.lat}, Lng: ${userContext.lng}). ` : 
+            `User Location: ${userContext.city} (Lat: ${userContext.lat}, Lng: ${userContext.lng}). ` : 
             "User location is unknown.";
 
         // Start chat with history
         const chat = model.startChat({
             history: history || [],
-            generationConfig: { maxOutputTokens: 600 },
+            generationConfig: { 
+                maxOutputTokens: 1000, 
+                temperature: 0.7 
+            },
         });
 
         const prompt = `
         ${contextStr}
+        
         ${databaseInfo}
-        
-        User Question: ${message}
-        
-        CRITICAL: If database info is provided above, USE the numbers and facts from it to answer specifically. If no data was found, acknowledge that we are still mapping that area.
+
+        USER QUESTION: ${message}
+
+        INSTRUCTIONS:
+        1. Answer the USER QUESTION directly using your knowledge (e.g. suggest actual cafes in the city).
+        2. Always mention the specific numbers from the [REAL-TIME CITY SCOUT DATABASE] section above to add credibility to your 'Safety Insight'.
+        3. If no database info is found, suggest using the site's 'Safety Explorer' map for more live info.
         `;
 
         const result = await chat.sendMessage(prompt);
