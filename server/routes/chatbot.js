@@ -10,7 +10,7 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
-    model: 'gemini-pro-latest',
+    model: 'gemini-2.0-flash',
     systemInstruction: `You are "City Scout", the premier interactive AI for 'Know Your City'. 
     Your mission is to provide deeply impactful, data-driven insights about any city or neighborhood.
 
