@@ -4,9 +4,13 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Initialize Gemini
 const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : "";
+if (!apiKey) {
+    console.error('CRITICAL: GEMINI_API_KEY is missing in server/.env');
+}
+
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3-flash-preview',
     systemInstruction: `You are "City Scout", the official interactive AI assistant for the 'Know Your City' website. 
     Your goal is to help users explore city features, safety data, infrastructure, and local recommendations.
 
@@ -46,11 +50,33 @@ router.post('/query', async (req, res) => {
 
         res.json({ response: text });
     } catch (error) {
-        console.error('Gemini Chat Error:', error.message);
-        if (error.message.includes('API_KEY_INVALID')) {
-            return res.status(500).json({ response: "I'm having trouble connecting to my brain right now (Invalid API Key). Please ask the administrator to check the Gemini configuration." });
+        console.error('--- Gemini Chat Error Detail ---');
+        console.error('Message:', error.message);
+        console.error('Stack:', error.stack);
+        if (error.response) {
+            console.error('Response Data:', error.response.data);
         }
-        res.status(500).json({ response: "Sorry, I encountered an error processing your request. Please try again later." });
+        console.error('-------------------------------');
+
+        if (error.message.includes('API_KEY_INVALID')) {
+            return res.status(500).json({ 
+                response: "I'm having trouble connecting to my brain right now (Invalid API Key). Please ask the administrator to check the Gemini configuration." 
+            });
+        }
+        if (error.message.includes('quota') || error.message.includes('429')) {
+          return res.status(500).json({ 
+              response: "I'm a bit overwhelmed with requests right now (Quota Exceeded). Please try again in a few minutes." 
+          });
+        }
+        if (error.message.includes('safety') || error.message.includes('blocked')) {
+          return res.status(500).json({ 
+              response: "I'm sorry, I cannot discuss that topic as it triggers my safety filters. Let's talk about city features instead!" 
+          });
+        }
+
+        res.status(500).json({ 
+            response: "Sorry, I encountered an error processing your request. (Error: " + error.message + "). Please try again later." 
+        });
     }
 });
 

@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dangerZone.textContent = "Please wait.";
 
       try {
-          const res = await fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
+          const res = await fetch(`${API_BASE}/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
           if(!res.ok) throw new Error("Backend timeout");
           const data = await res.json();
           
@@ -1490,7 +1490,7 @@ class CityScout {
     };
 
     try {
-      const response = await fetch('https://knowyourcity-1.onrender.com/api/chat/query', {
+      const response = await fetch(`${API_BASE}/chat/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
