@@ -1486,6 +1486,9 @@ class CityScout {
     this.chatInput.value = '';
     this.appendMessage('user', message);
     this.showTyping();
+    // Special cold-start handling indicator
+    const typingIndicator = document.getElementById('typingIndicator');
+    if(typingIndicator) typingIndicator.innerHTML = '<span></span><span></span><span></span> Connecting to city database...';
 
     const userContext = {
       city: localStorage.getItem('kyc_userCity') || 'Unknown',
@@ -1494,15 +1497,21 @@ class CityScout {
     };
 
     try {
+      // Set a 60-second timeout for the initial connection to the Render backend (free tier cold start)
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 60000);
+
       const response = await fetch(`${API_BASE}/chat/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message,
           userContext,
           history: this.history.slice(0, -1) // Send history excluding the last user message
         })
       });
+      clearTimeout(id);
 
       const data = await response.json();
       this.hideTyping();
@@ -1511,10 +1520,12 @@ class CityScout {
       this.hideTyping();
       let errorMsg = "I'm having trouble connecting to my city database. ";
       
-      if (error.message.includes('Failed to fetch')) {
-        errorMsg += "This is likely a CORS block or the backend is offline. Please make sure your local server is running on port 10000.";
+      if (error.name === 'AbortError') {
+        errorMsg += "The server is taking too long to respond (likely waking up from sleep). Please try one more time.";
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMsg += "This is likely a CORS block or the backend is offline. Please ensure your backend is reachable at " + API_BASE;
       } else {
-        errorMsg += `(Error: ${error.message}). Please ensure your backend is reachable at ${API_BASE}.`;
+        errorMsg += `(Error: ${error.message}).`;
       }
       
       this.appendMessage('ai', errorMsg);
