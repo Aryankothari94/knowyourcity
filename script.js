@@ -1453,13 +1453,49 @@ class CityScout {
   appendMessage(role, text) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${role}-message`;
-    msgDiv.innerHTML = text.replace(/\n/g, '<br/>');
     this.chatMessages.appendChild(msgDiv);
-    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-    
-    // Manage history for Gemini (limited to last 10 exchanges)
+
+    if (role === 'ai') {
+      this.typeWriter(text, msgDiv);
+    } else {
+      msgDiv.innerHTML = text.replace(/\n/g, '<br/>');
+      this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+
+    // Manage history for Gemini (limited to last 20 messages)
     this.history.push({ role: role === 'ai' ? 'model' : 'user', parts: [{ text }] });
-    if(this.history.length > 20) this.history.shift();
+    if (this.history.length > 20) this.history.shift();
+  }
+
+  typeWriter(text, element) {
+    const lines = text.split('\n');
+    let lineIndex = 0;
+    
+    // Function to process each line
+    const typeLine = () => {
+      if (lineIndex < lines.length) {
+        const line = lines[lineIndex];
+        const lineDiv = document.createElement('div');
+        lineDiv.style.marginBottom = '8px'; // Keep list items or lines clean
+        element.appendChild(lineDiv);
+        
+        let charIndex = 0;
+        const typeChar = () => {
+          if (charIndex < line.length) {
+            lineDiv.innerHTML += line.charAt(charIndex);
+            charIndex++;
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            setTimeout(typeChar, 10); // Speed of character typing
+          } else {
+            lineIndex++;
+            setTimeout(typeLine, 100); // Delay between lines
+          }
+        };
+        typeChar();
+      }
+    };
+    
+    typeLine();
   }
 
   showTyping() {
@@ -1483,9 +1519,11 @@ class CityScout {
     this.chatInput.value = '';
     this.appendMessage('user', message);
     this.showTyping();
-    // Special cold-start handling indicator
+    // Special 'Analyzing query...' then 'Connecting...' flow
     const typingIndicator = document.getElementById('typingIndicator');
-    if(typingIndicator) typingIndicator.innerHTML = '<span></span><span></span><span></span> Connecting to city database...';
+    if (typingIndicator) {
+        typingIndicator.innerHTML = '<span></span><span></span><span></span> Analyzing your city query...';
+    }
 
     const userContext = {
       city: localStorage.getItem('kyc_userCity') || 'Unknown',
@@ -1494,9 +1532,15 @@ class CityScout {
     };
 
     try {
-      // Set a 60-second timeout for the initial connection to the Render backend (free tier cold start)
+      // 60s timeout for cold start
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 60000);
+
+      // Transition to 'Connecting' after 2.5 seconds to show progress
+      setTimeout(() => {
+          const tid = document.getElementById('typingIndicator');
+          if (tid) tid.innerHTML = '<span></span><span></span><span></span> Fetching correct city data from Render...';
+      }, 2500);
 
       const response = await fetch(`${API_BASE}/chat/query`, {
         method: 'POST',
@@ -1505,7 +1549,7 @@ class CityScout {
         body: JSON.stringify({
           message,
           userContext,
-          history: this.history.slice(0, -1) // Send history excluding the last user message
+          history: this.history.slice(0, -1)
         })
       });
       clearTimeout(id);
