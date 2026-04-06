@@ -41,7 +41,6 @@ const CityDataSchema = new mongoose.Schema({
     }
 });
 
-// Create index for 24-hour cache expiration or quick lookups
-CityDataSchema.index({ cityName: 1 });
+// Indexing is already handled by 'unique: true' in the schema definition
 
 module.exports = mongoose.model('CityData', CityDataSchema);
