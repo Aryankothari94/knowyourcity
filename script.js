@@ -3,6 +3,8 @@
    Animations, Carousel, Nav, Scroll Effects
    ============================================ */
 
+const API_BASE = 'https://knowyourcity-1.onrender.com/api';
+
 document.addEventListener('DOMContentLoaded', () => {
 
   // ===== AUTHENTICATION SYSTEM =====
@@ -42,9 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastTitle = document.getElementById('toastTitle');
 
   // Database and State
-  // Dynamic API Base URL
-  const API_BASE = 'https://knowyourcity-1.onrender.com/api';
-
   let isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
   let usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
   let crimeMap;
