@@ -260,7 +260,7 @@
         // Dynamic API Base URL
         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://localhost:10000/api' 
-            : 'https://knowyourcity.onrender.com/api'; 
+            : 'https://knowyourcity-1.onrender.com/api'; 
 
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -377,7 +377,10 @@
                     </td>
                     <td>
                         <div style="font-weight:600; margin-bottom:4px; text-transform:capitalize;">${item.subject}</div>
-                        <div style="font-size:0.85rem; color:#aaa; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        <div style="font-size:0.85rem; color:#aaa; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" 
+                             title="Click to view full message" 
+                             onclick="showFullMessage(\`${item.message.replace(/"/g, '&quot;')}\`, '${item.name}')" 
+                             style="cursor:pointer;">
                             ${item.message}
                         </div>
                     </td>
@@ -391,6 +394,10 @@
                     <td style="color:#888; font-size:0.85rem;">${new Date(item.createdAt).toLocaleDateString()}</td>
                 </tr>
             `).join('');
+        }
+
+        function showFullMessage(message, sender) {
+            alert(`Message from ${sender}:\n\n${message}`);
         }
     </script>
 </body>

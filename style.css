@@ -1018,67 +1018,71 @@ body {
 
 /* Confirm Modal */
 .confirm-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 32px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   max-width: 400px;
   width: 90%;
   text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.confirm-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 82, 82, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--caution-red);
 }
 
 .confirm-modal h3 {
   font-family: var(--font-heading);
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 16px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-primary);
 }
 
 .confirm-modal p {
   font-size: 0.95rem;
   color: var(--text-secondary);
-  margin-bottom: 24px;
+  margin-bottom: 30px;
+  line-height: 1.5;
 }
 
-.confirm-actions {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-}
-
-.confirm-actions button {
-  padding: 10px 24px;
+.btn-cancel {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
   border-radius: var(--radius-sm);
-  font-weight: 600;
   cursor: pointer;
+  font-weight: 600;
   transition: var(--transition-fast);
 }
 
-.confirm-actions .btn-cancel {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.confirm-actions .btn-cancel:hover {
+.btn-cancel:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.confirm-actions .btn-confirm {
+.btn-confirm {
+  padding: 10px 20px;
   background: var(--caution-red);
-  color: var(--text-primary);
-  border: 1px solid var(--caution-red);
+  border: none;
+  color: white;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition-fast);
 }
 
-.confirm-actions .btn-confirm:hover {
-  background: #e63946;
-  /* Slightly darker red */
-  border-color: #e63946;
+.btn-confirm:hover {
+  background: #e53935;
 }
 
 .badge-safe {
@@ -1737,6 +1741,16 @@ body {
 
   .footer-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .location-dropdown,
+  #weatherDropdown {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 95% !important;
+    max-width: 360px !important;
+    top: 80px !important;
+    position: fixed !important;
   }
 }
 

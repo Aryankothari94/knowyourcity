@@ -177,9 +177,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Global exposure for mobile HTML onclicks
+  // Global accessibility for mobile navigation
   window.handleLogout = () => {
-    logoutConfirmModal.classList.add('active');
+    if (logoutConfirmModal) {
+      logoutConfirmModal.classList.add('active');
+    } else {
+      logout();
+    }
+  };
+
+  window.toggleLocationDropdown = (e) => {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('locationDropdown');
+    const weather = document.getElementById('weatherDropdown');
+    
+    // Hide other dropdowns
+    if (weather) weather.classList.remove('active');
+    
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+        if (dropdown.classList.contains('active')) {
+            window.closeMobileMenu();
+            setTimeout(() => document.getElementById('locationSearchInput')?.focus(), 100);
+        }
+    }
+  };
+
+  window.toggleWeatherDropdown = (e) => {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('weatherDropdown');
+    const location = document.getElementById('locationDropdown');
+    
+    // Hide other dropdowns
+    if (location) location.classList.remove('active');
+    
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+        if (dropdown.classList.contains('active')) {
+            window.closeMobileMenu();
+        }
+    }
   };
 
   window.closeMobileMenu = () => {
@@ -1084,22 +1121,31 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   window.addEventListener('scroll', handleScroll, { passive: true });
 
-  // ===== HAMBURGER MENU =====
+  // ===== HAMBURGER MENU & MOBILE NAVIGATION =====
   const hamburger = document.getElementById('hamburger');
   const navLinks = document.getElementById('navLinks');
 
-  hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navLinks.classList.toggle('open');
-  });
-
-  // Close menu on link click
-  navLinks.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      hamburger.classList.remove('active');
-      navLinks.classList.remove('open');
+  if (hamburger && navLinks) {
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hamburger.classList.toggle('active');
+      navLinks.classList.toggle('open');
+      
+      // Prevent body scroll when menu is open
+      if (navLinks.classList.contains('open')) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
     });
-  });
+
+    // Close menu on link click
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        window.closeMobileMenu();
+      });
+    });
+  }
 
   // Mobile Click Handlers for new button-wrapped widgets
   const mobLoc = document.getElementById('mobileLocationBadge');
@@ -1450,33 +1496,32 @@ class CityScout {
     }
   }
 
-  appendMessage(role, text) {
+  appendMessage(role, text, suggestions = []) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${role}-message`;
     this.chatMessages.appendChild(msgDiv);
 
     if (role === 'ai') {
-      this.typeWriter(text, msgDiv);
+      this.typeWriter(text, msgDiv, suggestions);
     } else {
       msgDiv.innerHTML = text.replace(/\n/g, '<br/>');
       this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
 
-    // Manage history for Gemini (limited to last 20 messages)
+    // Manage history (limited to last 20 messages)
     this.history.push({ role: role === 'ai' ? 'model' : 'user', parts: [{ text }] });
     if (this.history.length > 20) this.history.shift();
   }
 
-  typeWriter(text, element) {
+  typeWriter(text, element, suggestions = []) {
     const lines = text.split('\n');
     let lineIndex = 0;
     
-    // Function to process each line
     const typeLine = () => {
       if (lineIndex < lines.length) {
         const line = lines[lineIndex];
         const lineDiv = document.createElement('div');
-        lineDiv.style.marginBottom = '8px'; // Keep list items or lines clean
+        lineDiv.style.marginBottom = '8px';
         element.appendChild(lineDiv);
         
         let charIndex = 0;
@@ -1485,17 +1530,41 @@ class CityScout {
             lineDiv.innerHTML += line.charAt(charIndex);
             charIndex++;
             this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-            setTimeout(typeChar, 10); // Speed of character typing
+            setTimeout(typeChar, 10);
           } else {
             lineIndex++;
-            setTimeout(typeLine, 100); // Delay between lines
+            setTimeout(typeLine, 100);
           }
         };
         typeChar();
+      } else {
+          // Finished all lines, show suggestions if any
+          if (suggestions && suggestions.length > 0) {
+              this.renderSuggestions(suggestions);
+          }
       }
     };
     
     typeLine();
+  }
+
+  renderSuggestions(suggestions) {
+    const suggestDiv = document.createElement('div');
+    suggestDiv.className = 'chatbot-suggestions';
+    suggestDiv.style.marginTop = '12px';
+    
+    suggestions.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'suggest-btn';
+      btn.style.marginRight = '8px';
+      btn.style.marginBottom = '8px';
+      btn.textContent = s;
+      btn.onclick = () => window.sendQuickChat(s);
+      suggestDiv.appendChild(btn);
+    });
+    
+    this.chatMessages.appendChild(suggestDiv);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
   }
 
   showTyping() {
@@ -1510,6 +1579,9 @@ class CityScout {
   hideTyping() {
     const indicator = document.getElementById('typingIndicator');
     if(indicator) indicator.remove();
+    // Also remove old suggestion buttons to keep it clean
+    const oldSuggestions = document.querySelectorAll('.chatbot-suggestions:not(.initial)');
+    oldSuggestions.forEach(s => s.remove());
   }
 
   async handleSendMessage() {
@@ -1556,7 +1628,7 @@ class CityScout {
 
       const data = await response.json();
       this.hideTyping();
-      this.appendMessage('ai', data.response || "I'm sorry, I couldn't process that. Please try again.");
+      this.appendMessage('ai', data.response || "I'm sorry, I couldn't process that.", data.suggestions || []);
     } catch (error) {
       this.hideTyping();
       let errorMsg = "I'm having trouble connecting to my city database. ";
