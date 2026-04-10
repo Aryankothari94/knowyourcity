@@ -28,21 +28,23 @@ if (MONGO_URI) {
 app.use(express.json());
 
 const allowedOrigins = [
-    'https://knowyourcity-19qg.vercel.app', 
-    'https://knowyourcity.vercel.app'
+    'https://knowyourcity.vercel.app',
+    'https://knowyourcity-19qg.vercel.app'
 ];
 
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            return callback(null, true); // Set to true to avoid strict blocks during testing
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            // For production, you might want to be stricter, but allowing for testing
+            callback(null, true);
         }
-        return callback(null, true);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token']
+    maxAge: 86400 // Cache preflight for 24 hours
 }));
 
 // The modern wildcard fix for Express v5
