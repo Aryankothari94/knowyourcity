@@ -3,7 +3,7 @@
    Animations, Carousel, Nav, Scroll Effects
    ============================================ */
 
-const API_BASE = 'https://knowyourcity-1.onrender.com/api';
+const API_BASE = 'https://knowyourcity.onrender.com/api';
 
 document.addEventListener('DOMContentLoaded', () => {
 
