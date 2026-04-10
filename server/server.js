@@ -42,7 +42,7 @@ app.use(cors({
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token']
 }));
 
 // The modern wildcard fix for Express v5
