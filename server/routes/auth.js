@@ -119,12 +119,24 @@ router.post('/forgot-password', async (req, res) => {
             `
         };
 
-        await transporter.sendMail(mailOptions);
+        try {
+            await transporter.sendMail(mailOptions);
+        } catch (mailErr) {
+            console.error('Email Send Error:', mailErr);
+            return res.status(500).json({ 
+                message: 'Your password was reset, but we could not send the email. Please contact support.', 
+                error: mailErr.message 
+            });
+        }
 
         res.status(200).json({ success: true, message: 'A temporary password has been sent to your email.' });
     } catch (err) {
         console.error('Forgot Password Error:', err);
-        res.status(500).json({ message: 'Server error processing your request.', error: err.message });
+        const isDBError = err.name === 'MongooseError' || err.name === 'MongoError' || err.message.includes('buffering');
+        res.status(500).json({ 
+            message: isDBError ? 'Database connection issue. Please try again later.' : 'Server error processing your request.', 
+            error: err.message 
+        });
     }
 });
 
