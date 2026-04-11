@@ -89,19 +89,22 @@ router.post('/forgot-password', async (req, res) => {
         user.password = hashedPassword;
         await user.save();
 
-        // Setup Email Transporter (Port 587 for better cloud compatibility)
+        // Setup Email Transporter (matching the working contact.js config)
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // true for 465, false for other ports
+            service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            },
-            tls: {
-                rejectUnauthorized: false
             }
         });
+
+        // Log the transporter status
+        try {
+            await transporter.verify();
+            console.log('✅ SMTP Transporter is ready');
+        } catch (vErr) {
+            console.error('❌ SMTP Verification Failed:', vErr.message);
+        }
 
         // Send Email
         const mailOptions = {
