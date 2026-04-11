@@ -48,8 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastTitle = document.getElementById('toastTitle');
 
   // Database and State
+  // Database and State
   let isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
-  let usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
+  
+  // ONE-TIME CLEANUP: Remove old localStorage users to ensure transition to permanent server-side DB
+  if (localStorage.getItem('kyc_users')) {
+    console.warn('🗑️ Removing legacy browser users as we transition to permanent DB storage.');
+    localStorage.removeItem('kyc_users');
+  }
+
   let crimeMap;
   let markersLayer;
   let currentCityName = "Your Area";
@@ -522,19 +529,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
     } catch (err) {
-      // Backend unavailable — fallback to localStorage
-      console.log('Backend unavailable, using localStorage fallback. Reason:', err.message);
-    }
-
-    // localStorage fallback (Email existence check only, NO password matching)
-    usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
-    const localUser = usersDB.find(u => u.email === email);
-    
-    if (localUser) {
-      showError(loginError, 'Account found locally but password must be verified by the server. Please check your internet or use Forgot Password.');
-      generateCaptcha();
-    } else {
-      showError(loginError, "Invalid credentials or account does not exist.");
+      // Backend unavailable
+      console.error('Backend connection failed:', err.message);
+      showError(loginError, 'Network issue: Could not reach the server. Please try again later.');
       generateCaptcha();
     }
   });
@@ -579,24 +576,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
     } catch (err) {
-      console.log('Backend unavailable, using localStorage fallback. Reason:', err.message);
+      console.error('Backend connection failed:', err.message);
+      showError(signupError, 'Registration unavailable: Server cannot be reached. Try again later.');
     }
-
-    // localStorage fallback
-    usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
-    if (usersDB.some(u => u.email === email)) {
-      showError(signupError, 'Email is already registered. Please login.');
-      return;
-    }
-
-    usersDB.push({ firstName, lastName, phone, email, dob, password });
-    localStorage.setItem('kyc_users', JSON.stringify(usersDB));
-
-    signupForm.reset();
-    performLogin(email, firstName);
-    const authModal = document.getElementById('authModal');
-    if(authModal) authModal.classList.remove('active');
-    document.body.style.overflow = 'auto';
   });
 
   // Forgot Password Form Submission

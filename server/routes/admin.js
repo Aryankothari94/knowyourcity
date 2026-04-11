@@ -61,7 +61,22 @@ router.get('/feedback', async (req, res) => {
             feedbacks: feedbacks 
         });
     } catch (err) {
-        res.status(500).json({ message: 'Error retrieving feedback list', error: err.message });
+// CLEAR ALL USERS - RESTRICTED TO ADMIN (DANGER ZONE)
+router.post('/clear-all-users', async (req, res) => {
+    try {
+        const adminToken = req.headers['x-admin-token'];
+        if (adminToken !== 'kyc_admin_authorized_session') {
+            return res.status(403).json({ message: 'Access denied. Reserved for administrator only.' });
+        }
+
+        const result = await User.deleteMany({});
+        res.status(200).json({ 
+            success: true, 
+            message: 'All users have been permanently deleted.',
+            deletedCount: result.deletedCount 
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error wiping user database', error: err.message });
     }
 });
 

@@ -207,6 +207,10 @@
                     <div class="stat-value">Active</div>
                     <div class="stat-label">System Status</div>
                 </div>
+                <div class="stat-card" style="border: 1px solid rgba(255, 68, 68, 0.2); background: rgba(255, 68, 68, 0.02);">
+                    <div class="stat-label" style="color: #ff4444; margin-bottom: 10px; font-weight: 600;">DANGER ZONE</div>
+                    <button onclick="wipeAllUsers()" style="background:#ff4444; color:#fff; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem; width:100%;">Wipe All Users</button>
+                </div>
             </div>
 
             <div class="table-container">
@@ -394,6 +398,39 @@
                     <td style="color:#888; font-size:0.85rem;">${new Date(item.createdAt).toLocaleDateString()}</td>
                 </tr>
             `).join('');
+        }
+
+        async function wipeAllUsers() {
+            const adminToken = localStorage.getItem('kyc_adminToken');
+            
+            if (!confirm('🛑 WARNING: This will PERMANENTLY DELETE all registered users from the database. This action cannot be undone. Are you absolutely sure?')) {
+                return;
+            }
+
+            if (!confirm('Final Confirmation: Delete EVERYTHING?')) {
+                return;
+            }
+
+            try {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                const res = await fetch(`${API_BASE}/admin/clear-all-users`, {
+                    method: 'POST',
+                    headers: { 'X-Admin-Token': adminToken }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(`✅ Success: ${data.message} (${data.deletedCount} users removed)`);
+                    fetchUsers(); // Refresh list
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Error wiping users:', err);
+                alert('Database cleanup failed. Check console for details.');
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
         }
 
         function showFullMessage(message, sender) {
