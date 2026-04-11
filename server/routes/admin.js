@@ -29,13 +29,12 @@ router.post('/login', async (req, res) => {
 // GET ALL USERS - RESTRICTED TO ADMIN
 router.get('/users', async (req, res) => {
     try {
-        // Simple auth check from header for frontend-backend connection
         const adminToken = req.headers['x-admin-token'];
         if (adminToken !== 'kyc_admin_authorized_session') {
             return res.status(403).json({ message: 'Access denied. Reserved for administrator only.' });
         }
 
-        const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 }); // Fetch all users, excluding passwords for privacy
+        const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 });
         res.status(200).json({ 
             success: true, 
             count: users.length,
