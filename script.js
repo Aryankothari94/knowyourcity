@@ -3,7 +3,9 @@
    Animations, Carousel, Nav, Scroll Effects
    ============================================ */
 
-const API_BASE = 'https://knowyourcity.onrender.com/api';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:10000/api'
+  : 'https://knowyourcity.onrender.com/api';
 
 document.addEventListener('DOMContentLoaded', () => {
 
