@@ -110,12 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tab === 'login') generateCaptcha();
     switchTab(tab);
   };
+  window.openAuthModal = openAuthModal; // Expose globally for HTML onclicks
 
   const closeAuthModal = () => {
     if (!isLoggedIn) return; // Strict auth gate
     authModal.classList.remove('active');
     document.body.style.overflow = '';
   };
+  window.closeAuthModal = closeAuthModal; // Expose globally for HTML onclicks
 
   const switchTab = (tabName) => {
     clearErrors();
@@ -280,12 +282,18 @@ document.addEventListener('DOMContentLoaded', () => {
     showLoginToast(firstName);
     window.isLoggedIn = true;
 
-    // Show fact popup ONCE after login (not on city change or refresh)
-    const city = localStorage.getItem('kyc_userCity') || 'Your City';
-    sessionStorage.setItem('kyc_showFact', city);
-
     // Request geolocation for the location badge only
     detectUserCity();
+  };
+  window.performLogin = performLogin;
+
+  // Navigation Guard for Feature Pages (Safe Zone, Schools, Parks, Metro)
+  window.openFeaturePage = (url) => {
+    if (isLoggedIn) {
+        window.location.href = url;
+    } else {
+        openAuthModal('login');
+    }
   };
 
   const detectUserCity = () => {
