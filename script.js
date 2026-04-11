@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Database and State
   // Database and State
   let isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
-  
+
   // ONE-TIME CLEANUP: Remove old localStorage users to ensure transition to permanent server-side DB
   if (localStorage.getItem('kyc_users')) {
     console.warn('🗑️ Removing legacy browser users as we transition to permanent DB storage.');
@@ -207,16 +207,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e) e.stopPropagation();
     const dropdown = document.getElementById('locationDropdown');
     const weather = document.getElementById('weatherDropdown');
-    
+
     // Hide other dropdowns
     if (weather) weather.classList.remove('active');
-    
+
     if (dropdown) {
-        dropdown.classList.toggle('active');
-        if (dropdown.classList.contains('active')) {
-            window.closeMobileMenu();
-            setTimeout(() => document.getElementById('locationSearchInput')?.focus(), 100);
-        }
+      dropdown.classList.toggle('active');
+      if (dropdown.classList.contains('active')) {
+        window.closeMobileMenu();
+        setTimeout(() => document.getElementById('locationSearchInput')?.focus(), 100);
+      }
     }
   };
 
@@ -224,15 +224,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e) e.stopPropagation();
     const dropdown = document.getElementById('weatherDropdown');
     const location = document.getElementById('locationDropdown');
-    
+
     // Hide other dropdowns
     if (location) location.classList.remove('active');
-    
+
     if (dropdown) {
-        dropdown.classList.toggle('active');
-        if (dropdown.classList.contains('active')) {
-            window.closeMobileMenu();
-        }
+      dropdown.classList.toggle('active');
+      if (dropdown.classList.contains('active')) {
+        window.closeMobileMenu();
+      }
     }
   };
 
@@ -240,9 +240,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ham = document.getElementById('hamburger');
     const links = document.getElementById('navLinks');
     if (ham && links) {
-       ham.classList.remove('active');
-       links.classList.remove('open');
-       document.body.style.overflow = ''; // Ensure overflow is reset
+      ham.classList.remove('active');
+      links.classList.remove('open');
+      document.body.style.overflow = ''; // Ensure overflow is reset
     }
   };
 
@@ -295,16 +295,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const extractCityName = (address) => {
       if (!address) return 'Your City';
-      return address.city || 
-             address.town || 
-             address.suburb || 
-             address.neighbourhood || 
-             address.city_district || 
-             address.village || 
-             address.municipality || 
-             address.county || 
-             address.state || 
-             'Your City';
+      return address.city ||
+        address.town ||
+        address.suburb ||
+        address.neighbourhood ||
+        address.city_district ||
+        address.village ||
+        address.municipality ||
+        address.county ||
+        address.state ||
+        'Your City';
     };
 
     if (navigator.geolocation) {
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
             const data = await res.json();
             const city = extractCityName(data.address);
-            
+
             if (userCityName) userCityName.textContent = city;
             if (mobileCity) mobileCity.textContent = city;
 
@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroSecBtn = document.getElementById('heroCtaSecondary');
     const locationBadge = document.getElementById('locationBadge');
     const weatherBadge = document.getElementById('weatherBadge');
-    
+
     // Mobile Elements
     const mobileLoginNav = document.getElementById('mobileLoginNav');
     const mobileAccountNav = document.getElementById('mobileAccountNav');
@@ -397,17 +397,17 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileAccountNav.style.display = 'block';
         if (mobileAccountName && firstName) mobileAccountName.textContent = 'Hello, ' + firstName;
       }
-      
+
       if (premiumContent) premiumContent.style.display = 'block';
       if (heroBtn) {
-         heroBtn.innerHTML = 'Analyze City <span>→</span>';
-         heroBtn.href = "#safety-map";
-         heroBtn.removeAttribute('onclick');
+        heroBtn.innerHTML = 'Analyze City <span>→</span>';
+        heroBtn.href = "#safety-map";
+        heroBtn.removeAttribute('onclick');
       }
       if (heroSecBtn) heroSecBtn.style.display = 'inline-flex';
       if (locationBadge) locationBadge.style.display = 'flex';
       if (mobileLocationBadge) mobileLocationBadge.style.display = 'block';
-      
+
       // Attempt to show weather if we have coords
       const lat = localStorage.getItem('kyc_userLat');
       const lng = localStorage.getItem('kyc_userLng');
@@ -422,19 +422,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (heroSec) heroSec.style.filter = 'none';
       const navBar = document.getElementById('navbar');
       if (navBar) navBar.style.filter = 'none';
-      
+
     } else {
       if (accountNav) accountNav.style.display = 'none';
       if (mobileAccountNav) mobileAccountNav.style.display = 'none';
-      
+
       if (loginNav) loginNav.style.display = 'block';
       if (mobileLoginNav) mobileLoginNav.style.display = 'block';
-      
+
       if (premiumContent) premiumContent.style.display = 'none';
       if (heroBtn) {
-         heroBtn.innerHTML = 'Login to Explore <span>→</span>';
-         heroBtn.href = "#";
-         heroBtn.setAttribute('onclick', 'event.preventDefault(); document.getElementById("authModal").classList.add("active"); document.body.style.overflow="hidden";');
+        heroBtn.innerHTML = 'Login to Explore <span>→</span>';
+        heroBtn.href = "#";
+        heroBtn.setAttribute('onclick', 'event.preventDefault(); document.getElementById("authModal").classList.add("active"); document.body.style.overflow="hidden";');
       }
       if (heroSecBtn) heroSecBtn.style.display = 'none';
       if (locationBadge) locationBadge.style.display = 'none';
@@ -444,14 +444,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Strict Auth Enforcement: Hide close capabilities and force modal
       if (closeModal) closeModal.style.setProperty('display', 'none', 'important');
-      
+
       const appContent = document.getElementById('mainAppContent');
       if (appContent) appContent.style.filter = 'blur(10px)';
       const heroSec = document.getElementById('hero');
       if (heroSec) heroSec.style.filter = 'blur(10px)';
       const navBar = document.getElementById('navbar');
       if (navBar) navBar.style.filter = 'blur(8px)';
-      
+
       // Delay slightly to ensure DOM & styles are fully settled
       setTimeout(() => {
         if (!localStorage.getItem('kyc_isLoggedIn') || localStorage.getItem('kyc_isLoggedIn') === 'false') {
@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 600);
     }
   };
-  
+
   // ensure the UI is updated immediately dynamically
   updateAuthUI();
 
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         signupForm.reset();
         performLogin(data.user.email, data.user.firstName);
         const authModal = document.getElementById('authModal');
-        if(authModal) authModal.classList.remove('active');
+        if (authModal) authModal.classList.remove('active');
         document.body.style.overflow = 'auto';
         return;
       } else if (res.status >= 500) {
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
           forgotPasswordSuccess.textContent = 'Success! Your New Signin Password has been emailed to you.';
           forgotPasswordSuccess.style.display = 'block';
           forgotPasswordForm.reset();
-          
+
           // Smooth transition back to login after success
           setTimeout(() => {
             switchTab('login');
@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const weatherTemp = document.getElementById('weatherTemp');
         const weatherIcon = document.getElementById('weatherIcon');
         const hourlyList = document.getElementById('hourlyWeatherList');
-        
+
         const mobileWeatherBadge = document.getElementById('mobileWeatherBadge');
         const mobileWeatherTemp = document.getElementById('mobileWeatherTemp');
         const mobileWeatherIcon = document.getElementById('mobileWeatherIcon');
@@ -678,15 +678,15 @@ document.addEventListener('DOMContentLoaded', () => {
           weatherTemp.textContent = `${Math.round(wData.current_weather.temperature)}°C`;
           if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'block';
           if (mobileWeatherTemp) mobileWeatherTemp.textContent = `${Math.round(wData.current_weather.temperature)}°C`;
-          
+
           const iconMap = (c, isDay) => {
-              if (c === 0) return isDay ? '☀️' : '🌙';
-              if (c <= 3) return isDay ? '⛅' : '☁️';
-              if (c <= 48) return '🌫️';
-              if (c <= 67) return '🌧️';
-              if (c <= 77) return '❄️';
-              if (c >= 95) return '⛈️';
-              return '🌡️';
+            if (c === 0) return isDay ? '☀️' : '🌙';
+            if (c <= 3) return isDay ? '⛅' : '☁️';
+            if (c <= 48) return '🌫️';
+            if (c <= 67) return '🌧️';
+            if (c <= 77) return '❄️';
+            if (c >= 95) return '⛈️';
+            return '🌡️';
           };
           weatherIcon.textContent = iconMap(wData.current_weather.weathercode, wData.current_weather.is_day);
           if (mobileWeatherIcon) mobileWeatherIcon.textContent = iconMap(wData.current_weather.weathercode, wData.current_weather.is_day);
@@ -694,12 +694,12 @@ document.addEventListener('DOMContentLoaded', () => {
           if (hourlyList && wData.hourly && wData.current_weather) {
             const currentTimeStr = wData.current_weather.time;
             const currentIndex = wData.hourly.time.findIndex(t => t.slice(0, 13) === currentTimeStr.slice(0, 13));
-            
+
             if (currentIndex !== -1) {
               const startIndex = Math.max(0, currentIndex - 12);
               const endIndex = Math.min(wData.hourly.time.length, currentIndex + 13);
               let hourlyHTML = '';
-              
+
               for (let i = startIndex; i < endIndex; i++) {
                 const tDate = new Date(wData.hourly.time[i]);
                 const timeString = tDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -707,11 +707,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const t = Math.round(wData.hourly.temperature_2m[i]);
                 const c = wData.hourly.weathercode[i];
                 const dFlag = wData.hourly.is_day[i];
-                
+
                 let bg = i === currentIndex ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)';
                 let bder = i === currentIndex ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid transparent';
                 let label = i === currentIndex ? `<span style="color:var(--accent-cyan); font-size:0.75rem; font-weight:bold;">NOW</span>` : '';
-                
+
                 hourlyHTML += `
                   <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: ${bg}; border: ${bder}; border-radius: 6px;">
                     <div style="display: flex; flex-direction: column; width: 80px;">
@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
               }
               hourlyList.innerHTML = hourlyHTML;
-              
+
               // Optionally scroll to "NOW" smoothly after render
               setTimeout(() => {
                 const nowSpan = hourlyList.querySelector('span[style*="var(--accent-cyan)"]');
@@ -738,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }).catch(e => {
         const hourlyList = document.getElementById('hourlyWeatherList');
-        if(hourlyList) hourlyList.innerHTML = '<div style="color:var(--caution-red); font-size:0.8rem; text-align:center;">Error loading forecast</div>';
+        if (hourlyList) hourlyList.innerHTML = '<div style="color:var(--caution-red); font-size:0.8rem; text-align:center;">Error loading forecast</div>';
       });
   };
 
@@ -805,9 +805,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Gate nav links EXCEPT: Login button, Contact Us CTA, and Features
   document.querySelectorAll('.nav-links a').forEach(link => {
     // Skip the login button, Contact Us CTA, and the Features nav
-    if (link.classList.contains('nav-login') || 
-        link.classList.contains('nav-cta') || 
-        link.id === 'navFeatures') return;
+    if (link.classList.contains('nav-login') ||
+      link.classList.contains('nav-cta') ||
+      link.id === 'navFeatures') return;
     link.addEventListener('click', gateFeature, true);
   });
 
@@ -850,34 +850,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (crimeMap) return; // Already initialized
 
     interactiveMapSection.style.display = 'block';
-    
+
     crimeMap = L.map('map', {
-        zoomControl: false
+      zoomControl: false
     }).setView([lat, lng], 13);
 
     currentCityName = "Current Location";
 
     L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-        attribution: 'Tiles &copy; Google Maps', maxZoom: 20
+      attribution: 'Tiles &copy; Google Maps', maxZoom: 20
     }).addTo(crimeMap);
 
     L.control.zoom({
-        position: 'bottomright'
+      position: 'bottomright'
     }).addTo(crimeMap);
 
     markersLayer = L.layerGroup().addTo(crimeMap);
-    
+
     // Add user marker
     L.marker([lat, lng], {
-        icon: L.divIcon({
-            className: 'user-location-marker',
-            html: '<div style="background: var(--accent-cyan); width: 15px; height: 15px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px var(--accent-cyan);"></div>',
-            iconSize: [15, 15]
-        })
+      icon: L.divIcon({
+        className: 'user-location-marker',
+        html: '<div style="background: var(--accent-cyan); width: 15px; height: 15px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px var(--accent-cyan);"></div>',
+        iconSize: [15, 15]
+      })
     }).addTo(crimeMap).bindPopup('You are here').openPopup();
 
     generateSafeNeighborhoods(lat, lng);
-    
+
     // Smooth scroll to map
     interactiveMapSection.scrollIntoView({ behavior: 'smooth' });
 
@@ -886,12 +886,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('mapSearchInput');
 
     if (searchBtn) {
-        searchBtn.addEventListener('click', searchLocation);
+      searchBtn.addEventListener('click', searchLocation);
     }
     if (searchInput) {
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchLocation();
-        });
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchLocation();
+      });
     }
   };
 
@@ -905,55 +905,55 @@ document.addEventListener('DOMContentLoaded', () => {
     input.placeholder = "Analyzing safety records...";
 
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
-        if (data && data.length > 0) {
-            const { lat, lon, display_name } = data[0];
-            const nLat = parseFloat(lat);
-            const nLng = parseFloat(lon);
-            currentCityName = display_name.split(',')[0]; 
-            
-            crimeMap.setView([nLat, nLng], 13);
-            fetchRealtimeSafetyData(nLat, nLng, currentCityName, display_name);
-        } else {
-            alert("Area not found. Please specify city name.");
-        }
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const { lat, lon, display_name } = data[0];
+        const nLat = parseFloat(lat);
+        const nLng = parseFloat(lon);
+        currentCityName = display_name.split(',')[0];
+
+        crimeMap.setView([nLat, nLng], 13);
+        fetchRealtimeSafetyData(nLat, nLng, currentCityName, display_name);
+      } else {
+        alert("Area not found. Please specify city name.");
+      }
     } catch (err) {
-        console.error("Search error:", err);
+      console.error("Search error:", err);
     } finally {
-        input.disabled = false;
-        input.placeholder = originalPlaceholder;
+      input.disabled = false;
+      input.placeholder = originalPlaceholder;
     }
   };
 
   const fetchRealtimeSafetyData = async (lat, lng, city, fullAreaName) => {
-      const reportsList = document.getElementById('reportsList');
-      const safeZone = document.getElementById('safeZoneText');
-      const dangerZone = document.getElementById('dangerZoneText');
-      markersLayer.clearLayers();
-      reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Fetching real-time locational infrastructure...</li>';
-      safeZone.textContent = "Analyzing infrastructure...";
-      dangerZone.textContent = "Please wait.";
+    const reportsList = document.getElementById('reportsList');
+    const safeZone = document.getElementById('safeZoneText');
+    const dangerZone = document.getElementById('dangerZoneText');
+    markersLayer.clearLayers();
+    reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Fetching real-time locational infrastructure...</li>';
+    safeZone.textContent = "Analyzing infrastructure...";
+    dangerZone.textContent = "Please wait.";
 
+    try {
+      const res = await fetch(`${API_BASE}/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
+      if (!res.ok) throw new Error("Backend timeout");
+      const data = await res.json();
+
+      let items = [];
+      if (data.infrastructures) items.push(...data.infrastructures);
+      if (data.touristZones) items.push(...data.touristZones.map(tz => ({ ...tz, nodeType: tz.type || 'tourist' })));
+
+      if (items.length === 0) { throw new Error("No OSM infrastructure found"); }
+
+      renderRealtimeMarkers(items, lat, lng, fullAreaName, data.safetyStats);
+    } catch (e) {
+      // Fallback to unified Overpass query if backend is down
       try {
-          const res = await fetch(`${API_BASE}/safety/insights?lat=${lat}&lng=${lng}&city=${encodeURIComponent(city)}`);
-          if(!res.ok) throw new Error("Backend timeout");
-          const data = await res.json();
-          
-          let items = [];
-          if(data.infrastructures) items.push(...data.infrastructures);
-          if(data.touristZones) items.push(...data.touristZones.map(tz => ({...tz, nodeType: tz.type || 'tourist'})));
-          
-          if(items.length === 0) { throw new Error("No OSM infrastructure found"); }
-          
-          renderRealtimeMarkers(items, lat, lng, fullAreaName, data.safetyStats);
-      } catch(e) {
-          // Fallback to unified Overpass query if backend is down
-          try {
-             reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Connecting to regional safety monitors...</li>';
-             
-             const query = `[out:json][timeout:25];(
+        reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Connecting to regional safety monitors...</li>';
+
+        const query = `[out:json][timeout:25];(
                node["amenity"="police"](around:15000,${lat},${lng});
                way["amenity"="police"](around:15000,${lat},${lng});
                node["amenity"="hospital"](around:15000,${lat},${lng});
@@ -970,128 +970,128 @@ document.addEventListener('DOMContentLoaded', () => {
                node["amenity"="cctv"](around:10000,${lat},${lng});
              );out center tags 500;`;
 
-             const oController = new AbortController();
-             const oTimeout = setTimeout(() => oController.abort(), 12000);
-             const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
-                 method: 'POST', body: 'data=' + encodeURIComponent(query), signal: oController.signal
-             });
-             clearTimeout(oTimeout);
-             const overpassData = await overpassRes.json();
-             const elements = overpassData.elements || [];
+        const oController = new AbortController();
+        const oTimeout = setTimeout(() => oController.abort(), 12000);
+        const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST', body: 'data=' + encodeURIComponent(query), signal: oController.signal
+        });
+        clearTimeout(oTimeout);
+        const overpassData = await overpassRes.json();
+        const elements = overpassData.elements || [];
 
-             const items = [];
-             const seen = new Set();
-             elements.forEach(el => {
-                const elLat = el.lat || el.center?.lat;
-                const elLng = el.lon || el.center?.lon;
-                if (!elLat || !elLng) return;
-                const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
-                if (seen.has(key)) return;
-                seen.add(key);
+        const items = [];
+        const seen = new Set();
+        elements.forEach(el => {
+          const elLat = el.lat || el.center?.lat;
+          const elLng = el.lon || el.center?.lon;
+          if (!elLat || !elLng) return;
+          const key = `${elLat.toFixed(5)}_${elLng.toFixed(5)}`;
+          if (seen.has(key)) return;
+          seen.add(key);
 
-                const tags = el.tags || {};
-                const name = tags.name || tags['name:en'] || '';
-                
-                if (tags.amenity === 'police') items.push({ lat: elLat, lng: elLng, name: name || 'Police Station', nodeType: 'police' });
-                else if (tags.amenity === 'hospital' || tags.amenity === 'clinic') items.push({ lat: elLat, lng: elLng, name: name || 'Hospital/Clinic', nodeType: 'hospital' });
-                else if (tags.amenity === 'fire_station' || tags.emergency === 'fire_hydrant') items.push({ lat: elLat, lng: elLng, name: name || 'Fire Station', nodeType: 'fire_station' });
-                else if (tags.man_made === 'surveillance' || tags['surveillance:type'] || tags.amenity === 'cctv') items.push({ lat: elLat, lng: elLng, name: name || 'CCTV Camera', nodeType: 'surveillance' });
-             });
+          const tags = el.tags || {};
+          const name = tags.name || tags['name:en'] || '';
 
-             if(items.length > 0) {
-                 renderRealtimeMarkers(items, lat, lng, fullAreaName, null);
-             } else {
-                 throw new Error("Empty Overpass");
-             }
-          } catch(err) {
-             // Ultimate fallback: Wikipedia
-             try {
-                reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Searching digital footprint...</li>';
-                const wRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=10000&gslimit=10&format=json&origin=*`);
-                const wData = await wRes.json();
-                const places = wData.query?.geosearch || [];
-                if(places.length > 0) {
-                    const items = places.map(p => ({ name: p.title, lat: p.lat, lng: p.lon, nodeType: 'landmark' }));
-                    renderRealtimeMarkers(items, lat, lng, fullAreaName, null);
-                } else {
-                    reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">No digital footprint found for this region.</li>';
-                    safeZone.textContent = `📍 ${city}`;
-                    dangerZone.textContent = `Insufficient geodata available.`;
-                }
-             } catch(wErr) {
-                reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">Failed to load location data.</li>';
-             }
+          if (tags.amenity === 'police') items.push({ lat: elLat, lng: elLng, name: name || 'Police Station', nodeType: 'police' });
+          else if (tags.amenity === 'hospital' || tags.amenity === 'clinic') items.push({ lat: elLat, lng: elLng, name: name || 'Hospital/Clinic', nodeType: 'hospital' });
+          else if (tags.amenity === 'fire_station' || tags.emergency === 'fire_hydrant') items.push({ lat: elLat, lng: elLng, name: name || 'Fire Station', nodeType: 'fire_station' });
+          else if (tags.man_made === 'surveillance' || tags['surveillance:type'] || tags.amenity === 'cctv') items.push({ lat: elLat, lng: elLng, name: name || 'CCTV Camera', nodeType: 'surveillance' });
+        });
+
+        if (items.length > 0) {
+          renderRealtimeMarkers(items, lat, lng, fullAreaName, null);
+        } else {
+          throw new Error("Empty Overpass");
+        }
+      } catch (err) {
+        // Ultimate fallback: Wikipedia
+        try {
+          reportsList.innerHTML = '<li style="color:#aaa; padding: 10px;">Searching digital footprint...</li>';
+          const wRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=10000&gslimit=10&format=json&origin=*`);
+          const wData = await wRes.json();
+          const places = wData.query?.geosearch || [];
+          if (places.length > 0) {
+            const items = places.map(p => ({ name: p.title, lat: p.lat, lng: p.lon, nodeType: 'landmark' }));
+            renderRealtimeMarkers(items, lat, lng, fullAreaName, null);
+          } else {
+            reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">No digital footprint found for this region.</li>';
+            safeZone.textContent = `📍 ${city}`;
+            dangerZone.textContent = `Insufficient geodata available.`;
           }
+        } catch (wErr) {
+          reportsList.innerHTML = '<li style="color:#ff5252; padding: 10px;">Failed to load location data.</li>';
+        }
       }
+    }
   };
 
   const renderRealtimeMarkers = (items, centerLat, centerLng, fullAreaName, stats) => {
-      markersLayer.clearLayers();
-      const reportsList = document.getElementById('reportsList');
-      const safeZone = document.getElementById('safeZoneText');
-      const dangerZone = document.getElementById('dangerZoneText');
-      reportsList.innerHTML = '';
-      
-      const city = fullAreaName.split(',')[0];
-      
-      let score = 65;
-      if(stats) {
-          score = Math.max(65, Math.min(99, Math.floor((stats.densityPerKm * 15) + 65 + (stats.policeCount * 3))));
-      } else {
-          let hash = 0;
-          for (let i = 0; i < city.length; i++) hash = city.charCodeAt(i) + ((hash << 5) - hash);
-          score = 65 + (Math.abs(hash) % 25);
-      }
+    markersLayer.clearLayers();
+    const reportsList = document.getElementById('reportsList');
+    const safeZone = document.getElementById('safeZoneText');
+    const dangerZone = document.getElementById('dangerZoneText');
+    reportsList.innerHTML = '';
 
-      safeZone.textContent = `📍 ${city} Overall Confidence: ${score}/100`;
-      dangerZone.textContent = `Found ${items.length} verified establishments securely mapped in this region.`;
+    const city = fullAreaName.split(',')[0];
 
-      items.slice(0, 15).forEach((item) => {
-          let label = item.name || `Local ${item.nodeType.toUpperCase()}`;
-          // Ensure valid coordinates fallbacks
-          const ilat = item.lat || centerLat + (Math.random()-0.5)*0.05;
-          const ilng = item.lng || centerLng + (Math.random()-0.5)*0.05;
-          
-          let iconContent = '📍';
-          if(item.nodeType === 'police') iconContent = '👮';
-          else if(item.nodeType === 'hospital') iconContent = '🏥';
-          else if(item.nodeType === 'fire_station') iconContent = '🚒';
-          else if(item.nodeType === 'surveillance') iconContent = '📹';
-          else iconContent = '📸';
+    let score = 65;
+    if (stats) {
+      score = Math.max(65, Math.min(99, Math.floor((stats.densityPerKm * 15) + 65 + (stats.policeCount * 3))));
+    } else {
+      let hash = 0;
+      for (let i = 0; i < city.length; i++) hash = city.charCodeAt(i) + ((hash << 5) - hash);
+      score = 65 + (Math.abs(hash) % 25);
+    }
 
-          const markerClass = score >= 80 ? 'marker-excellent' : 'marker-safe';
+    safeZone.textContent = `📍 ${city} Overall Confidence: ${score}/100`;
+    dangerZone.textContent = `Found ${items.length} verified establishments securely mapped in this region.`;
 
-          const marker = L.marker([ilat, ilng], {
-              icon: L.divIcon({
-                  className: `custom-marker ${markerClass}`,
-                  html: `<div style="font-size:16px; margin-top:-2px;">${iconContent}</div>`,
-                  iconSize: [28, 28]
-              })
-          }).addTo(markersLayer);
+    items.slice(0, 15).forEach((item) => {
+      let label = item.name || `Local ${item.nodeType.toUpperCase()}`;
+      // Ensure valid coordinates fallbacks
+      const ilat = item.lat || centerLat + (Math.random() - 0.5) * 0.05;
+      const ilng = item.lng || centerLng + (Math.random() - 0.5) * 0.05;
 
-          // Build dynamic neighborhood-style card details for the clicked marker
-          const obj = {
-              name: label,
-              score: Math.min(99, parseInt(score) + Math.floor(Math.random() * 5 - 2)),
-              grade: score > 80 ? 'A+' : (score > 70 ? 'A' : 'B'),
-              rating: score > 80 ? 'excellent' : 'safe',
-              perks: ['Verified Location', `Type: ${item.nodeType.toUpperCase()}`],
-              desc: `This is a verified ${item.nodeType.replace('_',' ')} mapping point located in the vicinity of ${city}. High confidence validation across multiple spatial databases. Local coordinates: ${ilat.toFixed(3)}, ${ilng.toFixed(3)}.`
-          };
+      let iconContent = '📍';
+      if (item.nodeType === 'police') iconContent = '👮';
+      else if (item.nodeType === 'hospital') iconContent = '🏥';
+      else if (item.nodeType === 'fire_station') iconContent = '🚒';
+      else if (item.nodeType === 'surveillance') iconContent = '📹';
+      else iconContent = '📸';
 
-          marker.on('click', () => { showNeighborhoodAnalysis(obj, ilat, ilng, fullAreaName); });
+      const markerClass = score >= 80 ? 'marker-excellent' : 'marker-safe';
 
-          const li = document.createElement('li');
-          li.style.padding = '12px';
-          li.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-          li.innerHTML = `<strong>${iconContent} ${label}</strong><br/><span style="color:#aaa; font-size:0.8rem; text-transform:capitalize;">${item.nodeType.replace('_', ' ')}</span>`;
-          li.style.cursor = 'pointer';
-          li.onclick = () => {
-              crimeMap.setView([ilat, ilng], 15);
-              showNeighborhoodAnalysis(obj, ilat, ilng, fullAreaName);
-          };
-          reportsList.appendChild(li);
-      });
+      const marker = L.marker([ilat, ilng], {
+        icon: L.divIcon({
+          className: `custom-marker ${markerClass}`,
+          html: `<div style="font-size:16px; margin-top:-2px;">${iconContent}</div>`,
+          iconSize: [28, 28]
+        })
+      }).addTo(markersLayer);
+
+      // Build dynamic neighborhood-style card details for the clicked marker
+      const obj = {
+        name: label,
+        score: Math.min(99, parseInt(score) + Math.floor(Math.random() * 5 - 2)),
+        grade: score > 80 ? 'A+' : (score > 70 ? 'A' : 'B'),
+        rating: score > 80 ? 'excellent' : 'safe',
+        perks: ['Verified Location', `Type: ${item.nodeType.toUpperCase()}`],
+        desc: `This is a verified ${item.nodeType.replace('_', ' ')} mapping point located in the vicinity of ${city}. High confidence validation across multiple spatial databases. Local coordinates: ${ilat.toFixed(3)}, ${ilng.toFixed(3)}.`
+      };
+
+      marker.on('click', () => { showNeighborhoodAnalysis(obj, ilat, ilng, fullAreaName); });
+
+      const li = document.createElement('li');
+      li.style.padding = '12px';
+      li.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+      li.innerHTML = `<strong>${iconContent} ${label}</strong><br/><span style="color:#aaa; font-size:0.8rem; text-transform:capitalize;">${item.nodeType.replace('_', ' ')}</span>`;
+      li.style.cursor = 'pointer';
+      li.onclick = () => {
+        crimeMap.setView([ilat, ilng], 15);
+        showNeighborhoodAnalysis(obj, ilat, ilng, fullAreaName);
+      };
+      reportsList.appendChild(li);
+    });
   };
 
   const showNeighborhoodAnalysis = (hood, lat, lng, areaName) => {
@@ -1111,17 +1111,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render perks
     perksContainer.innerHTML = '';
-    
+
     const scoreDiv = document.createElement('div');
     scoreDiv.className = 'safety-score';
     scoreDiv.innerHTML = `<div class="score-number">${hood.score}</div><div><div class="score-label">Safety Score</div><div style="color: var(--safe-green); font-weight:600;">${hood.grade} Grade</div></div>`;
     perksContainer.appendChild(scoreDiv);
 
     hood.perks.forEach(perk => {
-        const div = document.createElement('div');
-        div.className = 'perk-item';
-        div.innerHTML = `<span class="perk-icon">✅</span> ${perk}`;
-        perksContainer.appendChild(div);
+      const div = document.createElement('div');
+      div.className = 'perk-item';
+      div.innerHTML = `<span class="perk-icon">✅</span> ${perk}`;
+      perksContainer.appendChild(div);
     });
 
     crimeDetailsPanel.classList.add('active');
@@ -1129,29 +1129,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (navFeatures) {
     navFeatures.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!isLoggedIn) {
-            openAuthModal();
-            return;
-        }
+      e.preventDefault();
+      if (!isLoggedIn) {
+        openAuthModal();
+        return;
+      }
 
-        const interactiveMapSection = document.getElementById('interactive-map');
-        if (interactiveMapSection) {
-            if (interactiveMapSection.style.display === 'none') {
-                interactiveMapSection.style.display = 'block';
-                // Use stored coords if available, else default
-                const savedLat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-                const savedLng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-                initCrimeMap(savedLat, savedLng);
-            }
-            interactiveMapSection.scrollIntoView({ behavior: 'smooth' });
+      const interactiveMapSection = document.getElementById('interactive-map');
+      if (interactiveMapSection) {
+        if (interactiveMapSection.style.display === 'none') {
+          interactiveMapSection.style.display = 'block';
+          // Use stored coords if available, else default
+          const savedLat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+          const savedLng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+          initCrimeMap(savedLat, savedLng);
         }
+        interactiveMapSection.scrollIntoView({ behavior: 'smooth' });
+      }
     });
   }
 
   if (closeDetailsPanel) {
     closeDetailsPanel.addEventListener('click', () => {
-        crimeDetailsPanel.classList.remove('active');
+      crimeDetailsPanel.classList.remove('active');
     });
   }
 
@@ -1172,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       hamburger.classList.toggle('active');
       navLinks.classList.toggle('open');
-      
+
       // Prevent body scroll when menu is open
       if (navLinks.classList.contains('open')) {
         document.body.style.overflow = 'hidden';
@@ -1210,7 +1210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     anchor.addEventListener('click', (e) => {
       const href = anchor.getAttribute('href');
       if (href === '#') return; // Ignore plain # anchors
-      
+
       e.preventDefault();
       try {
         const target = document.querySelector(href);
@@ -1359,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = document.getElementById('emailInput');
       const btn = form.querySelector('button');
       if (!btn) return;
-      
+
       const originalText = btn.textContent;
 
       btn.textContent = '✓ Subscribed!';
@@ -1454,12 +1454,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const cityEl = document.getElementById('userCityName');
     const mobileCityEl = document.getElementById('mobileUserCityName');
     const currentDisplay = document.getElementById('currentCityDisplay');
-    
+
     if (savedCity) {
       if (cityEl) cityEl.textContent = savedCity;
       if (mobileCityEl) mobileCityEl.textContent = savedCity;
       if (currentDisplay) currentDisplay.textContent = savedCity;
-      
+
       const lat = localStorage.getItem('kyc_userLat');
       const lng = localStorage.getItem('kyc_userLng');
       if (lat && lng && typeof window.kycFetchWeather === 'function') {
@@ -1495,15 +1495,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (authModal && !authModal.classList.contains('active')) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Use the internal openAuthModal logic
         if (typeof openAuthModal === 'function') {
-           openAuthModal('login');
+          openAuthModal('login');
         } else {
-           authModal.classList.add('active');
-           document.body.style.overflow = 'hidden';
-           // If generateCaptcha exists in scope, call it
-           if (typeof generateCaptcha === 'function') generateCaptcha();
+          authModal.classList.add('active');
+          document.body.style.overflow = 'hidden';
+          // If generateCaptcha exists in scope, call it
+          if (typeof generateCaptcha === 'function') generateCaptcha();
         }
       }
     }
@@ -1520,19 +1520,19 @@ class CityScout {
     this.chatInput = document.getElementById('chatbotInput');
     this.chatSend = document.getElementById('chatbotSend');
     this.history = [];
-    
+
     this.init();
   }
 
   init() {
-    if(!this.chatToggle) return;
+    if (!this.chatToggle) return;
 
     this.chatToggle.addEventListener('click', () => this.toggleWindow());
     this.chatClose.addEventListener('click', () => this.toggleWindow());
-    
+
     this.chatSend.addEventListener('click', () => this.handleSendMessage());
     this.chatInput.addEventListener('keypress', (e) => {
-      if(e.key === 'Enter') this.handleSendMessage();
+      if (e.key === 'Enter') this.handleSendMessage();
     });
 
     // Global quick chat function
@@ -1544,7 +1544,7 @@ class CityScout {
 
   toggleWindow() {
     this.chatWindow.classList.toggle('active');
-    if(this.chatWindow.classList.contains('active')) {
+    if (this.chatWindow.classList.contains('active')) {
       this.chatInput.focus();
     }
   }
@@ -1569,14 +1569,14 @@ class CityScout {
   typeWriter(text, element, suggestions = []) {
     const lines = text.split('\n');
     let lineIndex = 0;
-    
+
     const typeLine = () => {
       if (lineIndex < lines.length) {
         const line = lines[lineIndex];
         const lineDiv = document.createElement('div');
         lineDiv.style.marginBottom = '8px';
         element.appendChild(lineDiv);
-        
+
         let charIndex = 0;
         const typeChar = () => {
           if (charIndex < line.length) {
@@ -1591,13 +1591,13 @@ class CityScout {
         };
         typeChar();
       } else {
-          // Finished all lines, show suggestions if any
-          if (suggestions && suggestions.length > 0) {
-              this.renderSuggestions(suggestions);
-          }
+        // Finished all lines, show suggestions if any
+        if (suggestions && suggestions.length > 0) {
+          this.renderSuggestions(suggestions);
+        }
       }
     };
-    
+
     typeLine();
   }
 
@@ -1605,7 +1605,7 @@ class CityScout {
     const suggestDiv = document.createElement('div');
     suggestDiv.className = 'chatbot-suggestions';
     suggestDiv.style.marginTop = '12px';
-    
+
     suggestions.forEach(s => {
       const btn = document.createElement('button');
       btn.className = 'suggest-btn';
@@ -1615,7 +1615,7 @@ class CityScout {
       btn.onclick = () => window.sendQuickChat(s);
       suggestDiv.appendChild(btn);
     });
-    
+
     this.chatMessages.appendChild(suggestDiv);
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
   }
@@ -1631,7 +1631,7 @@ class CityScout {
 
   hideTyping() {
     const indicator = document.getElementById('typingIndicator');
-    if(indicator) indicator.remove();
+    if (indicator) indicator.remove();
     // Also remove old suggestion buttons to keep it clean
     const oldSuggestions = document.querySelectorAll('.chatbot-suggestions:not(.initial)');
     oldSuggestions.forEach(s => s.remove());
@@ -1639,7 +1639,7 @@ class CityScout {
 
   async handleSendMessage() {
     const message = this.chatInput.value.trim();
-    if(!message) return;
+    if (!message) return;
 
     this.chatInput.value = '';
     this.appendMessage('user', message);
@@ -1647,7 +1647,7 @@ class CityScout {
     // Special 'Analyzing query...' then 'Connecting...' flow
     const typingIndicator = document.getElementById('typingIndicator');
     if (typingIndicator) {
-        typingIndicator.innerHTML = '<span></span><span></span><span></span> Analyzing your city query...';
+      typingIndicator.innerHTML = '<span></span><span></span><span></span> Analyzing your city query...';
     }
 
     const userContext = {
@@ -1663,8 +1663,8 @@ class CityScout {
 
       // Transition to 'Connecting' after 2.5 seconds to show progress
       setTimeout(() => {
-          const tid = document.getElementById('typingIndicator');
-          if (tid) tid.innerHTML = '<span></span><span></span><span></span> Fetching correct city data from Render...';
+        const tid = document.getElementById('typingIndicator');
+        if (tid) tid.innerHTML = '<span></span><span></span><span></span> Fetching correct city data from Render...';
       }, 2500);
 
       const response = await fetch(`${API_BASE}/chat/query`, {
@@ -1685,7 +1685,7 @@ class CityScout {
     } catch (error) {
       this.hideTyping();
       let errorMsg = "I'm having trouble connecting to my city database. ";
-      
+
       if (error.name === 'AbortError') {
         errorMsg += "The server is taking too long to respond (likely waking up from sleep). Please try one more time.";
       } else if (error.message.includes('Failed to fetch')) {
@@ -1693,7 +1693,7 @@ class CityScout {
       } else {
         errorMsg += `(Error: ${error.message}).`;
       }
-      
+
       this.appendMessage('ai', errorMsg);
       console.error('Chat Error:', error);
     }

@@ -20,8 +20,10 @@ router.post('/register', async (req, res) => {
         const { firstName, lastName, phone, email, dob, password } = req.body;
 
         // Check if user exists
-        const existingUser = await User.findOne({ email });
+        // Case-insensitive check to see if email already exists
+        const existingUser = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
         if (existingUser) {
+            console.log(`[SIGNUP BLOCKED] Email already exists (Case-Insensitive): ${email}`);
             return res.status(400).json({ message: 'Email already registered' });
         }
 
