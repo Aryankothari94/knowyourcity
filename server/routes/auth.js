@@ -5,6 +5,15 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const User = require('../models/User');
 
+// Setup the Transporter OUTSIDE the routes (matches contact.js pattern)
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
 // Register
 router.post('/register', async (req, res) => {
     try {
@@ -81,46 +90,10 @@ router.post('/forgot-password', async (req, res) => {
         // Generate temporary password (8 characters)
         const tempPassword = crypto.randomBytes(4).toString('hex');
         
-        // Hash temporary password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(tempPassword, salt);
-        
-        // Update user password
-        user.password = hashedPassword;
-        await user.save();
+        // We do NOT update the user password yet (to avoid locking them out if email fails)
+        // We will do it inside the successful email block
 
-        // Setup the "Perfect" Email Transporter
-        // Using pool:true and specific Gmail settings for max reliability on cloud hosts like Render
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            pool: true,
-            maxConnections: 5,
-            maxMessages: 100,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
-
-        // Pre-Verify Transporter with a strict 10-second timeout
-        try {
-            await Promise.race([
-                transporter.verify(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP Connection Timeout')), 10000))
-            ]);
-            console.log('✅ SMTP Auth Ready for Reset');
-        } catch (vErr) {
-            console.error('❌ SMTP Auth Failed (Check App Password):', vErr.message);
-            return res.status(500).json({ 
-                message: vErr.message === 'SMTP Connection Timeout' 
-                    ? 'Email service timed out. Please check your Gmail connection.' 
-                    : 'Email service is temporarily unavailable. Connection refused by Google.', 
-                error: vErr.message 
-            });
-        }
+        // No verify block here - matching contact.js pattern for stability
 
         // Send Email
         const mailOptions = {
