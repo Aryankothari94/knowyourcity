@@ -105,14 +105,19 @@ router.post('/forgot-password', async (req, res) => {
             }
         });
 
-        // Pre-Verify Transporter
+        // Pre-Verify Transporter with a strict 10-second timeout
         try {
-            await transporter.verify();
+            await Promise.race([
+                transporter.verify(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP Connection Timeout')), 10000))
+            ]);
             console.log('✅ SMTP Auth Ready for Reset');
         } catch (vErr) {
             console.error('❌ SMTP Auth Failed (Check App Password):', vErr.message);
             return res.status(500).json({ 
-                message: 'Email service is temporarily unavailable. Connection refused by Google.', 
+                message: vErr.message === 'SMTP Connection Timeout' 
+                    ? 'Email service timed out. Please check your Gmail connection.' 
+                    : 'Email service is temporarily unavailable. Connection refused by Google.', 
                 error: vErr.message 
             });
         }

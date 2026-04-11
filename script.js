@@ -1226,10 +1226,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== SMOOTH SCROLL =====
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', (e) => {
+      const href = anchor.getAttribute('href');
+      if (href === '#') return; // Ignore plain # anchors
+      
       e.preventDefault();
-      const target = document.querySelector(anchor.getAttribute('href'));
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
+      try {
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      } catch (err) {
+        console.warn('Smooth scroll target not found:', href);
       }
     });
   });
@@ -1364,21 +1371,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ===== NEWSLETTER FORM =====
   const form = document.getElementById('newsletterForm');
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('emailInput');
-    const btn = form.querySelector('button');
-    const originalText = btn.textContent;
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('emailInput');
+      const btn = form.querySelector('button');
+      if (!btn) return;
+      
+      const originalText = btn.textContent;
 
-    btn.textContent = '✓ Subscribed!';
-    btn.style.background = 'var(--safe-green)';
-    email.value = '';
+      btn.textContent = '✓ Subscribed!';
+      btn.style.background = 'var(--safe-green)';
+      if (email) email.value = '';
 
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.style.background = '';
-    }, 3000);
-  });
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+      }, 3000);
+    });
+  }
 
   // ===== DYNAMIC COUNTER ANIMATION =====
   const statElements = document.querySelectorAll('.hero-stat h3');
