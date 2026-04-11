@@ -107,19 +107,19 @@ router.post('/forgot-password', async (req, res) => {
         const mailOptions = {
             from: `"Know Your City" <${process.env.EMAIL_USER}>`,
             to: email,
-            subject: 'Password Reset — Know Your City',
+            subject: 'New Signin Password — Know Your City',
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
-                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Password Reset Requested</h2>
+                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Your New Signin Password</h2>
                     <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${user.firstName},</p>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">We received a request to reset your password. Here is your temporary password:</p>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">As requested, your password has been reset. You can now use this <b>New Signin Password</b> to access your account:</p>
                     <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
                         <span style="font-family: monospace; font-size: 24px; font-weight: 700; color: #00e5ff; letter-spacing: 2px;">${tempPassword}</span>
                     </div>
-                    <p style="color: #ff5252; font-size: 14px; font-weight: 600;">Important Safety Tip:</p>
-                    <p style="color: #94a3b8; font-size: 14px;">Please use this temporary password to log in and change your password immediately from your account settings for better security.</p>
+                    <p style="color: #ff5252; font-size: 14px; font-weight: 600;">Security Reminder:</p>
+                    <p style="color: #94a3b8; font-size: 14px;">Log in using this password and immediately update it in your Account Settings to something you can easily remember.</p>
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
-                    <p style="font-size: 12px; color: #64748b; text-align: center;">If you did not request this, please ignore this email or contact support if you have concerns.</p>
+                    <p style="font-size: 12px; color: #64748b; text-align: center;">If you did not request this change, please contact our support team immediately.</p>
                 </div>
             `
         };
