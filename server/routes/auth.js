@@ -89,12 +89,17 @@ router.post('/forgot-password', async (req, res) => {
         user.password = hashedPassword;
         await user.save();
 
-        // Setup Email Transporter (matching contact.js logic)
+        // Setup Email Transporter (more robust config for Gmail)
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
             }
         });
 
