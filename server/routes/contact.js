@@ -4,13 +4,23 @@ const nodemailer = require('nodemailer');
 const Contact = require('../models/Contact');
 require('dotenv').config();
 
-// ── Email Transporter ────────────────────────────────────────────────
+// ── Email Transporter Optimization ───────────────────────────────────
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, 
+    pool: true,   // Keeps connections ready
+    maxConnections: 3,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    tls: {
+        family: 4, // Prevents IPv6 connection hangs
+        rejectUnauthorized: false
+    },
+    connectionTimeout: 10000, 
+    greetingTimeout: 10000
 });
 
 // ── Smart Auto-Reply Generator ───────────────────────────────────────

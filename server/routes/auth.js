@@ -5,13 +5,25 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const User = require('../models/User');
 
-// Setup the Transporter OUTSIDE the routes (matches contact.js pattern)
+// Setup the Transporter with high-speed optimization
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Use SSL for Port 465
+    pool: true,   // Keeps connections open for instant sending
+    maxConnections: 5,
+    maxMessages: 100,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    tls: {
+        // Force IPv4 to avoid common cloud IPv6 timeouts (the 4-minute bug)
+        family: 4,
+        rejectUnauthorized: false
+    },
+    connectionTimeout: 10000, // 10 seconds (don't wait minutes)
+    greetingTimeout: 10000
 });
 
 // Register
