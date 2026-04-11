@@ -53,8 +53,10 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        // Use a case-insensitive regex for email lookup to account for different capitalization
+        const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
         if (!user) {
+            console.log(`[LOGIN ATTEMPT] Email not found: ${email}`);
             return res.status(404).json({ message: 'Email does not exist. Please sign up first.' });
         }
 
@@ -63,15 +65,17 @@ router.post('/login', async (req, res) => {
         let passwordMigrated = false;
 
         // ATTEMPT 2: Plain-Text Fallback (Migration Flow for legacy/manual accounts)
-        // If bcrypt fails, check if input password exactly matches the database's password string.
-        // This usually means the password in the DB isn't a hash yet.
+        // Includes .trim() check to handle accidental hidden spaces
         if (!isMatch) {
-            if (password === user.password) {
+            const inputPass = password.trim();
+            const dbPass = user.password.trim();
+            
+            if (inputPass === dbPass) {
                 console.log(`[SECURITY UPGRADE] User ${email} logged in with plain-text password. Migrating to Hash...`);
                 
                 // Automatically HASH and UPDATE the password in the background
                 const salt = await bcrypt.genSalt(10);
-                const hashedPassword = await bcrypt.hash(password, salt);
+                const hashedPassword = await bcrypt.hash(password, salt); // Use original untrimmed password for hashing
                 user.password = hashedPassword;
                 await user.save();
                 
@@ -82,6 +86,8 @@ router.post('/login', async (req, res) => {
         }
 
         if (!isMatch) {
+            // DIAGNOSTIC LOG: Print lengths to help identify mismatch without exposing the password
+            console.log(`[LOGIN FAIL] User: ${email} | Input Length: ${password.length} | DB Length: ${user.password.length}`);
             return res.status(400).json({ message: 'Invalid password.' });
         }
 
