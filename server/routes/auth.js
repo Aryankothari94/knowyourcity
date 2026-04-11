@@ -124,17 +124,24 @@ router.post('/forgot-password', async (req, res) => {
             `
         };
 
+        // Only update the database IF the email sends successfully
         try {
             await transporter.sendMail(mailOptions);
+            
+            // Hash and Save the new password now that we know the user will receive it
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(tempPassword, salt);
+            user.password = hashedPassword;
+            await user.save();
+
+            res.status(200).json({ success: true, message: 'A new signin password has been sent to your email.' });
         } catch (mailErr) {
             console.error('Email Send Error:', mailErr);
             return res.status(500).json({ 
-                message: 'Your password was reset, but we could not send the email. Please contact support.', 
+                message: 'Could not send the email. Your password has NOT been changed.', 
                 error: mailErr.message 
             });
         }
-
-        res.status(200).json({ success: true, message: 'A temporary password has been sent to your email.' });
     } catch (err) {
         console.error('Forgot Password Error:', err);
         const isDBError = err.name === 'MongooseError' || err.name === 'MongoError' || err.message.includes('buffering');
