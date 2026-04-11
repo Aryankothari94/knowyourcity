@@ -702,40 +702,61 @@ body {
   top: 15%;
   left: -10%;
   animation-delay: 0s;
+  border-left: 3px solid var(--safe-green) !important;
 }
 
 .fc-1 .icon-circle {
-  background: rgba(0, 230, 118, 0.15);
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.2), rgba(0, 212, 255, 0.2)) !important;
+  color: var(--safe-green) !important;
+  box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
 }
 
 .fc-2 {
   top: 10%;
   right: -5%;
   animation-delay: -2s;
+  border-left: 3px solid var(--accent-cyan) !important;
 }
 
 .fc-2 .icon-circle {
-  background: rgba(0, 212, 255, 0.15);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(108, 92, 231, 0.2)) !important;
+  color: var(--accent-cyan) !important;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
 }
 
 .fc-3 {
   bottom: 20%;
   left: -5%;
   animation-delay: -4s;
+  border-left: 3px solid #a29bfe !important;
 }
 
 .fc-3 .icon-circle {
-  background: rgba(108, 92, 231, 0.15);
+  background: linear-gradient(135deg, rgba(162, 155, 254, 0.2), rgba(108, 92, 231, 0.2)) !important;
+  color: #a29bfe !important;
+  box-shadow: 0 0 15px rgba(162, 155, 254, 0.3);
 }
 
 .fc-4 {
   bottom: 10%;
   right: -10%;
   animation-delay: -3s;
+  border-left: 3px solid var(--moderate-amber) !important;
 }
 
 .fc-4 .icon-circle {
-  background: rgba(255, 171, 64, 0.15);
+  background: linear-gradient(135deg, rgba(255, 171, 64, 0.2), rgba(255, 107, 107, 0.2)) !important;
+  color: var(--moderate-amber) !important;
+  box-shadow: 0 0 15px rgba(255, 171, 64, 0.3);
+}
+
+.floating-card:hover {
+  transform: scale(1.08) translateY(-5px) !important;
+  background: rgba(15, 20, 50, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 255, 255, 0.1) !important;
+  z-index: 100;
+  cursor: pointer;
 }
 
 @keyframes floatCard {
