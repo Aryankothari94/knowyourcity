@@ -60,6 +60,7 @@ router.get('/feedback', async (req, res) => {
             count: feedbacks.length,
             feedbacks: feedbacks 
         });
+    } catch (err) {
         res.status(500).json({ message: 'Error retrieving feedback list', error: err.message });
     }
 });
