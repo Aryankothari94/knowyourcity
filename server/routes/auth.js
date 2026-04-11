@@ -105,7 +105,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Forgot Password
+// Forgot Password — Request OTP
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -114,73 +114,93 @@ router.post('/forgot-password', async (req, res) => {
             return res.status(400).json({ message: 'Email is required.' });
         }
 
-        const user = await User.findOne({ email });
+        // Case-insensitive lookup for reliability
+        const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
         if (!user) {
             return res.status(404).json({ message: 'No account found with this email address.' });
         }
 
-        // Generate temporary password (8 characters)
-        const tempPassword = crypto.randomBytes(4).toString('hex');
+        // Generate 6-digit numeric OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // We do NOT update the user password yet (to avoid locking them out if email fails)
-        // We will do it inside the successful email block
-
-        // No verify block here - matching contact.js pattern for stability
+        // Store hashed OTP and 15-minute expiration
+        const salt = await bcrypt.genSalt(10);
+        const hashedOTP = await bcrypt.hash(otp, salt);
+        user.resetOTP = hashedOTP;
+        user.resetOTPExpires = Date.now() + 15 * 60 * 1000; // 15 Minutes
+        await user.save();
 
         // Send Email
         const mailOptions = {
             from: `"Know Your City" <${process.env.EMAIL_USER}>`,
             to: email,
-            subject: 'New Signin Password — Know Your City',
+            subject: 'Password Recovery Code — Know Your City',
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
-                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Your New Signin Password</h2>
+                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Password Recovery</h2>
                     <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${user.firstName},</p>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">As requested, your password has been reset. You can now use this <b>New Signin Password</b> to access your account:</p>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">You requested a password reset. Use the following 6-digit code to reset your password. This code is valid for <b>15 minutes</b>:</p>
                     <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
-                        <span style="font-family: monospace; font-size: 24px; font-weight: 700; color: #00e5ff; letter-spacing: 2px;">${tempPassword}</span>
+                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #00e5ff; letter-spacing: 5px;">${otp}</span>
                     </div>
-                    <p style="color: #ff5252; font-size: 14px; font-weight: 600;">Security Reminder:</p>
-                    <p style="color: #94a3b8; font-size: 14px;">Log in using this password and immediately update it in your Account Settings to something you can easily remember.</p>
+                    <p style="color: #94a3b8; font-size: 14px;">If you did not request this, please ignore this email or contact support if you have concerns.</p>
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
-                    <p style="font-size: 12px; color: #64748b; text-align: center;">If you did not request this change, please contact our support team immediately.</p>
+                    <p style="font-size: 12px; color: #64748b; text-align: center;">&copy; 2026 Know Your City. All rights reserved.</p>
                 </div>
             `
         };
 
-        // Only update the database IF the email sends successfully
         try {
-            console.log(`Attempting to send email to ${email}...`);
             await transporter.sendMail(mailOptions);
-            console.log('✅ Email sent successfully');
-            
-            // Hash and Save the new password now that we know the user will receive it
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(tempPassword, salt);
-            user.password = hashedPassword;
-            await user.save();
-            console.log(`✅ Password updated in database for ${email}`);
-
-            res.status(200).json({ success: true, message: 'A new signin password has been sent to your email.' });
+            res.status(200).json({ success: true, message: 'Recovery code sent to your email.' });
         } catch (mailErr) {
-            console.error('❌ Email Send Error Details:', {
-                message: mailErr.message,
-                code: mailErr.code,
-                command: mailErr.command,
-                response: mailErr.response
-            });
-            return res.status(500).json({ 
-                message: 'Could not send the email. Your password has NOT been changed.', 
-                error: mailErr.message 
-            });
+            console.error('Email Error:', mailErr.message);
+            return res.status(500).json({ message: 'Could not send the recovery email. Please try again later.' });
         }
     } catch (err) {
-        console.error('Forgot Password Error:', err);
-        const isDBError = err.name === 'MongooseError' || err.name === 'MongoError' || err.message.includes('buffering');
-        res.status(500).json({ 
-            message: isDBError ? 'Database connection issue. Please try again later.' : 'Server error processing your request.', 
-            error: err.message 
-        });
+        res.status(500).json({ message: 'Server error processing your request.', error: err.message });
+    }
+});
+
+// Reset Password — Verify OTP and Update Password
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ message: 'All fields are required.' });
+        }
+
+        // Case-insensitive lookup for consistency
+        const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
+        if (!user || !user.resetOTP || !user.resetOTPExpires) {
+            return res.status(400).json({ message: 'Invalid or expired recovery session.' });
+        }
+
+        // Check expiration
+        if (Date.now() > user.resetOTPExpires) {
+            return res.status(400).json({ message: 'Recovery code has expired.' });
+        }
+
+        // Verify OTP
+        const isOTPValid = await bcrypt.compare(otp, user.resetOTP);
+        if (!isOTPValid) {
+            return res.status(400).json({ message: 'Invalid recovery code.' });
+        }
+
+        // High-security password update
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedPassword;
+        
+        // Clear OTP fields
+        user.resetOTP = undefined;
+        user.resetOTPExpires = undefined;
+        await user.save();
+
+        res.status(200).json({ success: true, message: 'Password updated successfully. You can now login.' });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error updating password.', error: err.message });
     }
 });
 

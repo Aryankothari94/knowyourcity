@@ -6,7 +6,9 @@ const userSchema = new mongoose.Schema({
     phone: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     dob: { type: Date, required: true },
-    password: { type: String, required: true }, // Should be hashed in production using bcrypt
+    password: { type: String, required: true },
+    resetOTP: { type: String }, // Hashed numeric OTP for password recovery
+    resetOTPExpires: { type: Date } // Expiration for OTP (e.g. 10-15 minutes)
 }, { 
     timestamps: true,
     bufferCommands: false // Fail fast if DB is down

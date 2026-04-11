@@ -359,7 +359,7 @@
       <form class="auth-form" id="forgotPasswordForm">
         <h3 style="text-align:center; margin-bottom:15px; color:var(--accent-cyan);">Reset Your Password</h3>
         <p style="text-align:center; font-size:0.85rem; color:var(--text-secondary); margin-bottom:20px;">
-          Enter your email address and we'll send you a temporary password.
+          Enter your email address and we'll send you a recovery code.
         </p>
         <div id="forgotPasswordError" class="auth-error-message"></div>
         <div id="forgotPasswordSuccess" style="display:none; color:var(--safe-green); background:rgba(0,230,118,0.1); padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:15px; border:1px solid rgba(0,230,118,0.2); text-align:center;"></div>
@@ -369,10 +369,38 @@
           <input type="email" id="forgotEmail" placeholder="rahul@example.com" required />
         </div>
         
-        <button type="submit" class="btn-auth" id="forgotBtn">Send Temporary Password</button>
+        <button type="submit" class="btn-auth" id="forgotBtn">Send Recovery Code</button>
         
         <div class="auth-footer" style="margin-top:15px;">
           Remembered your password? <a href="#" data-switch="login">Back to Login</a>
+        </div>
+      </form>
+
+      <!-- Reset Password Form (OTP + New Password) -->
+      <form class="auth-form" id="resetPasswordForm">
+        <h3 style="text-align:center; margin-bottom:15px; color:var(--accent-cyan);">Set New Password</h3>
+        <p style="text-align:center; font-size:0.85rem; color:var(--text-secondary); margin-bottom:20px;">
+          Enter the 6-digit code sent to your email and choose a new password.
+        </p>
+        <div id="resetPasswordError" class="auth-error-message"></div>
+        
+        <div class="form-group">
+          <label for="resetOTP">Recovery Code (6 Digits)</label>
+          <input type="text" id="resetOTP" placeholder="123456" maxlength="6" required />
+        </div>
+
+        <div class="form-group">
+          <label for="resetNewPassword">New Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="resetNewPassword" placeholder="••••••••" required />
+            <button type="button" class="toggle-password" data-target="resetNewPassword">👁️</button>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn-auth" id="resetBtn">Update Password</button>
+        
+        <div class="auth-footer" style="margin-top:15px;">
+          Didn't get a code? <a href="#" data-switch="forgotPassword">Try again</a>
         </div>
       </form>
     </div>

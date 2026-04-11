@@ -31,7 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const forgotPasswordForm = document.getElementById('forgotPasswordForm');
   const forgotPasswordError = document.getElementById('forgotPasswordError');
   const forgotPasswordSuccess = document.getElementById('forgotPasswordSuccess');
+  const resetPasswordForm = document.getElementById('resetPasswordForm');
+  const resetPasswordError = document.getElementById('resetPasswordError');
   let currentCaptchaAnswer = 0;
+  let recoveryEmail = ''; // To pass email from forgot screen to reset screen
 
   const loginNav = document.getElementById('loginNav');
   const accountNav = document.getElementById('accountNav');
@@ -95,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (signupError) signupError.classList.remove('active');
     if (adminLoginError) adminLoginError.classList.remove('active');
     if (forgotPasswordError) forgotPasswordError.classList.remove('active');
+    if (resetPasswordError) resetPasswordError.classList.remove('active');
     if (forgotPasswordSuccess) {
       forgotPasswordSuccess.textContent = '';
       forgotPasswordSuccess.style.display = 'none';
@@ -619,14 +623,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (res.ok) {
-          forgotPasswordSuccess.textContent = 'Success! Your New Signin Password has been emailed to you.';
+          recoveryEmail = email; // Save for the next step
+          forgotPasswordSuccess.textContent = 'Code Sent! Check your email for the recovery code.';
           forgotPasswordSuccess.style.display = 'block';
           forgotPasswordForm.reset();
 
-          // Smooth transition back to login after success
+          // Transition to the Reset form after a brief delay
           setTimeout(() => {
-            switchTab('login');
-          }, 4000);
+            switchTab('resetPassword');
+          }, 2500);
         } else {
           showError(forgotPasswordError, data.message || 'Error processing request.');
         }
@@ -636,6 +641,66 @@ document.addEventListener('DOMContentLoaded', () => {
         if (forgotBtn) {
           forgotBtn.disabled = false;
           forgotBtn.textContent = originalBtnText;
+        }
+      }
+    });
+  }
+
+  // Reset Password Form (OTP Verification + New Password)
+  if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const otp = document.getElementById('resetOTP').value.trim();
+      const newPassword = document.getElementById('resetNewPassword').value;
+      const resetBtn = document.getElementById('resetBtn');
+
+      if (!otp || !newPassword) {
+        showError(resetPasswordError, 'All fields are required.');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        showError(resetPasswordError, 'Password must be at least 6 characters.');
+        return;
+      }
+
+      if (resetBtn) {
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Updating...';
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: recoveryEmail, otp, newPassword })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          resetPasswordForm.reset();
+          // Success! Show success message and go to login
+          const successDiv = document.createElement('div');
+          successDiv.className = 'auth-success-message';
+          successDiv.style.display = 'block';
+          successDiv.textContent = 'Password Updated! You can now login.';
+          resetPasswordForm.prepend(successDiv);
+
+          setTimeout(() => {
+            switchTab('login');
+            successDiv.remove();
+          }, 3000);
+        } else {
+          showError(resetPasswordError, data.message || 'Reset failed.');
+        }
+      } catch (err) {
+        showError(resetPasswordError, 'Connection failed. Please try again.');
+      } finally {
+        if (resetBtn) {
+          resetBtn.disabled = false;
+          resetBtn.textContent = 'Update Password';
         }
       }
     });
