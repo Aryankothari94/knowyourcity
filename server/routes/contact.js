@@ -10,13 +10,13 @@ const transporter = nodemailer.createTransport({
     port: 465,
     secure: true, 
     pool: true,   // Keeps connections ready
+    family: 4,    // FORCE IPv4 to avoid ENETUNREACH (Render bug)
     maxConnections: 3,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        family: 4, // Prevents IPv6 connection hangs
         rejectUnauthorized: false
     },
     connectionTimeout: 10000, 

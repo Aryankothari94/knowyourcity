@@ -11,6 +11,7 @@ const transporter = nodemailer.createTransport({
     port: 465,
     secure: true, // Use SSL for Port 465
     pool: true,   // Keeps connections open for instant sending
+    family: 4,    // FORCE IPv4 to avoid ENETUNREACH IPv6 timeout (Render bug)
     maxConnections: 5,
     maxMessages: 100,
     auth: {
@@ -18,8 +19,6 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        // Force IPv4 to avoid common cloud IPv6 timeouts (the 4-minute bug)
-        family: 4,
         rejectUnauthorized: false
     },
     connectionTimeout: 10000, // 10 seconds (don't wait minutes)
