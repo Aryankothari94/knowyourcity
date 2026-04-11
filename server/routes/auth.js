@@ -58,13 +58,37 @@ router.post('/login', async (req, res) => {
             return res.status(404).json({ message: 'Email does not exist. Please sign up first.' });
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
+        // Check password - ATTEMPT 1: Standard Bcrypt Comparison (Normal Flow)
+        let isMatch = await bcrypt.compare(password, user.password);
+        let passwordMigrated = false;
+
+        // ATTEMPT 2: Plain-Text Fallback (Migration Flow for legacy/manual accounts)
+        // If bcrypt fails, check if input password exactly matches the database's password string.
+        // This usually means the password in the DB isn't a hash yet.
+        if (!isMatch) {
+            if (password === user.password) {
+                console.log(`[SECURITY UPGRADE] User ${email} logged in with plain-text password. Migrating to Hash...`);
+                
+                // Automatically HASH and UPDATE the password in the background
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(password, salt);
+                user.password = hashedPassword;
+                await user.save();
+                
+                console.log(`✅ User ${email} security migrated successfully.`);
+                isMatch = true; 
+                passwordMigrated = true;
+            }
+        }
+
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid password.' });
         }
 
-        res.status(200).json({ message: 'Login successful', user: { firstName: user.firstName, email: user.email } });
+        res.status(200).json({ 
+            message: passwordMigrated ? 'Login successful (Security Securely Migrated)' : 'Login successful', 
+            user: { firstName: user.firstName, email: user.email } 
+        });
     } catch (err) {
         if (err.name === 'MongooseServerSelectionError' || err.message.includes('buffering')) {
             return res.status(503).json({ message: 'Database is currently unavailable. Please try again later.' });
