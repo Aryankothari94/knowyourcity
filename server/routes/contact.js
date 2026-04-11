@@ -7,8 +7,9 @@ require('dotenv').config();
 // ── Email Transporter Optimization ───────────────────────────────────
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, 
+    port: 587,
+    secure: false, 
+    requireTLS: true,
     pool: true,   // Keeps connections ready
     family: 4,    // FORCE IPv4 to avoid ENETUNREACH (Render bug)
     maxConnections: 3,

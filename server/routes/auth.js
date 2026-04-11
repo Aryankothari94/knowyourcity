@@ -8,8 +8,9 @@ const User = require('../models/User');
 // Setup the Transporter with high-speed optimization
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL for Port 465
+    port: 587,
+    secure: false, // Use STARTTLS for Port 587
+    requireTLS: true,
     pool: true,   // Keeps connections open for instant sending
     family: 4,    // FORCE IPv4 to avoid ENETUNREACH IPv6 timeout (Render bug)
     maxConnections: 5,
