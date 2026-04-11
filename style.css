@@ -976,6 +976,21 @@ body {
   letter-spacing: 1px;
 }
 
+/* Auth Modal Additions */
+.auth-footer a:hover {
+  color: var(--accent-cyan) !important;
+  text-decoration: underline !important;
+}
+
+#forgotPasswordSuccess {
+  animation: forgotPasswordFadeIn 0.3s ease;
+}
+
+@keyframes forgotPasswordFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Account Nav Item */
 .account-nav-item {
   background: transparent;

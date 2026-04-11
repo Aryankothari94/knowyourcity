@@ -24,9 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Captcha Elements
   const captchaLabel = document.getElementById('captchaLabel');
   const loginCaptcha = document.getElementById('loginCaptcha');
-  const adminLoginForm = document.getElementById('adminLoginForm');
   const adminLoginError = document.getElementById('adminLoginError');
   const switchToAdmin = document.getElementById('switchToAdmin');
+  const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+  const forgotPasswordError = document.getElementById('forgotPasswordError');
+  const forgotPasswordSuccess = document.getElementById('forgotPasswordSuccess');
   let currentCaptchaAnswer = 0;
 
   const loginNav = document.getElementById('loginNav');
@@ -80,8 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const clearErrors = () => {
-    loginError.classList.remove('active');
-    signupError.classList.remove('active');
+    if (loginError) loginError.classList.remove('active');
+    if (signupError) signupError.classList.remove('active');
+    if (adminLoginError) adminLoginError.classList.remove('active');
+    if (forgotPasswordError) forgotPasswordError.classList.remove('active');
+    if (forgotPasswordSuccess) {
+      forgotPasswordSuccess.textContent = '';
+      forgotPasswordSuccess.style.display = 'none';
+    }
   };
 
   // Toggle Modal
@@ -590,6 +598,55 @@ document.addEventListener('DOMContentLoaded', () => {
     if(authModal) authModal.classList.remove('active');
     document.body.style.overflow = 'auto';
   });
+
+  // Forgot Password Form Submission
+  if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const emailInput = document.getElementById('forgotEmail');
+      const email = emailInput ? emailInput.value.trim() : '';
+      const forgotBtn = document.getElementById('forgotBtn');
+      const originalBtnText = forgotBtn ? forgotBtn.textContent : 'Send Temporary Password';
+
+      if (!email) {
+        showError(forgotPasswordError, 'Please enter your email.');
+        return;
+      }
+
+      if (forgotBtn) {
+        forgotBtn.disabled = true;
+        forgotBtn.textContent = 'Sending...';
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          if (forgotPasswordSuccess) {
+            forgotPasswordSuccess.textContent = data.message;
+            forgotPasswordSuccess.style.display = 'block';
+          }
+          forgotPasswordForm.reset();
+        } else {
+          showError(forgotPasswordError, data.message || 'Error processing request.');
+        }
+      } catch (err) {
+        showError(forgotPasswordError, 'Server connection failed.');
+      } finally {
+        if (forgotBtn) {
+          forgotBtn.disabled = false;
+          forgotBtn.textContent = originalBtnText;
+        }
+      }
+    });
+  }
 
   // ===== PASSWORD TOGGLE =====
   document.querySelectorAll('.toggle-password').forEach(btn => {

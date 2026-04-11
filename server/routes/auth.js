@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const User = require('../models/User');
 
 // Register
@@ -59,6 +61,70 @@ router.post('/login', async (req, res) => {
             return res.status(503).json({ message: 'Database is currently unavailable. Please try again later.' });
         }
         res.status(500).json({ message: 'Server error', error: err.message });
+    }
+});
+
+// Forgot Password
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required.' });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'No account found with this email address.' });
+        }
+
+        // Generate temporary password (8 characters)
+        const tempPassword = crypto.randomBytes(4).toString('hex');
+        
+        // Hash temporary password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(tempPassword, salt);
+        
+        // Update user password
+        user.password = hashedPassword;
+        await user.save();
+
+        // Setup Email Transporter (matching contact.js logic)
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        // Send Email
+        const mailOptions = {
+            from: `"Know Your City" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Password Reset — Know Your City',
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
+                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Password Reset Requested</h2>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${user.firstName},</p>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">We received a request to reset your password. Here is your temporary password:</p>
+                    <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
+                        <span style="font-family: monospace; font-size: 24px; font-weight: 700; color: #00e5ff; letter-spacing: 2px;">${tempPassword}</span>
+                    </div>
+                    <p style="color: #ff5252; font-size: 14px; font-weight: 600;">Important Safety Tip:</p>
+                    <p style="color: #94a3b8; font-size: 14px;">Please use this temporary password to log in and change your password immediately from your account settings for better security.</p>
+                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
+                    <p style="font-size: 12px; color: #64748b; text-align: center;">If you did not request this, please ignore this email or contact support if you have concerns.</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ success: true, message: 'A temporary password has been sent to your email.' });
+    } catch (err) {
+        console.error('Forgot Password Error:', err);
+        res.status(500).json({ message: 'Server error processing your request.', error: err.message });
     }
 });
 
