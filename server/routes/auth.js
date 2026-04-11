@@ -126,17 +126,25 @@ router.post('/forgot-password', async (req, res) => {
 
         // Only update the database IF the email sends successfully
         try {
+            console.log(`Attempting to send email to ${email}...`);
             await transporter.sendMail(mailOptions);
+            console.log('✅ Email sent successfully');
             
             // Hash and Save the new password now that we know the user will receive it
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(tempPassword, salt);
             user.password = hashedPassword;
             await user.save();
+            console.log(`✅ Password updated in database for ${email}`);
 
             res.status(200).json({ success: true, message: 'A new signin password has been sent to your email.' });
         } catch (mailErr) {
-            console.error('Email Send Error:', mailErr);
+            console.error('❌ Email Send Error Details:', {
+                message: mailErr.message,
+                code: mailErr.code,
+                command: mailErr.command,
+                response: mailErr.response
+            });
             return res.status(500).json({ 
                 message: 'Could not send the email. Your password has NOT been changed.', 
                 error: mailErr.message 

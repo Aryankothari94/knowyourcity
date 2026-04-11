@@ -12,7 +12,9 @@ const MONGO_URI = process.env.MONGO_URI;
 
 if (MONGO_URI) {
     mongoose.connect(MONGO_URI, {
-        serverSelectionTimeoutMS: 5000 // Fast fail for local DNS issues
+        serverSelectionTimeoutMS: 20000, // Increase timeout
+        socketTimeoutMS: 45000,
+        family: 4 // Force IPv4 to avoid some SRV issues
     })
     .then(() => console.log('✅ MongoDB connected successfully'))
     .catch(err => {

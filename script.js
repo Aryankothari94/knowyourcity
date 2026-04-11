@@ -526,17 +526,15 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Backend unavailable, using localStorage fallback. Reason:', err.message);
     }
 
-    // localStorage fallback
+    // localStorage fallback (Email existence check only, NO password matching)
     usersDB = JSON.parse(localStorage.getItem('kyc_users')) || [];
-    const user = usersDB.find(u => u.email === email && u.password === password);
-    if (user) {
-      performLogin(email, user.firstName);
-      loginForm.reset();
-    } else if (!usersDB.some(u => u.email === email)) {
-      showError(loginError, "Email doesn't exist. Please sign up first.");
+    const localUser = usersDB.find(u => u.email === email);
+    
+    if (localUser) {
+      showError(loginError, 'Account found locally but password must be verified by the server. Please check your internet or use Forgot Password.');
       generateCaptcha();
     } else {
-      showError(loginError, 'Invalid password.');
+      showError(loginError, "Invalid credentials or account does not exist.");
       generateCaptcha();
     }
   });
