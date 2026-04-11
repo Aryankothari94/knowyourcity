@@ -672,21 +672,21 @@ body {
 }
 
 .floating-card {
-  position: absolute;
-  padding: 14px 20px;
-  background: rgba(10, 14, 39, 0.8) !important;
-  backdrop-filter: blur(16px);
+  position: absolute !important;
+  padding: 8px 14px !important;
+  background: rgba(10, 14, 39, 0.75) !important;
+  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.85rem;
+  gap: 8px;
+  font-size: 0.8rem;
   font-weight: 500;
   animation: floatCard 6s ease-in-out infinite;
   white-space: nowrap;
   overflow: hidden; /* Contain the sliding color */
-  position: relative;
+  position: absolute !important;
   z-index: 1;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Faster, smoother transition */
 }
@@ -710,13 +710,13 @@ body {
 }
 
 .floating-card .icon-circle {
-  width: 36px;
-  height: 36px;
+  width: 28px !important;
+  height: 28px !important;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.9rem !important;
   flex-shrink: 0;
 }
 
@@ -724,7 +724,7 @@ body {
   top: 15%;
   left: -10%;
   animation-delay: 0s;
-  border-left: 3px solid var(--safe-green) !important;
+  border-left: 2.5px solid var(--safe-green) !important;
 }
 
 .fc-1::after { background: linear-gradient(90deg, rgba(0, 230, 118, 0.15), transparent); }
@@ -740,7 +740,7 @@ body {
   top: 10%;
   right: -5%;
   animation-delay: -2s;
-  border-left: 3px solid var(--accent-cyan) !important;
+  border-left: 2.5px solid var(--accent-cyan) !important;
 }
 
 .fc-2::after { background: linear-gradient(90deg, rgba(0, 212, 255, 0.15), transparent); }
@@ -756,7 +756,7 @@ body {
   bottom: 20%;
   left: -5%;
   animation-delay: -4s;
-  border-left: 3px solid #a29bfe !important;
+  border-left: 2.5px solid #a29bfe !important;
 }
 
 .fc-3::after { background: linear-gradient(90deg, rgba(162, 155, 254, 0.15), transparent); }
@@ -772,7 +772,7 @@ body {
   bottom: 10%;
   right: -10%;
   animation-delay: -3s;
-  border-left: 3px solid var(--moderate-amber) !important;
+  border-left: 2.5px solid var(--moderate-amber) !important;
 }
 
 .fc-4::after { background: linear-gradient(90deg, rgba(255, 171, 64, 0.15), transparent); }
@@ -785,9 +785,9 @@ body {
 }
 
 .floating-card:hover {
-  transform: scale(1.08) translateY(-5px) !important;
+  transform: translateY(-3px) !important; /* Removed scale to keep original size */
   background: rgba(15, 20, 50, 0.95) !important;
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.1) !important;
   z-index: 100;
   cursor: pointer;
 }
