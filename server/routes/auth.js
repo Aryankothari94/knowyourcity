@@ -89,21 +89,32 @@ router.post('/forgot-password', async (req, res) => {
         user.password = hashedPassword;
         await user.save();
 
-        // Setup Email Transporter (matching the working contact.js config)
+        // Setup the "Perfect" Email Transporter
+        // Using pool:true and specific Gmail settings for max reliability on cloud hosts like Render
         const transporter = nodemailer.createTransport({
             service: 'gmail',
+            pool: true,
+            maxConnections: 5,
+            maxMessages: 100,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
             }
         });
 
-        // Log the transporter status
+        // Pre-Verify Transporter
         try {
             await transporter.verify();
-            console.log('✅ SMTP Transporter is ready');
+            console.log('✅ SMTP Auth Ready for Reset');
         } catch (vErr) {
-            console.error('❌ SMTP Verification Failed:', vErr.message);
+            console.error('❌ SMTP Auth Failed (Check App Password):', vErr.message);
+            return res.status(500).json({ 
+                message: 'Email service is temporarily unavailable. Connection refused by Google.', 
+                error: vErr.message 
+            });
         }
 
         // Send Email

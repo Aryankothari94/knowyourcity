@@ -629,11 +629,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (res.ok) {
-          if (forgotPasswordSuccess) {
-            forgotPasswordSuccess.textContent = data.message;
-            forgotPasswordSuccess.style.display = 'block';
-          }
+          forgotPasswordSuccess.textContent = 'Success! Your New Signin Password has been emailed to you.';
+          forgotPasswordSuccess.style.display = 'block';
           forgotPasswordForm.reset();
+          
+          // Smooth transition back to login after success
+          setTimeout(() => {
+            switchTab('login');
+          }, 4000);
         } else {
           showError(forgotPasswordError, data.message || 'Error processing request.');
         }
