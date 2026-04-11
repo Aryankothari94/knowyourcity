@@ -633,7 +633,10 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab('resetPassword');
           }, 2500);
         } else {
-          showError(forgotPasswordError, data.message || 'Error processing request.');
+          let errMsg = data.message || 'Error processing request.';
+          if (data.code) errMsg += ` (Code: ${data.code})`;
+          if (data.diagnostic) errMsg += ` - ${data.diagnostic}`;
+          showError(forgotPasswordError, errMsg);
         }
       } catch (err) {
         showError(forgotPasswordError, 'Server connection failed.');

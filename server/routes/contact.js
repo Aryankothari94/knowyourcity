@@ -23,6 +23,12 @@ const transporter = nodemailer.createTransport({
     greetingTimeout: 10000
 });
 
+// Startup verification
+transporter.verify(function (error, success) {
+    if (error) console.error('❌ Contact SMTP Error:', error.message);
+    else console.log('✅ Contact SMTP Optimized');
+});
+
 // ── Smart Auto-Reply Generator ───────────────────────────────────────
 function generateAutoReply(name, subject, message) {
     const subjectTemplates = {
@@ -266,10 +272,11 @@ router.post('/', async (req, res) => {
             emailSent
         });
     } else {
+        const errorDetail = errors.length > 0 ? ` (Last error: ${errors[errors.length-1]})` : '';
         return res.status(500).json({
             success: false,
-            message: 'We could not process your request right now. Please email us directly at knowyourcity000@gmail.com',
-            errors
+            message: `We could not process your request right now. ${errorDetail}`,
+            diagnostic: 'Check your EMAIL_PASS in Render Environment Variables.'
         });
     }
 });

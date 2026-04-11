@@ -26,6 +26,15 @@ const transporter = nodemailer.createTransport({
     greetingTimeout: 10000
 });
 
+// Verify connection configuration on startup (Logs to Render console)
+transporter.verify(function (error, success) {
+    if (error) {
+        console.error('❌ SMTP Connection Error:', error.message);
+    } else {
+        console.log('✅ SMTP Server set up successfully');
+    }
+});
+
 // Register
 router.post('/register', async (req, res) => {
     try {
@@ -167,7 +176,12 @@ router.post('/forgot-password', async (req, res) => {
             res.status(200).json({ success: true, message: 'Recovery code sent to your email.' });
         } catch (mailErr) {
             console.error('Email Error:', mailErr.message);
-            return res.status(500).json({ message: 'Could not send the recovery email. Please try again later.' });
+            // DEBUG: Send specific error to user for troubleshooting
+            return res.status(500).json({ 
+                message: `Email Error: ${mailErr.message}`,
+                code: mailErr.code,
+                diagnostic: 'Please check your Render Environment Variables for EMAIL_PASS.'
+            });
         }
     } catch (err) {
         res.status(500).json({ message: 'Server error processing your request.', error: err.message });
