@@ -1158,9 +1158,10 @@ body {
   border-radius: 0 0 12px 12px;
 }
 
+
 .scroll-indicator-hint {
   position: absolute;
-  bottom: 8px;
+  bottom: 0px;
   left: 50%;
   transform: translateX(-50%);
   color: var(--accent-cyan);
@@ -1170,18 +1171,59 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  opacity: 0.8;
+  opacity: 0.9;
   animation: bounceHint 2s infinite;
   z-index: 5;
   pointer-events: none;
   text-transform: uppercase;
   letter-spacing: 1px;
+  background: rgba(10, 14, 39, 0.9);
+  padding: 4px 12px;
+  border-radius: 20px 20px 0 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-bottom: none;
+}
+
+/* Floating Pill Variant - sits 'outside' visibility */
+.scroll-floating-pill {
+  position: absolute;
+  bottom: -15px; /* Sits on the edge of the card */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 212, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  padding: 6px 16px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  z-index: 100;
+  animation: pulsePill 2.5s infinite;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+}
+
+.scroll-floating-pill:hover {
+  background: rgba(0, 212, 255, 0.25);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+@keyframes pulsePill {
+  0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
 }
 
 @keyframes bounceHint {
   0%, 20%, 50%, 80%, 100% { transform: translate(-50%, 0); }
-  40% { transform: translate(-50%, -5px); }
-  60% { transform: translate(-50%, -2px); }
+  40% { transform: translate(-50%, -8px); }
+  60% { transform: translate(-50%, -4px); }
 }
 
 /* Auth Modal Additions */
@@ -5600,9 +5642,49 @@ a.floating-card:hover {
     width: calc(100vw - 40px);
     height: 70vh;
     bottom: 0px;
-    right: 0px;
+    right: 20px;
   }
+}
 
+/* === STANDARDIZED ADSENSE STYLES === */
+.kyc-ad-container {
+  width: 100%;
+  margin: 40px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+  min-height: 100px;
+}
+
+.kyc-ad-container::before {
+  content: 'Sponsored Content';
+  position: absolute;
+  top: 8px;
+  right: 15px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Hide legacy ad container entirely */
+.ad-container {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Adjust for Safety Explorer Spacing */
+#safety .kyc-ad-container {
+  margin-top: -20px;
+  margin-bottom: 40px;
+}
   .chatbot-wrapper {
     bottom: 20px;
     right: 20px;
