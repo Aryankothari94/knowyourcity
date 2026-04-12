@@ -81,7 +81,13 @@ router.get('/insights', async (req, res) => {
             const stats = cachedCity.safetyStats || {};
             if (stats.policeCount > 0 || stats.hospitalCount > 0) {
               console.log(`⚡ Returning cached analytics for ${cityName}...`);
-              return res.json({ source: 'cache', safetyStats: cachedCity.safetyStats, infrastructures: cachedCity.infrastructures, recentIncidents: cachedCity.recentIncidents || [] });
+              return res.json({ 
+                source: 'cache', 
+                safetyStats: cachedCity.safetyStats, 
+                infrastructures: cachedCity.infrastructures, 
+                touristZones: cachedCity.touristZones || [],
+                recentIncidents: cachedCity.recentIncidents || [] 
+              });
             } else {
               console.log(`⚡ Cache bust triggered for ${cityName} due to 0-counts. Re-fetching live...`);
             }
@@ -104,6 +110,20 @@ router.get('/insights', async (req, res) => {
             fetchTouristZones(lat, lng, 15000),
             fetchCrimeData(lat, lng, 10)
         ]);
+
+        const touristZones = [];
+        (touristData.elements || []).forEach(el => {
+            const la = el.lat || el.center?.lat;
+            const lo = el.lon || el.center?.lon;
+            if (!la || !lo) return;
+            let type = el.tags?.leisure === 'park' ? 'park' : (el.tags?.tourism === 'museum' ? 'museum' : 'attraction');
+            touristZones.push({
+                name: el.tags?.name || el.tags?.['name:en'] || 'Local Landmark',
+                lat: la,
+                lng: lo,
+                type: type
+            });
+        });
 
         const infrastructures = [];
         const seenCoords = new Set();
@@ -131,14 +151,15 @@ router.get('/insights', async (req, res) => {
         // AUTHENTIC SAFETY SCORING
         const crimePoints = incidents.length * 2.5; 
         const sSafe = Math.max(65, Math.min(99, Math.floor(88 - crimePoints + (pCount * 1.5))));
-        const sFam = Math.max(65, Math.min(99, Math.floor(82 - (incidents.length * 1.5) + (hCount * 2))));
-        const sWalk = Math.max(60, Math.min(99, Math.floor(84 - (incidents.length * 2) + (cCount * 1.2))));
+        const sFam = Math.max(65, Math.min(99, Math.floor(82 - (incidents.length * 1.5) + (hCount * 2) + (touristZones.filter(t => t.type === 'park').length * 0.5))));
+        const sWalk = Math.max(60, Math.min(99, Math.floor(84 - (incidents.length * 2) + (cCount * 1.2) + (touristZones.length * 0.3))));
 
         const safetyStats = {
             policeCount: pCount,
             hospitalCount: hCount,
             fireCount: fCount,
             cctvCount: cCount,
+            landmarkCount: touristZones.length,
             crimeScore: sSafe,
             familyScore: sFam,
             walkScore: sWalk,
@@ -201,15 +222,15 @@ router.get('/insights', async (req, res) => {
         // 3. Update Cache
         try {
             if (cachedCity) {
-                Object.assign(cachedCity, { safetyStats, infrastructures, recentIncidents, lastUpdated: Date.now() });
+                Object.assign(cachedCity, { safetyStats, infrastructures, touristZones, recentIncidents, lastUpdated: Date.now() });
                 await cachedCity.save();
             } else {
-                cachedCity = new CityData({ cityName, coordinates: { lat, lng }, safetyStats, infrastructures, recentIncidents });
+                cachedCity = new CityData({ cityName, coordinates: { lat, lng }, safetyStats, infrastructures, touristZones, recentIncidents });
                 await cachedCity.save();
             }
         } catch (e) { console.error('Cache Save Error:', e.message); }
 
-        res.json({ source: 'live', safetyStats, infrastructures, recentIncidents });
+        res.json({ source: 'live', safetyStats, infrastructures, touristZones, recentIncidents });
     } catch (error) {
         console.error('Error fetching insights:', error.message);
         res.status(500).json({ message: 'Error' });

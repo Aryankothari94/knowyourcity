@@ -16,19 +16,40 @@ const SafetyExplorer = () => {
 
 
     useEffect(() => {
-        fetchCityInsights(defaultCity);
+        const lastLat = localStorage.getItem('kyc_userLat');
+        const lastLng = localStorage.getItem('kyc_userLng');
+        if (lastLat && lastLng) {
+            fetchCityInsights(defaultCity, parseFloat(lastLat), parseFloat(lastLng));
+        } else {
+            fetchCityInsights(defaultCity);
+        }
+
+        const handleUpdate = (e) => {
+            const { lat, lng, city } = e.detail;
+            fetchCityInsights(city, parseFloat(lat), parseFloat(lng));
+        };
+
+        window.addEventListener('kyc_locationUpdated', handleUpdate);
+        return () => window.removeEventListener('kyc_locationUpdated', handleUpdate);
     }, []);
 
-    const fetchCityInsights = async (cityName) => {
+    const fetchCityInsights = async (cityName, forcedLat = null, forcedLng = null) => {
         setLoading(true);
         setIsPulsing(true);
         try {
-            // 1. Get Coordinates via Nominatim
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`);
-            const geoData = await geoRes.json();
-            if (geoData.length === 0) throw new Error("City not found");
-            const { lat, lon, display_name } = geoData[0];
-            const cleanCity = display_name.split(',')[0];
+            let lat = forcedLat;
+            let lon = forcedLng;
+            let cleanCity = cityName;
+
+            if (lat === null || lon === null) {
+                // 1. Get Coordinates via Nominatim if not provided
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`);
+                const geoData = await geoRes.json();
+                if (geoData.length === 0) throw new Error("City not found");
+                lat = geoData[0].lat;
+                lon = geoData[0].lon;
+                cleanCity = geoData[0].display_name.split(',')[0];
+            }
 
             // 2. Get Safety Insights (Backend API)
             const insightRes = await fetch(`${API_BASE}/safety/insights?lat=${lat}&lng=${lon}&city=${encodeURIComponent(cleanCity)}`);

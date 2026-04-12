@@ -71,25 +71,86 @@ export const initNavigation = () => {
     };
 
     // Location Search Logic
+    window.fetchLocationSuggestions = async (query) => {
+        const resultsDiv = document.getElementById('locationResults');
+        if (!query || query.length < 3) {
+            if (resultsDiv) resultsDiv.innerHTML = '';
+            return;
+        }
+
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`);
+            const data = await res.json();
+            
+            if (resultsDiv && data) {
+                let html = '';
+                data.forEach(item => {
+                    const name = item.display_name;
+                    const lat = item.lat;
+                    const lon = item.lon;
+                    const city = item.address.city || item.address.town || item.address.village || item.address.suburb || item.display_name.split(',')[0];
+                    
+                    html += `
+                        <div class="location-suggestion-item" onclick="window.selectLocation('${lat}', '${lon}', '${city.replace(/'/g, "\\'")}')">
+                            <span class="suggestion-icon">📍</span>
+                            <span class="suggestion-text">${name}</span>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+            }
+        } catch (err) {
+            console.error("Suggestions error:", err);
+        }
+    };
+
+    window.selectLocation = (lat, lng, city) => {
+        window.updateGlobalLocation(lat, lng, city);
+        const resultsDiv = document.getElementById('locationResults');
+        if (resultsDiv) resultsDiv.innerHTML = '';
+        const input = document.getElementById('locationSearchInput');
+        if (input) input.value = '';
+        document.getElementById('locationDropdown')?.classList.remove('active');
+    };
+
+    window.updateGlobalLocation = (lat, lng, city) => {
+        localStorage.setItem('kyc_userLat', lat);
+        localStorage.setItem('kyc_userLng', lng);
+        localStorage.setItem('kyc_userCity', city);
+        
+        // Update UI Badges immediately
+        const cityEls = ['userCityName', 'currentCityDisplay', 'mobileUserCityName'];
+        cityEls.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = city;
+        });
+
+        window.kycFetchWeather(lat, lng);
+        
+        // Dispatch custom event for React and legacy pages
+        const event = new CustomEvent('kyc_locationUpdated', { 
+            detail: { lat, lng, city } 
+        });
+        window.dispatchEvent(event);
+        console.log(`📍 Location updated: ${city} (${lat}, ${lng})`);
+    };
+
     window.searchLocation = async () => {
         const input = document.getElementById('locationSearchInput');
         const query = input?.value.trim();
         if (!query) return;
-
+        
+        // If query is long enough, it might have already triggered suggestions.
+        // But for a direct click, we fetch the top result.
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
             const data = await res.json();
             if (data && data.length > 0) {
                 const { lat, lon, display_name } = data[0];
                 const city = display_name.split(',')[0];
-                
-                localStorage.setItem('kyc_userLat', lat);
-                localStorage.setItem('kyc_userLng', lon);
-                localStorage.setItem('kyc_userCity', city);
-                
-                window.kycFetchWeather(lat, lon);
-                document.getElementById('locationDropdown')?.classList.remove('active');
+                window.updateGlobalLocation(lat, lon, city);
                 if (input) input.value = '';
+                document.getElementById('locationDropdown')?.classList.remove('active');
             }
         } catch (err) {
             console.error("Search error:", err);
@@ -99,22 +160,28 @@ export const initNavigation = () => {
     // Current Location Logic
     window.useCurrentLocation = () => {
         if (navigator.geolocation) {
+            const btn = document.querySelector('.location-current-btn');
+            if (btn) btn.textContent = '📍 Locating...';
+
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const { latitude, longitude } = position.coords;
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                     const data = await res.json();
-                    const city = data.address.city || data.address.town || data.address.village || "Unknown Area";
+                    const city = data.address.city || data.address.town || data.address.village || data.address.suburb || "Current Location";
                     
-                    localStorage.setItem('kyc_userLat', latitude);
-                    localStorage.setItem('kyc_userLng', longitude);
-                    localStorage.setItem('kyc_userCity', city);
-                    
-                    window.kycFetchWeather(latitude, longitude);
+                    window.updateGlobalLocation(latitude, longitude, city);
+                    if (btn) btn.textContent = '📍 Use Current Location';
                     document.getElementById('locationDropdown')?.classList.remove('active');
                 } catch (e) {
                     console.error("Reverse geocode error:", e);
+                    window.updateGlobalLocation(latitude, longitude, "Current Location");
+                    if (btn) btn.textContent = '📍 Use Current Location';
                 }
+            }, (error) => {
+                console.error("Geolocation error:", error);
+                alert("Location access denied or unavailable.");
+                if (btn) btn.textContent = '📍 Use Current Location';
             });
         }
     };

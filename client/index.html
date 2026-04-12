@@ -16,7 +16,7 @@
         <span>📍 Change Location</span>
       </div>
       <div class="location-search-wrapper">
-        <input type="text" id="locationSearchInput" placeholder="Search city or place..." autocomplete="off" />
+        <input type="text" id="locationSearchInput" placeholder="Search city or place..." autocomplete="off" oninput="window.fetchLocationSuggestions(this.value)" />
         <button class="location-search-btn" onclick="window.searchLocation()">🔍</button>
       </div>
       <button class="location-current-btn" onclick="window.useCurrentLocation()">📍 Use Current Location</button>

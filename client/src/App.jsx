@@ -97,14 +97,35 @@ function App() {
     if (dropdown) dropdown.classList.toggle('active');
   };
 
-  // Sync city name from local storage periodically
+  // Sync city name from local storage periodically (Backup)
   useEffect(() => {
     const interval = setInterval(() => {
       const city = localStorage.getItem('kyc_userCity');
       if (city && city !== userCity) setUserCity(city);
+      
+      const temp = localStorage.getItem('kyc_weatherTemp');
+      if (temp && temp !== weatherTemp) setWeatherTemp(temp);
     }, 2000);
     return () => clearInterval(interval);
-  }, [userCity]);
+  }, [userCity, weatherTemp]);
+
+  // Reactive Global Location Update Listener
+  useEffect(() => {
+    const handleGlobalUpdate = (e) => {
+      const { lat, lng, city } = e.detail;
+      setUserCity(city);
+      setUserLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
+      
+      // Auto-scroll to map if it's a manual selection
+      setTimeout(() => {
+        const mapEl = document.getElementById('interactive-map') || document.getElementById('safety-map');
+        if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    };
+
+    window.addEventListener('kyc_locationUpdated', handleGlobalUpdate);
+    return () => window.removeEventListener('kyc_locationUpdated', handleGlobalUpdate);
+  }, []);
 
   return (
     <div className="App">

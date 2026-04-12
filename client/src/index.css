@@ -2059,4 +2059,51 @@ body {
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
   }
-}
+}
+/* === Safety Explorer Landmarks Enhanced === */
+.landmarks-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 10px 0;
+  scrollbar-width: thin;
+}
+
+.landmark-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  min-width: max-content;
+  border-radius: 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  transition: all 0.3s ease;
+}
+
+.landmark-pill:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--accent-cyan);
+  transform: translateY(-2px);
+}
+
+.pill-icon {
+  font-size: 1.4rem;
+}
+
+.pill-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.pill-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.pill-dist {
+  font-size: 0.75rem;
+  color: var(--accent-cyan);
+  font-weight: 500;
+}

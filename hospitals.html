@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="style.css?v=14">
   <link rel="icon" href="logo.png" type="image/png" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
 </head>
 <body>
   <!-- ===== NAVBAR ===== -->
@@ -29,19 +31,22 @@
     </div>
   </nav>
 
-  <!-- Google AdSense - Responsive Ad Unit -->
-  <div class="ad-container" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; text-align: center;">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-1078761578330689"
-         data-ad-slot="9947362184"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
+
+  <!-- Standardized AdSense Placement -->
+  <div class="container">
+    <div class="kyc-ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-1078761578330689"
+           data-ad-slot="9947362184"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
   </div>
+
 
 
   <section class="feature-hero">
@@ -386,23 +391,165 @@
   </div>
 
   <!-- ===== AUTH MODAL ===== -->
+
+  <!-- ===== AUTH MODAL ===== -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-modal glass-card">
-      <button class="modal-close" id="closeModal">&times;</button>
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">Login</button>
-        <button class="auth-tab" data-tab="signup">Sign Up</button>
+      <button class="modal-close" id="closeModal" aria-label="Close modal">&times;</button>
+      
+      <div id="authTabsHeader">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Login</button>
+          <button class="auth-tab" data-tab="signup">Sign Up</button>
+          <button class="auth-tab" data-tab="adminLogin" style="display:none;">Admin</button>
+        </div>
       </div>
+
+      <!-- Login Form -->
       <form class="auth-form active" id="loginForm">
         <div id="loginError" class="auth-error-message"></div>
-        <div class="form-group"><label for="loginEmail">Email Address</label><input type="email" id="loginEmail" placeholder="rahul@example.com" required /></div>
-        <div class="form-group"><label for="loginPassword">Password</label><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="••••••••" required /><button type="button" class="toggle-password" data-target="loginPassword">👁️</button></div></div>
-        <div class="form-group captcha-group"><label id="captchaLabel" for="loginCaptcha">Loading captcha...</label><input type="text" id="loginCaptcha" placeholder="Enter answer" required /></div>
-        <button type="submit" class="btn-auth">Login to Your City</button>
-        <div class="auth-footer">Don't have an account? <a href="#" data-switch="signup">Sign Up</a></div>
+        <div class="form-group">
+          <label for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" placeholder="rahul@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="loginPassword" placeholder="••••••••" required />
+            <button type="button" class="toggle-password" data-target="loginPassword" title="Toggle visibility">
+              <span class="material-symbols-outlined eye-open">visibility</span>
+              <span class="material-symbols-outlined eye-closed" style="display:none;">visibility_off</span>
+            </button>
+          </div>
+        </div>
+        <div class="form-group captcha-group">
+          <label id="captchaLabel" for="loginCaptcha">Loading captcha...</label>
+          <input type="number" id="loginCaptcha" placeholder="Enter answer" required />
+        </div>
+        
+        <div class="form-group checkbox-group" style="margin-top: 10px;">
+          <input type="checkbox" id="loginTerms" required checked />
+          <label for="loginTerms" style="font-size: 0.8rem;">I agree to the <a href="terms.html">Terms & Conditions</a></label>
+        </div>
+        <div id="termsError" class="auth-error-message"></div>
+
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="loginPrivacy" required checked />
+          <label for="loginPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy.html">Privacy Policy</a></label>
+        </div>
+        <div id="privacyError" class="auth-error-message"></div>
+
+        <button type="submit" class="btn-auth" id="loginBtnPrimary">Login to Your City</button>
+        
+        <div class="auth-footer">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button type="button" class="forgot-link-btn" onclick="switchTab('forgotPassword')" style="background:none; border:none; color:var(--accent-cyan); cursor:pointer; font-size:0.85rem; padding:0;">Forgot Password?</button>
+            <a href="#" onclick="switchTab('adminLogin')" style="color:var(--accent-cyan); font-size:0.75rem; font-weight:600; text-decoration:none;">Admin Access</a>
+          </div>
+          <p style="margin-top:10px;">Don't have an account? <a href="#" data-switch="signup">Sign Up</a></p>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form class="auth-form" id="signupForm">
+        <div id="signupError" class="auth-error-message"></div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="signupFirstName">First Name</label>
+            <input type="text" id="signupFirstName" placeholder="Rahul" required />
+          </div>
+          <div class="form-group half">
+            <label for="signupLastName">Last Name</label>
+            <input type="text" id="signupLastName" placeholder="Sharma" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email Address</label>
+          <input type="email" id="signupEmail" placeholder="rahul@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="signupPhone">Phone Number</label>
+          <input type="tel" id="signupPhone" placeholder="+91 9876543210" required />
+        </div>
+        <div class="form-group">
+          <label for="signupDOB">Date of Birth</label>
+          <input type="date" id="signupDOB" required />
+        </div>
+        <div class="form-group">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" placeholder="Min 6 characters" required />
+        </div>
+        <button type="submit" class="btn-auth" id="signupBtnPrimary">Create Account</button>
+        <div class="auth-footer">Already have an account? <a href="#" data-switch="login">Login</a></div>
+      </form>
+
+      <!-- Forgot Password Form -->
+      <form class="auth-form" id="forgotPasswordForm" style="display:none;">
+        <div class="auth-header-mini" style="text-align:center; margin-bottom:20px;">
+          <h3 style="color:var(--accent-cyan); font-size:1.4rem; margin-bottom:8px;">Recover Password</h3>
+          <p style="color:var(--text-secondary); font-size:0.9rem;">Enter your email to receive a recovery code.</p>
+        </div>
+        <div id="forgotPasswordError" class="auth-error-message"></div>
+        <div id="forgotPasswordSuccess" class="auth-success-message" style="display:none; color: #00e676; margin-bottom: 15px; font-weight: 600; text-align: center; background: rgba(0,230,118,0.1); padding: 10px; border-radius: 8px;"></div>
+        
+        <div class="form-group">
+          <label for="forgotEmail">Email Address</label>
+          <input type="email" id="forgotEmail" placeholder="rahul@example.com" required />
+        </div>
+        <button type="submit" class="btn-auth" id="forgotBtn">Send Recovery Code</button>
+        <div class="auth-footer" style="text-align:center; margin-top:15px;">
+          <a href="#" onclick="switchTab('login')" style="color:var(--text-secondary); text-decoration:none; font-size:0.9rem;">← Back to Login</a>
+        </div>
+      </form>
+
+      <!-- Reset Password Form -->
+      <form class="auth-form" id="resetPasswordForm" style="display:none;">
+        <div class="auth-header-mini" style="text-align:center; margin-bottom:20px;">
+          <h3 style="color:var(--accent-cyan); font-size:1.4rem; margin-bottom:8px;">Set New Password</h3>
+          <p style="color:var(--text-secondary); font-size:0.9rem;">Enter the 6-digit code sent to your email.</p>
+        </div>
+        <div id="resetPasswordError" class="auth-error-message"></div>
+        
+        <div class="form-group">
+          <label for="resetOTP">Recovery Code (OTP)</label>
+          <input type="text" id="resetOTP" placeholder="123456" maxlength="6" required style="letter-spacing: 4px; text-align: center; font-size: 1.2rem; font-weight: 700;" />
+        </div>
+        <div class="form-group">
+          <label for="resetNewPassword">New Password</label>
+          <input type="password" id="resetNewPassword" placeholder="Min 6 characters" required />
+        </div>
+        <button type="submit" class="btn-auth" id="resetBtn">Update Password</button>
+        <div class="auth-footer" style="text-align:center; margin-top:15px;">
+          <a href="#" onclick="switchTab('forgotPassword')" style="color:var(--text-secondary); text-decoration:none; font-size:0.9rem;">Resend Code</a>
+        </div>
+      </form>
+
+      <!-- Admin Login Form -->
+      <form class="auth-form" id="adminLoginForm" style="display:none;">
+        <div class="auth-header-mini" style="text-align:center; margin-bottom:20px;">
+          <h3 style="color:var(--accent-cyan); font-size:1.4rem; margin-bottom:8px;">Admin Login</h3>
+          <p style="color:var(--text-secondary); font-size:0.9rem;">Restricted area for authorized personnel only.</p>
+        </div>
+        <div id="adminLoginError" class="auth-error-message"></div>
+        <div class="form-group">
+          <label for="adminEmail">Administrator Email</label>
+          <input type="email" id="adminEmail" placeholder="admin@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="adminPassword">Admin Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="adminPassword" placeholder="••••••••" required />
+            <button type="button" class="toggle-password" data-target="adminPassword">👁️</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-auth" style="background:linear-gradient(135deg, #00e5ff, #0a0b1a);">Unlock Admin Dashboard</button>
+        <div class="auth-footer" style="text-align:center; margin-top:15px;">
+          <a href="#" onclick="switchTab('login')" style="color:var(--text-secondary); text-decoration:none; font-size:0.9rem;">← Back to User Login</a>
+        </div>
       </form>
     </div>
   </div>
+
 
   <!-- ===== LOGOUT CONFIRMATION MODAL ===== -->
   <div class="modal-overlay" id="logoutConfirmModal">

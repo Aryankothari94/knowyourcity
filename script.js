@@ -342,6 +342,10 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('kyc_userCity', city);
             localStorage.setItem('kyc_userLat', latitude);
             localStorage.setItem('kyc_userLng', longitude);
+            
+            // Dispatch global event for other components
+            window.dispatchEvent(new CustomEvent('kyc_locationUpdated', { detail: { lat: latitude, lng: longitude, city } }));
+            
             if (typeof window.kycFetchWeather === 'function') window.kycFetchWeather(latitude, longitude);
           } catch {
             if (userCityName) userCityName.textContent = 'Your City';
@@ -359,6 +363,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (mobileCity) mobileCity.textContent = 'Location N/A';
     }
   };
+
+  // Global Location Sync for Feature Pages
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'kyc_userLat' || e.key === 'kyc_userLng' || e.key === 'kyc_userCity') {
+      console.log('🔄 Global location change detected. Refreshing feature metrics...');
+      // Logic: If on a feature page (title includes nearby/safety/etc), reload to fetch new data
+      if (document.body.classList.contains('feature-body') || 
+          window.location.pathname.includes('.html') && !window.location.pathname.includes('index.html')) {
+        window.location.reload();
+      } else {
+        // Just update UI badges if on home or static info page
+        const city = localStorage.getItem('kyc_userCity');
+        const lat = localStorage.getItem('kyc_userLat');
+        const lng = localStorage.getItem('kyc_userLng');
+        if (userCityName) userCityName.textContent = city || 'Your Area';
+        if (city && lat && lng) {
+            window.dispatchEvent(new CustomEvent('kyc_locationUpdated', { detail: { lat, lng, city } }));
+        }
+      }
+    }
+  });
+
+  window.addEventListener('kyc_locationUpdated', (e) => {
+    const { city } = e.detail;
+    if (userCityName) userCityName.textContent = city;
+    const mobileCity = document.getElementById('mobileUserCityName');
+    if (mobileCity) mobileCity.textContent = city;
+  });
 
   const logout = () => {
     isLoggedIn = false;
