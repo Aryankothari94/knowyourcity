@@ -1,4 +1,6 @@
 const express = require('express');
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first'); // FORCE IPv4 globally to fix Render/SMTP ENETUNREACH issues
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
