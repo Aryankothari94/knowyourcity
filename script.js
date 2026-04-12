@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       form.classList.toggle('active', form.id === `${tabName}Form`);
     });
   };
+  window.switchTab = switchTab; // Expose globally for HTML onclicks
 
   // Auth Button Click
   if (loginBtn) {
@@ -367,10 +368,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Global Location Sync for Feature Pages
   window.addEventListener('storage', (e) => {
     if (e.key === 'kyc_userLat' || e.key === 'kyc_userLng' || e.key === 'kyc_userCity') {
-      console.log('🔄 Global location change detected. Refreshing feature metrics...');
-      // Logic: If on a feature page (title includes nearby/safety/etc), reload to fetch new data
-      if (document.body.classList.contains('feature-body') || 
-          window.location.pathname.includes('.html') && !window.location.pathname.includes('index.html')) {
+      // Prevent reload if the value hasn't actually changed significantly or if we are on index.html
+      if (e.oldValue === e.newValue) return;
+      
+      console.log('🔄 Global location change detected. Syncing metrics...');
+      
+      // Only reload on actual feature pages, NOT on index.html
+      const isFeaturePage = document.body.classList.contains('feature-body') || 
+                          (window.location.pathname.includes('.html') && 
+                           !window.location.pathname.includes('index.html') &&
+                           !window.location.pathname.endsWith('/'));
+
+      if (isFeaturePage) {
         window.location.reload();
       } else {
         // Just update UI badges if on home or static info page

@@ -5683,10 +5683,249 @@ a.floating-card:hover {
 /* Adjust for Safety Explorer Spacing */
 #safety .kyc-ad-container {
   margin-top: -20px;
+}
+
+.online-dot {
+  width: 8px;
+  height: 8px;
+  background: #00e676;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 10px #00e676;
+}
+
+.chatbot-desc {
+  font-size: 0.75rem;
+  color: #8899aa;
+}
+
+.chatbot-close-btn {
+  background: none;
+  border: none;
+  color: #8899aa;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.chatbot-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.ai-message {
+  align-self: flex-start;
+  background: rgba(100, 100, 120, 0.15);
+  color: #e2e8f0;
+  border-bottom-left-radius: 4px;
+}
+
+.user-message {
+  align-self: flex-end;
+  background: var(--accent-gradient);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.chatbot-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.suggest-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.suggest-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.3);
+}
+
+.chatbot-input-area {
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  gap: 10px;
+}
+
+.chatbot-input-area input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
+  padding: 10px 15px;
+  font-size: 0.9rem;
+}
+
+.chatbot-send-btn {
+  background: var(--accent-gradient);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.typing-indicator {
+  padding: 12px 16px;
+  background: rgba(100, 100, 120, 0.1);
+  border-radius: 18px;
+  align-self: flex-start;
+  color: #8899aa;
+  font-size: 0.8rem;
+  display: flex;
+  gap: 4px;
+}
+
+.typing-indicator span {
+  width: 4px;
+  height: 4px;
+  background: #8899aa;
+  border-radius: 50%;
+  animation: typing 1s infinite alternate;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  from {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* Responsive Mobile Chat */
+@media (max-width: 480px) {
+  .chatbot-window {
+    width: calc(100vw - 40px);
+    height: 70vh;
+    bottom: 0px;
+    right: 20px;
+  }
+}
+
+/* === STANDARDIZED ADSENSE STYLES === */
+.kyc-ad-container {
+  width: 100%;
+  margin: 40px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+  min-height: 100px;
+}
+
+.kyc-ad-container::before {
+  content: 'Sponsored Content';
+  position: absolute;
+  top: 8px;
+  right: 15px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Hide legacy ad container entirely */
+.ad-container {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Adjust for Safety Explorer Spacing */
+#safety .kyc-ad-container {
+  margin-top: -20px;
   margin-bottom: 40px;
 }
   .chatbot-wrapper {
     bottom: 20px;
     right: 20px;
   }
+
+/* === CHECKBOX & AUTH UI REFINEMENT === */
+.checkbox-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+  text-align: left !important;
+  width: 100%;
+}
+
+.checkbox-group input[type='checkbox'] {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  cursor: pointer;
+  accent-color: var(--accent-cyan);
+  flex-shrink: 0;
+}
+
+.checkbox-group label {
+  font-size: 0.85rem !important;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.checkbox-group a {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.auth-footer .forgot-link-btn,
+.auth-footer a {
+  transition: all 0.2s ease;
+}
+
+.auth-footer .forgot-link-btn:hover,
+.auth-footer a:hover {
+  color: #fff !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
 }
