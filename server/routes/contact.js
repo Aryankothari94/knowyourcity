@@ -7,9 +7,8 @@ require('dotenv').config();
 // ── Email Transporter Optimization ───────────────────────────────────
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, 
-    requireTLS: true,
+    port: 465,
+    secure: true, 
     pool: true,   // Keeps connections ready
     family: 4,    // FORCE IPv4 to avoid ENETUNREACH (Render bug)
     maxConnections: 3,
@@ -20,8 +19,8 @@ const transporter = nodemailer.createTransport({
     tls: {
         rejectUnauthorized: false
     },
-    connectionTimeout: 10000, 
-    greetingTimeout: 10000
+    connectionTimeout: 30000, 
+    greetingTimeout: 30000
 });
 
 // Startup verification

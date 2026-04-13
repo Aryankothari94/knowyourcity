@@ -8,9 +8,8 @@ const User = require('../models/User');
 // Setup the Transporter with high-speed optimization
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use STARTTLS for Port 587
-    requireTLS: true,
+    port: 465,
+    secure: true, 
     pool: true,   // Keeps connections open for instant sending
     family: 4,    // FORCE IPv4 to avoid ENETUNREACH IPv6 timeout (Render bug)
     maxConnections: 5,
@@ -22,8 +21,8 @@ const transporter = nodemailer.createTransport({
     tls: {
         rejectUnauthorized: false
     },
-    connectionTimeout: 10000, // 10 seconds (don't wait minutes)
-    greetingTimeout: 10000
+    connectionTimeout: 30000, // 30 seconds
+    greetingTimeout: 30000
 });
 
 // Verify connection configuration on startup (Logs to Render console)
