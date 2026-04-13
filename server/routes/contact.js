@@ -6,12 +6,9 @@ require('dotenv').config();
 
 // ── Email Transporter Optimization ───────────────────────────────────
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, 
-    pool: true,   // Keeps connections ready
-    family: 4,    // FORCE IPv4 to avoid ENETUNREACH (Render bug)
-    maxConnections: 3,
+    service: 'gmail',
+    pool: true,
+    family: 4,    // STRICT IPv4 only to avoid ENETUNREACH IPv6 timeout
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -19,8 +16,8 @@ const transporter = nodemailer.createTransport({
     tls: {
         rejectUnauthorized: false
     },
-    connectionTimeout: 30000, 
-    greetingTimeout: 30000
+    connectionTimeout: 40000, 
+    greetingTimeout: 40000
 });
 
 // Startup verification
