@@ -69,8 +69,8 @@
         <div class="spinner"></div>
         <p>Fetching hospitals and clinics near your location...</p>
       </div>
-      <div class="results-grid" id="resultsGrid" style="display:none;"></div>
-      <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="results-grid" id="resultsGrid"></div>
+      <div class="empty-state" id="emptyState">
         <div class="empty-icon">📭</div>
         <h3>No Hospitals Found Nearby</h3>
         <p>Try a different location.</p>
@@ -401,7 +401,7 @@
         <div class="auth-tabs">
           <button class="auth-tab active" data-tab="login">Login</button>
           <button class="auth-tab" data-tab="signup">Sign Up</button>
-          <button class="auth-tab" data-tab="adminLogin" style="display:none;">Admin</button>
+          <button class="auth-tab" data-tab="adminLogin">Admin</button>
         </div>
       </div>
 
@@ -418,7 +418,7 @@
             <input type="password" id="loginPassword" placeholder="••••••••" required />
             <button type="button" class="toggle-password" data-target="loginPassword" title="Toggle visibility">
               <span class="material-symbols-outlined eye-open">visibility</span>
-              <span class="material-symbols-outlined eye-closed" style="display:none;">visibility_off</span>
+              <span class="material-symbols-outlined eye-closed">visibility_off</span>
             </button>
           </div>
         </div>
@@ -443,7 +443,7 @@
         
         <div class="auth-footer">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button type="button" class="forgot-link-btn" onclick="switchTab('forgotPassword')" style="background:none; border:none; color:var(--accent-cyan); cursor:pointer; font-size:0.85rem; padding:0;">Forgot Password?</button>
+            <a href="forgot-password.html" class="forgot-link-btn" style="color:var(--accent-cyan); cursor:pointer; font-size:0.85rem; text-decoration:none;">Forgot Password?</a>
             <a href="#" onclick="switchTab('adminLogin')" style="color:var(--accent-cyan); font-size:0.75rem; font-weight:600; text-decoration:none;">Admin Access</a>
           </div>
           <p style="margin-top:10px;">Don't have an account? <a href="#" data-switch="signup">Sign Up</a></p>
@@ -484,7 +484,7 @@
       </form>
 
       <!-- Forgot Password Form -->
-      <form class="auth-form" id="forgotPasswordForm" style="display:none;">
+      <form class="auth-form" id="forgotPasswordForm">
         <div class="auth-header-mini" style="text-align:center; margin-bottom:20px;">
           <h3 style="color:var(--accent-cyan); font-size:1.4rem; margin-bottom:8px;">Recover Password</h3>
           <p style="color:var(--text-secondary); font-size:0.9rem;">Enter your email to receive a recovery code.</p>
@@ -503,7 +503,7 @@
       </form>
 
       <!-- Reset Password Form -->
-      <form class="auth-form" id="resetPasswordForm" style="display:none;">
+      <form class="auth-form" id="resetPasswordForm">
         <div class="auth-header-mini" style="text-align:center; margin-bottom:20px;">
           <h3 style="color:var(--accent-cyan); font-size:1.4rem; margin-bottom:8px;">Set New Password</h3>
           <p style="color:var(--text-secondary); font-size:0.9rem;">Enter the 6-digit code sent to your email.</p>
@@ -525,7 +525,7 @@
       </form>
 
       <!-- Admin Login Form -->
-      <form class="auth-form" id="adminLoginForm" style="display:none;">
+      <form class="auth-form" id="adminLoginForm">
         <div class="auth-header-mini" style="text-align:center; margin-bottom:20px;">
           <h3 style="color:var(--accent-cyan); font-size:1.4rem; margin-bottom:8px;">Admin Login</h3>
           <p style="color:var(--text-secondary); font-size:0.9rem;">Restricted area for authorized personnel only.</p>

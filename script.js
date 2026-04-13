@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Captcha Elements
   const captchaLabel = document.getElementById('captchaLabel');
   const loginCaptcha = document.getElementById('loginCaptcha');
+  const adminLoginForm = document.getElementById('adminLoginForm');
   const adminLoginError = document.getElementById('adminLoginError');
   const switchToAdmin = document.getElementById('switchToAdmin');
   const forgotPasswordForm = document.getElementById('forgotPasswordForm');
@@ -130,7 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
     });
     authForms.forEach(form => {
-      form.classList.toggle('active', form.id === `${tabName}Form`);
+      const isActive = form.id === `${tabName}Form`;
+      form.classList.toggle('active', isActive);
+      // Explicitly override inline style="display:none;"
+      form.style.display = isActive ? 'block' : 'none';
     });
   };
   window.switchTab = switchTab; // Expose globally for HTML onclicks
