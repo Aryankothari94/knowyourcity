@@ -1187,7 +1187,7 @@ body {
 /* Floating Pill Variant - sits 'outside' visibility */
 .scroll-floating-pill {
   position: absolute;
-  bottom: -15px; /* Sits on the edge of the card */
+  bottom: 25px; /* Floating on top of content at the bottom */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 212, 255, 0.15);

@@ -231,7 +231,7 @@
             </div>
         </div>
 
-        <div id="feedbackSection">
+        <div id="feedbackSection" style="display: none;">
             <h1>User Feedback & Inquiries</h1>
             <p style="color: #888; margin-bottom: 30px;">Messages submitted through the platform's contact form.</p>
 
@@ -276,8 +276,9 @@
                 return;
             }
 
-            fetchUsers();
-            fetchFeedback();
+            await Promise.all([fetchUsers(), fetchFeedback()]);
+            switchAdminTab('users'); // Ensure correct initial state
+            document.getElementById('loadingOverlay').style.display = 'none';
 
             document.getElementById('navUsers').addEventListener('click', (e) => {
                 e.preventDefault();
@@ -314,8 +315,6 @@
             } catch (err) {
                 console.error('Error fetching users:', err);
                 alert('Could not connect to the administration server.');
-            } finally {
-                document.getElementById('loadingOverlay').style.display = 'none';
             }
         }
 
