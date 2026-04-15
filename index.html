@@ -21,7 +21,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689"
+     crossorigin="anonymous"></script>
 
   <link rel="stylesheet" href="style.css?v=87">
   <style>
@@ -2408,56 +2409,107 @@
       document.getElementById('weatherDropdown')?.classList.remove('active');
     });
 
+    let _locActiveIndex = -1;
+
     document.getElementById('locationSearchInput')?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') searchLocation();
+      const results = document.getElementById('locationResults');
+      const items = results.querySelectorAll('.location-result-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        _locActiveIndex = Math.min(_locActiveIndex + 1, items.length - 1);
+        updateActiveResult(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        _locActiveIndex = Math.max(_locActiveIndex - 1, -1);
+        updateActiveResult(items);
+      } else if (e.key === 'Enter') {
+        if (_locActiveIndex >= 0 && items[_locActiveIndex]) {
+          e.preventDefault();
+          items[_locActiveIndex].click();
+        } else {
+          searchLocation(true);
+        }
+      }
     });
+
+    function updateActiveResult(items) {
+      items.forEach((item, idx) => {
+        if (idx === _locActiveIndex) {
+          item.classList.add('active');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
 
     let _locSearchTimeout = null;
     // Live autocomplete while typing
     document.getElementById('locationSearchInput')?.addEventListener('input', function () {
       clearTimeout(_locSearchTimeout);
+      _locActiveIndex = -1;
       const q = this.value.trim();
-      if (q.length < 3) { document.getElementById('locationResults').innerHTML = ''; return; }
-      _locSearchTimeout = setTimeout(() => searchLocation(), 400);
-    });
-    document.getElementById('locationSearchInput')?.addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') { clearTimeout(_locSearchTimeout); searchLocation(true); }
+      if (q.length < 2) { 
+        document.getElementById('locationResults').innerHTML = ''; 
+        return; 
+      }
+      _locSearchTimeout = setTimeout(() => searchLocation(), 300);
     });
 
     async function searchLocation(autoSelectFirst = false) {
       const q = document.getElementById('locationSearchInput').value.trim();
       if (!q) return;
+      
       const results = document.getElementById('locationResults');
-      results.innerHTML = '<div class="location-searching">🔍 Searching...</div>';
+      if (!autoSelectFirst) {
+        results.innerHTML = '<div class="location-searching">🔍 Finding areas in India...</div>';
+      }
+
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`, {
+        // Biasing towards India with countrycodes=in and using bounded view if possible
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&countrycodes=in`, {
           headers: { 'Accept-Language': 'en' }
         });
         const data = await res.json();
+        
         if (data.length === 0) {
-          results.innerHTML = '<div class="location-no-results">No places found. Try a different name.</div>';
+          if (!autoSelectFirst) {
+            results.innerHTML = '<div class="location-no-results">No places found in India. Try a different name.</div>';
+          }
           return;
         }
 
-        // Auto-select first result if triggered by Enter key
+        // Auto-select first result if triggered by Enter key without navigation
         if (autoSelectFirst && data[0]) {
           const place = data[0];
-          const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
+          const name = extractCityName(place.address);
           selectLocation(place.lat, place.lon, name);
           return;
         }
 
         results.innerHTML = data.map((place, i) => {
-          const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
-          const state = place.address?.state || '';
-          const country = place.address?.country || '';
-          return `<div class="location-result-item" onclick="selectLocation('${place.lat}','${place.lon}','${name.replace(/'/g, "\\'")}')">
-            <div class="location-result-name">📍 ${name}</div>
-            <div class="location-result-sub">${state}${country ? ', ' + country : ''}</div>
+          const addr = place.address;
+          const mainName = addr.city || addr.town || addr.village || addr.suburb || addr.neighbourhood || place.display_name.split(',')[0];
+          
+          // Construct a nice sub-label: e.g. "Bandra West, Mumbai, Maharashtra"
+          const parts = [];
+          if (addr.suburb && addr.suburb !== mainName) parts.push(addr.suburb);
+          if (addr.city && addr.city !== mainName) parts.push(addr.city);
+          if (addr.state) parts.push(addr.state);
+          
+          const subLabel = parts.join(', ') || 'India';
+
+          return `<div class="location-result-item" onclick="selectLocation('${place.lat}','${place.lon}','${mainName.replace(/'/g, "\\'")}')">
+            <div class="location-result-name">📍 ${mainName}</div>
+            <div class="location-result-sub">${subLabel}</div>
           </div>`;
         }).join('');
-      } catch {
-        results.innerHTML = '<div class="location-no-results">Search failed. Try again.</div>';
+        
+        _locActiveIndex = -1;
+      } catch (err) {
+        console.error("Search failed:", err);
+        results.innerHTML = '<div class="location-no-results">Search failed. Please try again.</div>';
       }
     }
 
