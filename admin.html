@@ -267,7 +267,7 @@
             : 'https://knowyourcity.onrender.com/api'; 
 
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const isAdmin = localStorage.getItem('kyc_isAdmin') === 'true';
             const adminToken = localStorage.getItem('kyc_adminToken');
 
@@ -276,9 +276,14 @@
                 return;
             }
 
-            await Promise.all([fetchUsers(), fetchFeedback()]);
-            switchAdminTab('users'); // Ensure correct initial state
-            document.getElementById('loadingOverlay').style.display = 'none';
+            try {
+                await Promise.all([fetchUsers(), fetchFeedback()]);
+                switchAdminTab('users'); // Ensure correct initial state
+            } catch (err) {
+                console.error('Error during initial fetch:', err);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
 
             document.getElementById('navUsers').addEventListener('click', (e) => {
                 e.preventDefault();

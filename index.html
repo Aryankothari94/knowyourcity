@@ -1022,8 +1022,8 @@
                <h4 style="color: #ff5252; font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                   <span class="material-symbols-outlined" style="font-size: 20px;">history</span> Recent Incidents
                </h4>
-                   <div class="scrollable-list-container">
-                     <div id="recentActivityList" style="display: flex; flex-direction: column; gap: 10px;">
+                   <div class="scrollable-list-container" style="max-height: 120px;">
+                     <div id="recentActivityList" style="display: flex; flex-direction: column; gap: 8px;">
                         <!-- Crime incidents will be injected here -->
                      </div>
                    </div>
@@ -1071,7 +1071,8 @@
             <h3 class="area-name" id="touristCardTitle">Tourist Places</h3>
             <span class="area-badge badge-safe">Explore</span>
           </div>
-            <div class="scrollable-list-container" style="max-height: 150px;">
+          <div class="area-card-content">
+            <div class="scrollable-list-container" style="max-height: 120px;">
               <div id="touristPlacesList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px; text-align: left;"></div>
             </div>
           </div>
