@@ -7,6 +7,9 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
   ? 'http://localhost:10000/api'
   : 'https://knowyourcity.onrender.com/api';
 
+// Production Domain Constant
+const PRODUCTION_DOMAIN = 'www.knowyourcitys.in';
+
 document.addEventListener('DOMContentLoaded', () => {
 
   // ===== AUTHENTICATION SYSTEM =====

@@ -640,9 +640,13 @@
         const el = document.getElementById(id); if(el) el.innerHTML = '<div class="spinner-small"></div>';
       });
 
+      const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:10000/api' 
+        : 'https://knowyourcity.onrender.com/api';
+
       try {
         const results = await Promise.any([
-          fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`)
+          fetch(`${API_BASE}/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`)
             .then(r => r.ok ? r.json() : Promise.reject())
             .then(data => {
               if (data.safetyStats && data.safetyStats.policeCount === 0 && data.safetyStats.hospitalCount === 0) {
@@ -1198,9 +1202,11 @@
             globalCity = data[0].display_name.split(',')[0];
             
             // Sync map view
-            if (typeof _safetyMap !== 'undefined' && _safetyMap) fetchSafetyData(_safetyMap, globalLat, globalLng, globalCity);
+            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? 'http://localhost:10000/api' 
+                : 'https://knowyourcity.onrender.com/api';
 
-            return fetch(`https://knowyourcity.onrender.com/api/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(globalCity)}`);
+            return fetch(`${API_BASE}/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(globalCity)}`);
         })
         .then(res => res.json())
         .then(data => {
@@ -1355,7 +1361,6 @@
             }
             
             // Update scroll hints after data injection
-            setTimeout(updateScrollHints, 800);
             
         })
         .catch(err => {
