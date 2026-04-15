@@ -25,19 +25,20 @@
 
   <link rel="stylesheet" href="style.css?v=87">
   <style>
-    /* GRID LAYOUT: Safety Explorer (Restored 3-Column Grid) */
+    /* GRID LAYOUT: Safety Explorer (Optimized 4-Column Grid) */
     #safety .safety-grid {
       display: grid !important;
-      grid-template-columns: repeat(3, 1fr) !important;
-      gap: 25px !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 12px !important;
       margin-top: 40px !important;
       width: 100% !important;
-      max-width: 1300px !important;
+      max-width: 1400px !important;
       margin-left: auto !important;
       margin-right: auto !important;
       padding: 0 15px 40px 15px !important;
     }
     #safety .area-card {
+      padding: 16px !important;
       width: 100% !important;
       flex: 0 0 auto !important;
       display: flex !important;
@@ -55,7 +56,7 @@
       border-color: rgba(255,255,255,0.3) !important;
       background: rgba(35,38,55,0.85) !important;
     }
-    @media (max-width: 1024px) {
+    @media (max-width: 1100px) {
       #safety .safety-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
     @media (max-width: 650px) {

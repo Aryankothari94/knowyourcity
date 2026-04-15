@@ -1082,11 +1082,11 @@ body {
 .safety-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 
 .area-card {
-  padding: 20px;
+  padding: 16px;
   position: relative;
   overflow: hidden;
   height: min-content;
@@ -1847,8 +1847,8 @@ body {
 
 .safety-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 12px;
   margin-top: 48px;
   width: 100%;
 }
