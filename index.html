@@ -756,7 +756,7 @@
           </div>
         `).join('');
       } else {
-        html = incidents.slice(0, 4).map(inc => `
+        html = incidents.map(inc => `
           <div style="background: rgba(255,82,82,0.08); border-left: 3px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255,82,82,0.1);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <span style="color: #ff5252; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
@@ -1062,7 +1062,7 @@
         </div>
 
         <!-- Area Card 3: Dynamic Tourist Places -->
-        <div class="area-card glass-card reveal" id="dynamicTouristCard" style="display: none;">
+        <div class="area-card glass-card reveal" id="dynamicTouristCard">
           <div class="area-card-header">
             <div class="area-icon-box">
               <span class="material-symbols-outlined">photo_camera</span>
@@ -1070,8 +1070,8 @@
             <h3 class="area-name" id="touristCardTitle">Tourist Places</h3>
             <span class="area-badge badge-safe">Explore</span>
           </div>
-            <div class="scrollable-list-container">
-              <div id="touristPlacesList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px; text-align: left;"></div>
+            <div class="scrollable-list-container" style="max-height: 150px;">
+              <div id="touristPlacesList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px; text-align: left;"></div>
             </div>
           </div>
         </div>

@@ -1081,15 +1081,16 @@ body {
 
 .safety-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 }
 
 .area-card {
-  padding: 32px;
+  padding: 20px;
   position: relative;
   overflow: hidden;
   height: min-content;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .area-card-header {
@@ -1101,8 +1102,12 @@ body {
 
 .area-name {
   font-family: var(--font-heading);
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 600;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .area-badge {
@@ -1116,8 +1121,23 @@ body {
 
 /* Scrollable Container for Data Inside Cards */
 .scrollable-list-container {
-  max-height: 280px;
+  max-height: 200px;
   overflow-y: auto;
+  padding-right: 5px;
+}
+
+.scrollable-list-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollable-list-container::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.02);
+}
+
+.scrollable-list-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
   padding-right: 8px;
   position: relative;
   /* Thin custom scrollbar */
