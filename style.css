@@ -2100,14 +2100,46 @@ body {
 
 .location-dropdown-header {
   font-family: var(--font-heading);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--accent-cyan);
+  color: var(--text-primary);
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-back-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.dropdown-back-btn:hover {
+  background: var(--accent-gradient);
+  color: var(--bg-primary);
+  border-color: transparent;
+  transform: translateX(-3px);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.dropdown-back-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-back-btn:hover svg {
+  transform: scale(1.1);
 }
 
 .location-search-wrapper {
