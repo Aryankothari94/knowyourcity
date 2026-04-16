@@ -30,11 +30,50 @@
             padding: 30px 20px;
             display: flex;
             flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 2000;
         }
 
         .admin-main {
             margin-left: 280px;
             padding: 40px;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Mobile Responsive Sync */
+        @media (max-width: 992px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                width: 240px;
+            }
+            .admin-sidebar.active {
+                transform: translateX(0);
+            }
+            .admin-main {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .mobile-header {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 20px;
+                background: rgba(255,255,255,0.02);
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                position: sticky;
+                top: 0;
+                z-index: 1500;
+                backdrop-filter: blur(10px);
+            }
+        }
+
+        .mobile-header { display: none; }
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
         }
 
         .admin-brand {
@@ -175,7 +214,12 @@
         <div class="loader"></div>
     </div>
 
-    <div class="admin-sidebar">
+    <div class="mobile-header">
+        <div class="admin-brand" style="margin-bottom: 0;">🛡️ KYC Admin</div>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    </div>
+
+    <div class="admin-sidebar" id="sidebar">
         <div class="admin-brand">
             <span>🛡️</span> Admin Panel
         </div>
@@ -202,6 +246,10 @@
                 <div class="stat-card">
                     <div class="stat-value" id="totalUsersCount">0</div>
                     <div class="stat-label">Total Registered Users</div>
+                </div>
+                <div class="stat-card" style="border: 1px solid var(--admin-accent); background: rgba(0, 212, 255, 0.05);">
+                    <div class="stat-value" id="totalVisitorsCount">0</div>
+                    <div class="stat-label">Total Website Visitors</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">Active</div>
@@ -277,7 +325,7 @@
             }
 
             try {
-                await Promise.all([fetchUsers(), fetchFeedback()]);
+                await Promise.all([fetchUsers(), fetchFeedback(), fetchStats()]);
                 switchAdminTab('users'); // Ensure correct initial state
             } catch (err) {
                 console.error('Error during initial fetch:', err);
@@ -343,12 +391,37 @@
             `).join('');
         }
 
+        async function fetchStats() {
+            const adminToken = localStorage.getItem('kyc_adminToken');
+            try {
+                const res = await fetch(`${API_BASE}/admin/stats`, {
+                    headers: { 'X-Admin-Token': adminToken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('totalVisitorsCount').textContent = data.pageViews;
+                }
+            } catch (err) {
+                console.error('Error fetching stats:', err);
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
         function switchAdminTab(tab) {
             document.getElementById('navUsers').classList.toggle('active', tab === 'users');
             document.getElementById('navFeedback').classList.toggle('active', tab === 'feedback');
             
             document.getElementById('usersSection').style.display = tab === 'users' ? 'block' : 'none';
             document.getElementById('feedbackSection').style.display = tab === 'feedback' ? 'block' : 'none';
+
+            // Close sidebar on mobile after selection
+            if (window.innerWidth <= 992) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.remove('active');
+            }
         }
 
         async function fetchFeedback() {

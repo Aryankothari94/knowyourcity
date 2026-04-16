@@ -9,6 +9,18 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // 📊 Analytics: Track Page Hit
+      (async function trackHit() {
+        try {
+          const API_BASE_ANALYTICS = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:10000/api' 
+            : 'https://knowyourcity.onrender.com/api';
+          
+          await fetch(`${API_BASE_ANALYTICS}/admin/hit`, { method: 'POST' });
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Global Access Dropdowns (Shared by Desktop & Mobile) -->
     <div class="location-dropdown" id="locationDropdown" onclick="event.stopPropagation()">

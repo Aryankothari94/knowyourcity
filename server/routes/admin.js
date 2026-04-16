@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Contact = require('../models/Contact');
+const Analytics = require('../models/Analytics');
 
 // ADMIN LOGIN - Hardcoded specific credentials for the admin
 router.post('/login', async (req, res) => {
@@ -80,6 +81,39 @@ router.post('/clear-all-users', async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: 'Error wiping user database', error: err.message });
+    }
+});
+
+// ANALYTICS: TRACK PAGE HIT (PUBLIC)
+router.post('/hit', async (req, res) => {
+    try {
+        const stats = await Analytics.findOneAndUpdate(
+            { metric: 'page_views' },
+            { $inc: { count: 1 }, lastUpdated: new Date() },
+            { upsert: true, new: true }
+        );
+        res.status(200).json({ success: true, count: stats.count });
+    } catch (err) {
+        console.error('Hit tracking error:', err);
+        res.status(500).json({ success: false });
+    }
+});
+
+// ANALYTICS: GET STATS (ADMIN ONLY)
+router.get('/stats', async (req, res) => {
+    try {
+        const adminToken = req.headers['x-admin-token'];
+        if (adminToken !== 'kyc_admin_authorized_session') {
+            return res.status(403).json({ message: 'Access denied.' });
+        }
+
+        const stats = await Analytics.findOne({ metric: 'page_views' });
+        res.status(200).json({ 
+            success: true, 
+            pageViews: stats ? stats.count : 0 
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching stats', error: err.message });
     }
 });
 

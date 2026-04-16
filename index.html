@@ -2946,5 +2946,20 @@
       </div>
     </div>
   </div>
+  <script>
+    // 📊 Analytics: Track Page Hit
+    (async function trackHit() {
+      try {
+        const API_BASE_ANALYTICS = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+          ? 'http://localhost:10000/api' 
+          : 'https://knowyourcity.onrender.com/api';
+        
+        await fetch(`${API_BASE_ANALYTICS}/admin/hit`, { method: 'POST' });
+        console.log('📊 Visit tracked');
+      } catch (e) {
+        // Silently fail analytics if backend is down
+      }
+    })();
+  </script>
 </body>
 </html>
