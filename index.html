@@ -1133,42 +1133,58 @@
 
     async function fetchAreaSuggestions(q) {
       const results = document.getElementById('areaSearchResults');
+      if (!results) return;
       results.style.display = 'block';
-      results.innerHTML = '<div style="padding: 15px; color: #fff;">🔍 Searching...</div>';
+      results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-cyan);"><div class="spinner-small" style="margin-right:8px;"></div>Searching regions...</div>';
+      
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`, {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`, {
           headers: { 'Accept-Language': 'en' }
         });
         const data = await res.json();
-        if(data.length === 0) {
-          results.innerHTML = '<div style="padding: 15px; color: #aaa;">No places found. Try a different name.</div>';
+        
+        if (data.length === 0) {
+          results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No locations found. Try a broader search.</div>';
           return;
         }
-        results.innerHTML = data.map((place) => {
+
+        results.innerHTML = data.map((place, idx) => {
           const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
           const full = place.display_name;
-          return `<div style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" onclick="selectAreaSuggestion('${name.replace(/'/g, "\\'")}')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
-            <div style="font-weight: 500; font-size: 1.05rem; color: #fff;">📍 ${name}</div>
-            <div style="font-size: 0.85rem; color: #aaa; margin-top: 4px;">${full}</div>
-          </div>`;
+          return `
+            <div 
+              style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s;" 
+              onclick="selectAreaSuggestion('${name.replace(/'/g, "\\'")}', '${place.lat}', '${place.lon}')" 
+              onmouseover="this.style.background='rgba(0, 229, 255, 0.08)'" 
+              onmouseout="this.style.background='transparent'"
+            >
+              <div style="font-weight: 600; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--accent-cyan);">location_on</span>
+                ${name}
+              </div>
+              <div style="font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 26px;">
+                ${full}
+              </div>
+            </div>`;
         }).join('');
-      } catch(err) {
-        results.innerHTML = '<div style="padding: 15px; color: #aaa;">Search failed. Try again.</div>';
+      } catch (err) {
+        results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--caution-red);">Connection issue. Please retry.</div>';
       }
     }
 
-    async function selectAreaSuggestion(name) {
+    async function selectAreaSuggestion(name, lat, lon) {
       document.getElementById('areaSearchInput').value = name;
       document.getElementById('areaSearchResults').style.display = 'none';
       
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1`);
-        const data = await res.json();
-        if(data && data.length > 0) {
-          const cityName = data[0].display_name.split(',')[0];
-          syncAllCityData(data[0].lat, data[0].lon, cityName);
-        }
-      } catch(e) { console.error("Sync failed"); }
+      // Dispatch global sync event
+      window.dispatchEvent(new CustomEvent('kyc_locationUpdated', { 
+          detail: { lat, lng: lon, city: name } 
+      }));
+      
+      // Traditional sync for non-event components in index.html
+      if (typeof syncAllCityData === 'function') {
+        syncAllCityData(lat, lon, name);
+      }
     }
 
     function searchAreaCard() {

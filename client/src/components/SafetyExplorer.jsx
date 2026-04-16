@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 const SafetyExplorer = () => {
     const defaultCity = localStorage.getItem('kyc_userCity') || 'Your City';
-    const [searchedCity, setSearchedCity] = useState(defaultCity);
+    const [searchedCity, setSearchedCity] = useState(localStorage.getItem('kyc_userCity') || 'Your City');
     const [searchInput, setSearchInput] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
     const [safetyData, setSafetyData] = useState(null);
     const [incidents, setIncidents] = useState([]);
@@ -81,6 +83,44 @@ const SafetyExplorer = () => {
         }
     };
 
+    // Autocomplete Suggestions logic
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            if (searchInput.trim().length < 3) {
+                setSuggestions([]);
+                setShowSuggestions(false);
+                return;
+            }
+
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput.trim())}&format=json&limit=5&addressdetails=1`);
+                const data = await res.json();
+                setSuggestions(data);
+                setShowSuggestions(true);
+            } catch (err) {
+                console.error("Suggestions fetch failed:", err);
+            }
+        };
+
+        const timer = setTimeout(fetchSuggestions, 400);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    const handleSelectSuggestion = (place) => {
+        const city = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
+        const { lat, lon } = place;
+        
+        // Dispatch global update
+        const event = new CustomEvent('kyc_locationUpdated', { 
+            detail: { lat, lng: lon, city } 
+        });
+        window.dispatchEvent(event);
+        
+        setSearchInput('');
+        setSuggestions([]);
+        setShowSuggestions(false);
+    };
+
     const handleSearch = async () => {
         if (!searchInput.trim()) return;
         setLoading(true);
@@ -128,18 +168,40 @@ const SafetyExplorer = () => {
                     <p className="section-subtitle">Real-time localized analytics and exploration insights for {searchedCity}.</p>
                     
                     <div className="area-search-wrapper" style={{ maxWidth: '600px', margin: '30px auto', position: 'relative', zIndex: 10 }}>
-                        <input 
-                            type="text" 
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                            className="search-input" 
-                            placeholder="Search any area or city..." 
-                            style={{ width: '100%', padding: '16px 24px', paddingRight: '120px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(30, 32, 47, 0.8)', color: 'white', fontSize: '1.1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)' }}
-                        />
-                        <button className="btn-primary" onClick={handleSearch} style={{ position: 'absolute', right: '8px', top: '8px', borderRadius: '50px', padding: '8px 20px', border: 'none', fontWeight: 600 }}>
-                            {loading ? '...' : 'Explore'}
-                        </button>
+                        <div style={{ position: 'relative', width: '100%' }}>
+                            <input 
+                                type="text" 
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                className="search-input" 
+                                placeholder="Search any area or city..." 
+                                style={{ width: '100%', padding: '16px 24px', paddingRight: '120px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(30, 32, 47, 0.8)', color: 'white', fontSize: '1.1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)' }}
+                            />
+                            
+                            {/* Suggestions Dropdown */}
+                            {showSuggestions && suggestions.length > 0 && (
+                                <div className="glass-card" style={{ position: 'absolute', top: 'calc(100% + 10px)', left: '0', width: '100%', zIndex: 1000, borderRadius: '20px', overflow: 'hidden', padding: '10px' }}>
+                                    {suggestions.map((p, idx) => (
+                                        <div 
+                                            key={idx} 
+                                            onClick={() => handleSelectSuggestion(p)}
+                                            style={{ padding: '12px 20px', cursor: 'pointer', borderRadius: '12px', transition: 'all 0.2s', textAlign: 'left' }}
+                                            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                            <div style={{ color: '#00e5ff', fontWeight: 600, fontSize: '1rem' }}>📍 {p.display_name.split(',')[0]}</div>
+                                            <div style={{ color: '#aaa', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <button className="btn-primary" onClick={handleSearch} style={{ position: 'absolute', right: '8px', top: '8px', borderRadius: '50px', padding: '8px 20px', border: 'none', fontWeight: 600 }}>
+                                Explore
+                            </button>
+                        </div>
                     </div>
                 </div>
 
