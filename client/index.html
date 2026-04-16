@@ -13,6 +13,12 @@
     <!-- Global Access Dropdowns (Shared by Desktop & Mobile) -->
     <div class="location-dropdown" id="locationDropdown" onclick="event.stopPropagation()">
       <div class="location-dropdown-header">
+        <button class="dropdown-back-btn" onclick="this.closest('.location-dropdown').classList.remove('active')" aria-label="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
         <span>📍 Change Location</span>
       </div>
       <div class="location-search-wrapper">
@@ -29,6 +35,12 @@
 
     <div class="location-dropdown" id="weatherDropdown" onclick="event.stopPropagation()" style="width: 320px;">
       <div class="location-dropdown-header">
+        <button class="dropdown-back-btn" onclick="this.closest('.location-dropdown').classList.remove('active')" aria-label="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
         <span>🌦️ Hourly Forecast</span>
       </div>
       <div id="hourlyWeatherList" style="padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto;">
