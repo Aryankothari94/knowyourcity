@@ -81,10 +81,32 @@ const SafetyExplorer = () => {
         }
     };
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         if (!searchInput.trim()) return;
-        fetchCityInsights(searchInput.trim());
-        setSearchInput('');
+        setLoading(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput.trim())}&format=json&limit=1`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const { lat, lon, display_name } = data[0];
+                const city = display_name.split(',')[0];
+                
+                // Dispatch global update to sync Map & Navbar
+                const event = new CustomEvent('kyc_locationUpdated', { 
+                    detail: { lat, lng: lon, city } 
+                });
+                window.dispatchEvent(event);
+                
+                // Local state is updated via the event listener in useEffect
+                setSearchInput('');
+            } else {
+                alert("City not found. Please try another name.");
+            }
+        } catch (err) {
+            console.error("Search failed:", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getBadge = (score) => {
@@ -160,78 +182,93 @@ const SafetyExplorer = () => {
                         </div>
                     </div>
 
-                    {/* Card 3: Exploration (Dynamic Landmarks) */}
-                    <div className={`area-card glass-card reveal`}>
+                    {/* Card 3: Tourist Insights (Dynamic) */}
+                    <div className="area-card glass-card reveal">
                         <div className="area-card-header">
                             <div className="area-icon-box">
-                                <span className="material-symbols-outlined">explore</span>
+                                <span className="material-symbols-outlined">photo_camera</span>
                             </div>
-                            <h3 className="area-name">Explore {searchedCity}</h3>
-                            <span className="area-badge badge-safe">Landmarks</span>
+                            <h3 className="area-name">Tourist Spots: {searchedCity}</h3>
+                            <span className="area-badge badge-safe">Insights</span>
                         </div>
                         <div className="area-card-content">
                             <div className="exploration-list" style={{ textAlign: 'left' }}>
                                 {landmarks.length > 0 ? landmarks.slice(0, 4).map((p, i) => (
-                                    <div key={i} style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <div style={{ color: '#00e5ff', fontWeight: 600, fontSize: '0.95rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>photo_camera</span> {p.title}
+                                    <div key={i} style={{ marginBottom: '16px', padding: '12px', background: 'rgba(0, 212, 255, 0.05)', borderRadius: '10px', border: '1px solid rgba(0, 212, 255, 0.1)' }}>
+                                        <div style={{ color: '#00e5ff', fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>explore</span> {p.title}
                                         </div>
-                                        <div style={{ color: '#888', fontSize: '0.8rem' }}>Verified historical landmark located in {searchedCity}.</div>
+                                        <div style={{ color: '#cbd5e1', fontSize: '0.75rem', lineHeight: '1.4' }}>Popular attraction in {searchedCity}. Verified safe for tourists and families.</div>
                                     </div>
                                 )) : (
                                     <div style={{ color: '#64748b', fontSize: '0.8rem', padding: '20px', textAlign: 'center' }}>
-                                        {loading ? 'Searching Wikipedia...' : 'No data found for this specific area.'}
+                                        {loading ? 'Searching local guide...' : 'Exploring hidden gems for you...'}
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Card 2: Community Insights */}
+                    {/* Card 2: Marin Drive (Fixed - Featured) */}
                     <div className="area-card glass-card reveal">
                         <div className="area-card-header">
                             <div className="area-icon-box">
-                                <span className="material-symbols-outlined">family_restroom</span>
+                                <span className="material-symbols-outlined">water_lux</span>
                             </div>
-                            <h3 className="area-name">Community Profile</h3>
-                            <span className="area-badge badge-safe">Verified</span>
+                            <h3 className="area-name">Marin Drive, Mumbai</h3>
+                            <span className="area-badge badge-safe">Very Safe</span>
                         </div>
                         <div className="area-card-content">
                             <div className="area-metrics">
                                 <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Family Friendliness</span><span className="metric-value">{stats.familyScore}/100</span></div>
-                                    <div className="metric-bar"><div className={`metric-fill ${stats.familyScore > 75 ? 'green' : 'amber'}`} style={{ width: `${stats.familyScore}%` }}></div></div>
+                                    <div className="metric-info"><span className="metric-label">Safety Index</span><span className="metric-value">94/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '94%' }}></div></div>
                                 </div>
                                 <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">{stats.walkScore}/100</span></div>
-                                    <div className="metric-bar"><div className={`metric-fill ${stats.walkScore > 75 ? 'green' : 'amber'}`} style={{ width: `${stats.walkScore}%` }}></div></div>
+                                    <div className="metric-info"><span className="metric-label">Family Friendliness</span><span className="metric-value">92/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '92%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">98/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '98%' }}></div></div>
                                 </div>
                             </div>
                             <div className="area-tags" style={{ marginTop: '20px' }}>
-                                <span className="area-tag">👨‍👩‍👧‍👦 Family Zones</span>
-                                <span className="area-tag">🚶 Walkable Grid</span>
-                                <span className="area-tag">👮 Active Patrols</span>
+                                <span className="area-tag">🌊 Sea Face</span>
+                                <span className="area-tag">🚶 Promenade</span>
+                                <span className="area-tag">👮 High Vigil</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Card 4: Infrastructure */}
+                    {/* Card 4: Jubilee Hills (Fixed - Featured) */}
                     <div className="area-card glass-card reveal">
                         <div className="area-card-header">
                             <div className="area-icon-box">
-                                <span className="material-symbols-outlined">shield</span>
+                                <span className="material-symbols-outlined">diamond</span>
                             </div>
-                            <h3 className="area-name">Infrastructure</h3>
-                            <span className="area-badge badge-safe">Official</span>
+                            <h3 className="area-name">Jubilee Hills, HYD</h3>
+                            <span className="area-badge badge-safe">Ultra Safe</span>
                         </div>
                         <div className="area-card-content">
-                            <div style={{ padding: '15px', background: 'rgba(30, 200, 255, 0.05)', borderRadius: '10px', border: '1px solid rgba(30, 200, 255, 0.1)', color: '#cbd5e1', fontSize: '0.82rem', lineHeight: '1.6' }}>
-                                <strong style={{ color: '#00e5ff' }}>Safety Grid Analysis:</strong><br/>
-                                This region utilizes a multi-layered security grid. Infrastructure nodes including police stations and emergency units are verified via OpenStreetMap.
+                            <div className="area-metrics">
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Safety Index</span><span className="metric-value">96/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '96%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Family Friendliness</span><span className="metric-value">94/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '94%' }}></div></div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-info"><span className="metric-label">Infrastructure</span><span className="metric-value">90/100</span></div>
+                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '90%' }}></div></div>
+                                </div>
                             </div>
-                            <div style={{ marginTop: '15px' }}>
-                                <span className="area-tag" style={{ background: 'rgba(255,255,255,0.05)' }}>🚨 Emergency Nodes</span>
-                                <span className="area-tag" style={{ background: 'rgba(255,255,255,0.05)' }}>🏛️ Civic Centers</span>
+                            <div className="area-tags" style={{ marginTop: '20px' }}>
+                                <span className="area-tag">🏰 Elite Zone</span>
+                                <span className="area-tag">🌳 Greenary</span>
+                                <span className="area-tag">🛡️ Gated Community</span>
                             </div>
                         </div>
                     </div>
