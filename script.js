@@ -1498,6 +1498,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== DYNAMIC COUNTER ANIMATION =====
+  // Intersection Observer for counting numbers
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        counterObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
   const statElements = document.querySelectorAll('.hero-stat h3');
   statElements.forEach(el => counterObserver.observe(el));
 

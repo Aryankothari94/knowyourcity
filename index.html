@@ -620,7 +620,8 @@
         ));
         return { source: 'Live High-Precision OSM', elements: fastestResponse.elements || [] };
       } catch (e) {
-        throw new Error('All mirrors failed');
+        console.warn('Overpass Direct Fetch failed:', e);
+        throw new Error('High-traffic detected on global safety mirrors. Please wait or retry.');
       }
     }
 
@@ -691,7 +692,13 @@
         dataFound = true;
         clearTimeout(analyzeTimeout);
         console.error("Safety Data Overhaul Failed:", e);
-        if (summary) summary.innerHTML = '<p style="color:#ff5252">High-precision analysis failed. Try reloading the map.</p>';
+        if (summary) {
+          summary.innerHTML = `
+            <div style="background: rgba(255, 68, 68, 0.1); border: 1px solid rgba(255, 68, 68, 0.2); padding: 12px; border-radius: 8px;">
+              <p style="color:#ff5252; font-weight:600; margin-bottom:4px;">⚠️ High Traffic on Global Servers</p>
+              <p style="color:#aaa; font-size:0.85rem;">The international safety database is currently busy. Please click "Explore" again in a few seconds.</p>
+            </div>`;
+        }
       }
     }
 
@@ -1388,9 +1395,10 @@
                        } else {
                           tList.innerHTML += `<div style="padding:15px; border-radius:12px; text-align:center; color:#aaa; font-size:0.85rem; border:1px dashed rgba(255,255,255,0.1);">Exploring local history markers for safety baseline.</div>`;
                        }
-                    });
-               }
-            }
+                     });
+                });
+             }
+          }
 
             function appendTouristCard(name, type, globalCityStr, container) {
                const placeDiv = document.createElement('div');
