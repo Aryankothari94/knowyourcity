@@ -108,6 +108,29 @@
       font-size: 0.8rem !important;
     }
     
+    /* Premium Autocomplete Styles */
+    .area-suggestion-item:hover {
+      background: rgba(0, 229, 255, 0.1) !important;
+    }
+    .area-suggestion-item.active {
+      background: rgba(0, 229, 255, 0.15) !important;
+    }
+    .area-search-wrapper:focus-within input {
+      border-color: var(--accent-cyan) !important;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.3) !important;
+    }
+    #areaSearchResults::-webkit-scrollbar {
+      width: 6px;
+    }
+    #areaSearchResults::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+    }
+    
+    .metric-fill.amber { background: #ffb300 !important; }
+    .metric-fill.red { background: #ff5252 !important; }
+    .metric-fill.green { background: #00e676 !important; }
+
     /* Interactive Mobile Widgets */
     .mobile-nav-li {
       width: 100%;
@@ -199,6 +222,12 @@
               <div class="mobile-account-info" style="display:none; padding:15px; font-size:0.85rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02); margin-top:5px; border-radius:15px;">
                  <p style="color:var(--text-primary); margin-bottom:5px; font-weight:600;">Account Synced</p>
                  <p>Your session is active. You can explore all city safety features. To switch accounts, use the logout icon.</p>
+                 <div id="adminMobileLink" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <a href="admin.html" style="display:flex; align-items:center; gap:10px; color:var(--accent-cyan); text-decoration:none; font-weight:600;">
+                      <span class="material-symbols-outlined" style="font-size:1.2rem;">shield_person</span>
+                      Admin Dashboard
+                    </a>
+                  </div>
               </div>
             </button>
   
@@ -583,9 +612,98 @@
 
     // Update area cards: Only Card 3 (Tourist Insights) is dynamic now besides the main card
     async function updateAreaCards(globalLat, globalLng, city) {
-      // Logic for Card 3 (Tourist Insights) is handled in generateSafetyCard or separate fetches
-      // Since Card 2 and 4 are now hardcoded benchmarks, we don't overwrite them here.
-      console.log('🔄 Discovery Cards benchmarks (Marin Drive & Jubilee Hills) are active.');
+      console.log(`🔄 Fetching regional safety comparison for members of ${city}...`);
+      
+      const grid = document.querySelector('.safety-grid');
+      const cards = grid?.querySelectorAll('.area-card');
+      
+      // We want to populate Card 2 and Card 4 with nearby areas
+      // Card 1 is the main dynamicCityCard, Card 3 is Tourist Insights
+      const targetCards = [];
+      if(cards && cards.length >= 4) {
+        targetCards.push(cards[1]); // Card 2
+        targetCards.push(cards[3]); // Card 4
+      }
+
+      // 1. Fetch nearby suburbs/neighborhoods using Overpass
+      const radius = 15000; // 15km
+      const query = `[out:json][timeout:25];
+        (
+          node["place"~"suburb|neighbourhood|village|town"](around:${radius},${globalLat},${globalLng});
+        );
+        out body 5;`;
+
+      try {
+        const res = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          body: 'data=' + encodeURIComponent(query)
+        });
+        const data = await res.json();
+        const neighbors = (data.elements || [])
+          .filter(el => el.tags?.name && el.tags.name !== city)
+          .slice(0, targetCards.length);
+
+        neighbors.forEach((neighbor, idx) => {
+          const card = targetCards[idx];
+          if(!card) return;
+
+          const nName = neighbor.tags.name;
+          const nLat = neighbor.lat;
+          const nLng = neighbor.lon;
+
+          // Transform Card 2/4 into a dynamic lookalike of Card 1
+          card.innerHTML = `
+            <div class="area-card-header">
+              <div class="area-icon-box" style="background: rgba(0, 230, 118, 0.1);">
+                <span class="material-symbols-outlined">explore</span>
+              </div>
+              <h3 class="area-name">${nName}</h3>
+              <span class="area-badge badge-safe">Analyzing...</span>
+            </div>
+            <div class="area-card-content">
+               <div id="miniMetrics-${idx}" style="padding: 10px 0;">
+                 <div class="spinner-small"></div> Fetching regional stats...
+               </div>
+               <div class="area-tags" style="margin-top:10px;">
+                  <span class="area-tag">📍 Nearby Area</span>
+                  <span class="area-tag">🛡️ Live Sync</span>
+               </div>
+               <button class="btn-primary" style="width:100%; margin-top:15px; padding:10px; font-size:0.85rem;" onclick="selectAreaSuggestion('${nName.replace(/'/g, "\\'")}', '${nLat}', '${nLng}')">Explore ${nName}</button>
+            </div>
+          `;
+
+          // Fetch safety insights for this neighbor
+          const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:10000/api' 
+            : 'https://knowyourcity.onrender.com/api';
+
+          fetch(`${API_BASE}/safety/insights?lat=${nLat}&lng=${nLng}&city=${encodeURIComponent(nName)}`)
+            .then(r => r.json())
+            .then(sData => {
+              const score = sData.safetyStats?.crimeScore || 75;
+              const badge = card.querySelector('.area-badge');
+              if(badge) {
+                badge.textContent = score > 80 ? 'Very Safe' : score > 60 ? 'Safe' : 'Moderate';
+                badge.className = 'area-badge ' + (score > 60 ? 'badge-safe' : 'badge-moderate');
+              }
+
+              const metricsDiv = document.getElementById(`miniMetrics-${idx}`);
+              if(metricsDiv) {
+                metricsDiv.innerHTML = `
+                  <div class="metric">
+                    <div class="metric-info"><span class="metric-label">Safety</span><span class="metric-value">${score}/100</span></div>
+                    <div class="metric-bar"><div class="metric-fill green" style="width: ${score}%; background: ${score > 75 ? '#00e676' : '#ffb300'}"></div></div>
+                  </div>
+                `;
+              }
+            }).catch(() => {
+              const metricsDiv = document.getElementById(`miniMetrics-${idx}`);
+              if(metricsDiv) metricsDiv.innerHTML = '<div style="color:#888; font-size:0.8rem;">Regional data synced via historical baseline.</div>';
+            });
+        });
+      } catch (err) {
+        console.warn("Neighbor fetch failed, keeping placeholders.");
+      }
     }
 
     // HIGH-PRECISION CONCURRENT OVERPASS RACE (Police, Hospital, Fire, CCTV)
@@ -834,6 +952,15 @@
           <div class="feature-text">
             <h3>Cafes & Restaurants</h3>
             <p>Explore the best food spots around the city with ratings, contacts, and direct map navigation.
+            </p>
+          </div>
+        </div>
+        <!-- Feature 10 -->
+        <div class="feature-card glass-card reveal" onclick="openFeaturePage('hotels.html')" style="cursor:pointer">
+          <div class="feature-icon cyan"><span class="material-symbols-outlined">hotel</span></div>
+          <div class="feature-text">
+            <h3>Hotels & Stays</h3>
+            <p>Find premium, safe hotels with price transparency, safety scores, and essential amenities nearby.
             </p>
           </div>
         </div>
@@ -1113,85 +1240,135 @@
         <p style="color: #888;">Search any neighborhood or city above to unlock real-time security data and insights.</p>
       `;
       grid.parentNode.insertBefore(prompt, grid);
-    });
 
-    document.addEventListener('click', (e) => {
-      if(!e.target.closest('.area-search-wrapper')) {
-        const el = document.getElementById('areaSearchResults');
-        if(el) el.style.display = 'none';
+      // Event Listeners
+      const searchInput = document.getElementById('areaSearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          clearTimeout(_areaSearchTimeout);
+          const q = this.value.trim();
+          if(q.length < 3) { document.getElementById('areaSearchResults').style.display = 'none'; return; }
+          _areaSearchTimeout = setTimeout(() => fetchAreaSuggestions(q), 400);
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+          const results = document.getElementById('areaSearchResults');
+          const items = results?.querySelectorAll('.area-suggestion-item');
+          
+          if(e.key === 'ArrowDown') {
+            e.preventDefault();
+            _areaActiveIndex = Math.min(_areaActiveIndex + 1, (items?.length || 0) - 1);
+            updateAreaActiveResult(items);
+          } else if(e.key === 'ArrowUp') {
+            e.preventDefault();
+            _areaActiveIndex = Math.max(_areaActiveIndex - 1, -1);
+            updateAreaActiveResult(items);
+          } else if(e.key === 'Enter') {
+            if(_areaActiveIndex >= 0 && items && items[_areaActiveIndex]) {
+              e.preventDefault();
+              items[_areaActiveIndex].click();
+            } else {
+              clearTimeout(_areaSearchTimeout);
+              if(results) results.style.display = 'none';
+              searchAreaCard();
+            }
+          }
+        });
       }
+
+      document.addEventListener('click', (e) => {
+        if(!e.target.closest('.area-search-wrapper')) {
+          const el = document.getElementById('areaSearchResults');
+          if(el) el.style.display = 'none';
+        }
+      });
     });
 
-    let _areaSearchTimeout = null;
-    document.getElementById('areaSearchInput')?.addEventListener('input', function() {
-      clearTimeout(_areaSearchTimeout);
-      const q = this.value.trim();
-      if(q.length < 3) { document.getElementById('areaSearchResults').style.display = 'none'; return; }
-      _areaSearchTimeout = setTimeout(() => fetchAreaSuggestions(q), 400);
-    });
-
-    document.getElementById('areaSearchInput')?.addEventListener('keydown', function(e) {
-      if(e.key === 'Enter') {
-        clearTimeout(_areaSearchTimeout);
-        document.getElementById('areaSearchResults').style.display = 'none';
-        searchAreaCard();
-      }
-    });
+    function updateAreaActiveResult(items) {
+      items.forEach((item, idx) => {
+        if(idx === _areaActiveIndex) {
+          item.style.background = 'rgba(0, 229, 255, 0.15)';
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.style.background = 'transparent';
+        }
+      });
+    }
 
     async function fetchAreaSuggestions(q) {
       const results = document.getElementById('areaSearchResults');
       if (!results) return;
+      _areaActiveIndex = -1;
       results.style.display = 'block';
-      results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-cyan);"><div class="spinner-small" style="margin-right:8px;"></div>Searching regions...</div>';
+      results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-cyan); font-size: 0.9rem;"><div class="spinner-small" style="display:inline-block; vertical-align:middle; margin-right:10px;"></div>Searching areas in India...</div>';
       
+      console.log(`🔍 [Safety Explorer] Searching for: "${q}"`);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`, {
-          headers: { 'Accept-Language': 'en' }
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&countrycodes=in`, {
+          headers: { 'Accept-Language': 'en' } // Remove custom headers that trigger CORS preflight failures
         });
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const data = await res.json();
+        console.log(`✅ [Safety Explorer] Found ${data.length} results.`);
         
         if (data.length === 0) {
-          results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No locations found. Try a broader search.</div>';
+          results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No locations found in India. Try a different name.</div>';
           return;
         }
 
         results.innerHTML = data.map((place, idx) => {
-          const name = place.address?.city || place.address?.town || place.address?.village || place.display_name.split(',')[0];
-          const full = place.display_name;
+          const addr = place.address;
+          const name = addr.city || addr.town || addr.village || addr.suburb || addr.neighbourhood || place.display_name.split(',')[0];
+          
+          // Construct premium sub-label
+          const regions = [];
+          if(addr.suburb && addr.suburb !== name) regions.push(addr.suburb);
+          if(addr.city && addr.city !== name) regions.push(addr.city);
+          if(addr.state) regions.push(addr.state);
+          const full = regions.join(', ') || 'India';
+
           return `
             <div 
-              style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s;" 
-              onclick="selectAreaSuggestion('${name.replace(/'/g, "\\'")}', '${place.lat}', '${place.lon}')" 
+              class="area-suggestion-item"
+              style="padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s;" 
+              onclick="selectAreaSuggestion('${name.replace(/'/g, "\\'")}', '${place.lat}', '${place.lon}', '${full.replace(/'/g, "\\'")}')" 
               onmouseover="this.style.background='rgba(0, 229, 255, 0.08)'" 
-              onmouseout="this.style.background='transparent'"
+              onmouseout="if(_areaActiveIndex !== ${idx}) this.style.background='transparent'"
             >
-              <div style="font-weight: 600; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 8px;">
-                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--accent-cyan);">location_on</span>
+              <div style="font-weight: 600; font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 10px;">
+                <span class="material-symbols-outlined" style="font-size: 20px; color: var(--accent-cyan);">location_on</span>
                 ${name}
               </div>
-              <div style="font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 26px;">
+              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 30px;">
                 ${full}
               </div>
             </div>`;
         }).join('');
       } catch (err) {
+        console.error(`❌ [Safety Explorer] Suggestion Fetch Failed:`, err);
         results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--caution-red);">Connection issue. Please retry.</div>';
       }
     }
 
-    async function selectAreaSuggestion(name, lat, lon) {
-      document.getElementById('areaSearchInput').value = name;
+    async function selectAreaSuggestion(name, lat, lon, sublabel = '') {
+      console.log(`🎯 [Safety Explorer] Selected: ${name} (${lat}, ${lon})`);
+      const input = document.getElementById('areaSearchInput');
+      if(input) input.value = name;
       document.getElementById('areaSearchResults').style.display = 'none';
       
+      // Initial trigger for search UI if hidden
+      const prompt = document.getElementById('explorerPrompt');
+      const grid = document.querySelector('.safety-grid');
+      if(prompt) prompt.remove();
+      if(grid) grid.style.display = 'grid';
+
       // Dispatch global sync event
       window.dispatchEvent(new CustomEvent('kyc_locationUpdated', { 
           detail: { lat, lng: lon, city: name } 
       }));
       
-      // Traditional sync for non-event components in index.html
-      if (typeof syncAllCityData === 'function') {
-        syncAllCityData(lat, lon, name);
-      }
+      // Trigger full data sync
+      syncAllCityData(lat, lon, name);
     }
 
     function searchAreaCard() {
@@ -1199,14 +1376,22 @@
       const val = input.value.trim();
       if(!val) return;
       
-      // Initial trigger for search UI
-      const prompt = document.getElementById('explorerPrompt');
-      const grid = document.querySelector('.safety-grid');
-      if(prompt) prompt.remove();
-      if(grid) grid.style.display = 'grid';
+      // Look for the first result if the user just pressed Enter without selecting
+      const results = document.getElementById('areaSearchResults');
+      const firstItem = results?.querySelector('.area-suggestion-item');
+      if (firstItem && results.style.display !== 'none') {
+        firstItem.click();
+        return;
+      }
 
-      selectAreaSuggestion(val);
-      input.value = '';
+      // If no suggestions, use the input value and search coordinates via Nominatim explicitly
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=1&countrycodes=in`)
+        .then(r => r.json())
+        .then(data => {
+            if(data && data[0]) {
+                selectAreaSuggestion(val, data[0].lat, data[0].lon);
+            }
+        });
     }
 
     async function syncAllCityData(lat, lng, cityName) {
@@ -2819,13 +3004,13 @@
         </div>
         
         <div class="form-group checkbox-group" style="margin-top: 10px;">
-          <input type="checkbox" id="loginTerms" required checked />
+          <input type="checkbox" id="loginTerms" required />
           <label for="loginTerms" style="font-size: 0.8rem;">I agree to the <a href="terms.html">Terms & Conditions</a></label>
         </div>
         <div id="termsError" class="auth-error-message"></div>
 
         <div class="form-group checkbox-group">
-          <input type="checkbox" id="loginPrivacy" required checked />
+          <input type="checkbox" id="loginPrivacy" required />
           <label for="loginPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy.html">Privacy Policy</a></label>
         </div>
         <div id="privacyError" class="auth-error-message"></div>

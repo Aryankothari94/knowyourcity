@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotels & Stays — KnowYourCity</title>
+    <link rel="stylesheet" href="style.css?v=88">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --filter-bg: rgba(10, 14, 39, 0.95);
+        }
+
+        /* Sticky Filter Bar */
+        .sticky-filters {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--filter-bg);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+
+        .filter-scroll-container {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 4px 5px;
+            scrollbar-width: none; /* Hide scrollbar for clean UI */
+        }
+        .filter-scroll-container::-webkit-scrollbar { display: none; }
+
+        .filter-item {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+            transition: 0.3s;
+            appearance: none;
+            -webkit-appearance: none;
+            min-width: 120px;
+            padding-right: 35px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .filter-select:hover, .filter-select:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Multi-select essentials logic */
+        .essentials-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #1e202f;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            width: 220px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-top: 10px;
+        }
+        .essentials-dropdown.active { display: flex; }
+
+        .essentials-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .essentials-item input { accent-color: var(--accent-cyan); }
+
+        /* Map UI */
+        #hotelMap {
+            height: 500px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            display: none;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .view-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        /* Hotel Card Specifics */
+        .hotel-safety-badge {
+            background: rgba(0,230,118,0.15);
+            color: #00e676;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .hotel-safety-badge.medium { background: rgba(255,171,64,0.15); color: #ffab40; }
+        .hotel-safety-badge.low { background: rgba(255,82,82,0.15); color: #ff5252; }
+
+        .hotel-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+        }
+        .hotel-tag {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        .action-save {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ff5252;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .action-save:hover { background: rgba(255,82,82,0.1); }
+        .action-save.active { background: #ff5252; color: white; }
+
+        .image-placeholder {
+            width: 100%;
+            height: 200px;
+            background: #1a1c2c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+    </style>
+</head>
+<body class="feature-page">
+    <nav class="feature-navbar">
+        <div class="container">
+            <a href="index.html" class="nav-brand">
+                <img src="logo.png" alt="Logo" class="nav-brand-icon" />
+                <div class="nav-brand-text">Know<span>Your</span>City</div>
+            </a>
+            <div class="feature-nav-right">
+                <a href="index.html" class="btn-back">← Back to Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="feature-hero">
+        <div class="container">
+            <div class="feature-hero-content">
+                <div class="feature-icon-large">🏨</div>
+                <h1><span class="gradient-text">Premium Hotels</span> in <span id="cityName">Your City</span></h1>
+                <p>Discover secure, high-rated stays with real-time safety insights and essential amenities nearby.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- STICKY FILTER BAR -->
+    <div class="sticky-filters">
+        <div class="container">
+            <div class="filter-scroll-container" id="filterBar">
+                <!-- Price Dropdown -->
+                <div class="filter-item">
+                    <select class="filter-select" id="priceFilter" onchange="applyFilters()">
+                        <option value="all">Any Price</option>
+                        <option value="budget">₹0 – ₹1000</option>
+                        <option value="mid">₹1000 – ₹3000</option>
+                        <option value="luxury">₹3000+</option>
+                    </select>
+                </div>
+                <!-- Area Dropdown -->
+                <div class="filter-item">
+                    <select class="filter-select" id="areaFilter" onchange="applyFilters()">
+                        <option value="all">All Areas</option>
+                    </select>
+                </div>
+                <!-- Rating Dropdown -->
+                <div class="filter-item">
+                    <select class="filter-select" id="ratingFilter" onchange="applyFilters()">
+                        <option value="all">All Ratings</option>
+                        <option value="4">4★ & above</option>
+                        <option value="3">3★ & above</option>
+                    </select>
+                </div>
+                <!-- Safety Dropdown -->
+                <div class="filter-item">
+                    <select class="filter-select" id="safetyFilter" onchange="applyFilters()">
+                        <option value="all">Safety: All</option>
+                        <option value="high">High Safety</option>
+                        <option value="medium">Medium Safety</option>
+                        <option value="low">Low Safety</option>
+                    </select>
+                </div>
+                <!-- Essentials Trigger -->
+                <div class="filter-item" style="position:relative;">
+                    <button class="filter-select" onclick="document.getElementById('essentialsDrop').classList.toggle('active')">Essentials</button>
+                    <div class="essentials-dropdown" id="essentialsDrop">
+                        <label class="essentials-item"><input type="checkbox" value="WiFi" onchange="applyFilters()"> WiFi</label>
+                        <label class="essentials-item"><input type="checkbox" value="AC" onchange="applyFilters()"> AC</label>
+                        <label class="essentials-item"><input type="checkbox" value="Parking" onchange="applyFilters()"> Parking</label>
+                        <label class="essentials-item"><input type="checkbox" value="Family" onchange="applyFilters()"> Family-friendly</label>
+                        <label class="essentials-item"><input type="checkbox" value="Couple" onchange="applyFilters()"> Couple-friendly</label>
+                    </div>
+                </div>
+                <!-- Sort Dropdown -->
+                <div class="filter-item">
+                    <select class="filter-select" id="sortFilter" onchange="applyFilters()">
+                        <option value="safety">Sort By: Safety</option>
+                        <option value="price">Price: Low-High</option>
+                        <option value="rating">Rating</option>
+                        <option value="distance">Distance</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="feature-results">
+        <div class="container">
+            <!-- Map Container -->
+            <div id="hotelMap"></div>
+
+            <div class="results-header">
+                <h2 id="resultsCount">Searching for stays...</h2>
+                <div class="results-meta" id="resultsMeta">Connecting to global hospitality networks...</div>
+            </div>
+
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Locating verified hotels near you...</p>
+            </div>
+
+            <div class="results-grid" id="hotelsGrid">
+                <!-- Cards injected here -->
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="empty-icon">🚫</div>
+                <h3>No Hotels Found</h3>
+                <p>Try adjusting your filters or expanding your search radius.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detail Display Overlay -->
+    <div class="detail-overlay" id="detailOverlay">
+        <div class="detail-panel glass-card">
+            <button class="detail-close" id="detailClose">✕</button>
+            <div class="detail-body" id="detailBody"></div>
+        </div>
+    </div>
+
+    <!-- View Toggle Button -->
+    <button class="view-toggle-btn" id="viewToggle" onclick="toggleView()">
+        <span class="material-symbols-outlined">map</span>
+        <span>Show Map View</span>
+    </button>
+
+    <script src="script.js?v=88"></script>
+    <script>
+        let allHotels = [];
+        let map = null;
+        let markers = [];
+        let currentView = 'grid';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+            const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+            const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Mumbai';
+
+            document.getElementById('cityName').textContent = city;
+            await fetchHotels(lat, lng, city);
+        });
+
+        async function fetchHotels(lat, lng, city) {
+            const radius = 25000;
+            const query = `[out:json][timeout:30];
+                (node["tourism"="hotel"](around:${radius},${lat},${lng});
+                 way["tourism"="hotel"](around:${radius},${lat},${lng}););
+                out center tags;`;
+            
+            try {
+                const res = await fetch('https://overpass-api.de/api/interpreter', {
+                    method: 'POST',
+                    body: 'data=' + encodeURIComponent(query)
+                });
+                const data = await res.json();
+                
+                if (!data.elements || data.elements.length === 0) {
+                    showEmpty();
+                    return;
+                }
+
+                allHotels = data.elements.map(el => processHotel(el, lat, lng));
+                populateAreas();
+                applyFilters();
+                document.getElementById('loadingSpinner').style.display = 'none';
+            } catch (e) {
+                console.error("Hotel fetch failed", e);
+                showEmpty();
+            }
+        }
+
+        function processHotel(el, userLat, userLng) {
+            const tags = el.tags || {};
+            const id = el.id;
+            const hotelLat = el.lat || el.center.lat;
+            const hotelLng = el.lon || el.center.lon;
+
+            // Deterministic simulation based on ID
+            const hash = (id * 97) % 100;
+            const rating = 3.5 + (hash % 15) / 10;
+            const price = 800 + (hash * 45); // Range 800 - 5300
+            const safety = 3.5 + (hash % 16) / 10;
+            
+            const areas = ["Railway Station Area", "City Center", "Gateway", "Financial Hub", "Airport Zone", "Beachfront"];
+            const area = tags['addr:suburb'] || tags['addr:neighbourhood'] || areas[hash % areas.length];
+
+            const amenitiesList = ["WiFi", "AC", "Parking", "Family", "Couple"];
+            const essentials = amenitiesList.filter((_, i) => (hash + i) % 2 === 0);
+
+            return {
+                id,
+                name: tags.name || tags['name:en'] || "Premium Stay",
+                lat: hotelLat,
+                lng: hotelLng,
+                rating,
+                price,
+                safety,
+                area,
+                essentials,
+                distance: getDist(userLat, userLng, hotelLat, hotelLng),
+                tags: tags
+            };
+        }
+
+        function populateAreas() {
+            const areas = [...new Set(allHotels.map(h => h.area))].sort();
+            const select = document.getElementById('areaFilter');
+            areas.forEach(area => {
+                const opt = document.createElement('option');
+                opt.value = area;
+                opt.textContent = area;
+                select.appendChild(opt);
+            });
+        }
+
+        function applyFilters() {
+            const priceVal = document.getElementById('priceFilter').value;
+            const areaVal = document.getElementById('areaFilter').value;
+            const ratingVal = document.getElementById('ratingFilter').value;
+            const safetyVal = document.getElementById('safetyFilter').value;
+            const sortVal = document.getElementById('sortFilter').value;
+            
+            const checkboxes = document.querySelectorAll('#essentialsDrop input:checked');
+            const selectedEssentials = Array.from(checkboxes).map(cb => cb.value);
+
+            let filtered = allHotels.filter(h => {
+                const matchesPrice = priceVal === 'all' || 
+                    (priceVal === 'budget' && h.price <= 1000) ||
+                    (priceVal === 'mid' && h.price > 1000 && h.price <= 3000) ||
+                    (priceVal === 'luxury' && h.price > 3000);
+                
+                const matchesArea = areaVal === 'all' || h.area === areaVal;
+                const matchesRating = ratingVal === 'all' || h.rating >= parseFloat(ratingVal);
+                
+                const matchesSafety = safetyVal === 'all' ||
+                    (safetyVal === 'high' && h.safety >= 4.5) ||
+                    (safetyVal === 'medium' && h.safety >= 3.8 && h.safety < 4.5) ||
+                    (safetyVal === 'low' && h.safety < 3.8);
+
+                const matchesEssentials = selectedEssentials.every(e => h.essentials.includes(e));
+
+                return matchesPrice && matchesArea && matchesRating && matchesSafety && matchesEssentials;
+            });
+
+            // Sorting
+            filtered.sort((a, b) => {
+                if (sortVal === 'safety') return b.safety - a.safety;
+                if (sortVal === 'price') return a.price - b.price;
+                if (sortVal === 'rating') return b.rating - a.rating;
+                if (sortVal === 'distance') return a.distance - b.distance;
+                return 0;
+            });
+
+            renderGrid(filtered);
+            if (map) updateMap(filtered);
+        }
+
+        function renderGrid(hotels) {
+            const grid = document.getElementById('hotelsGrid');
+            const countEl = document.getElementById('resultsCount');
+            grid.innerHTML = '';
+            countEl.textContent = `${hotels.length} Hotels Found`;
+
+            if (hotels.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+            document.getElementById('emptyState').style.display = 'none';
+
+            hotels.forEach(h => {
+                const card = document.createElement('div');
+                card.className = 'result-card glass-card clickable-card';
+                
+                const safetyClass = h.safety >= 4.5 ? '' : (h.safety >= 3.8 ? 'medium' : 'low');
+                const safetyText = h.safety >= 4.5 ? 'High' : (h.safety >= 3.8 ? 'Medium' : 'Low');
+
+                card.innerHTML = `
+                    <div class="card-image-wrapper">
+                        <div class="image-placeholder">🏨</div>
+                        <div class="card-image-overlay">
+                            <span class="result-badge result-badge-green">${h.distance.toFixed(1)} km</span>
+                            <span class="result-type-badge">Hotel</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                            <h3 class="result-title">${h.name}</h3>
+                            <button class="action-save" onclick="event.stopPropagation(); this.classList.toggle('active')">❤️</button>
+                        </div>
+                        <div style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:10px;">📍 ${h.area}</div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <div class="hotel-price">₹${h.price} <span style="font-size:0.8rem; color:var(--text-muted)">/ night</span></div>
+                            <div class="hotel-safety-badge ${safetyClass}">
+                                <span class="material-symbols-outlined" style="font-size:16px">verified_user</span> 
+                                Safety: ${h.safety.toFixed(1)}
+                            </div>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:15px;">
+                            <span style="color:#ffb400">★</span> <strong>${h.rating.toFixed(1)}</strong>
+                            <div style="display:flex; gap:4px; margin-left:10px;">
+                                ${h.essentials.slice(0,3).map(e => `<span class="hotel-tag">${e}</span>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="card-actions">
+                            <button class="btn-direction" style="flex:1" onclick="openDetail(${h.id})">Details</button>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}" target="_blank" class="btn-direction" style="background:#00d4ff; color:#000" onclick="event.stopPropagation()">Directions</a>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => openDetail(h.id);
+                grid.appendChild(card);
+            });
+        }
+
+        async function openDetail(id) {
+            const h = allHotels.find(x => x.id === id);
+            const overlay = document.getElementById('detailOverlay');
+            const body = document.getElementById('detailBody');
+            overlay.classList.add('active');
+            
+            body.innerHTML = `
+                <div class="image-placeholder" style="height:250px; border-radius:15px;">🏨</div>
+                <h2 style="margin-top:20px;">${h.name}</h2>
+                <div class="hotel-safety-badge ${h.safety >= 4.5 ? '' : (h.safety >= 3.8 ? 'medium' : 'low')}" style="margin-bottom:20px;">
+                    Safety Score: ${h.safety.toFixed(1)}/5.0
+                </div>
+                
+                <div class="detail-section">
+                    <h4>📋 Information</h4>
+                    <p>📍 Area: ${h.area}</p>
+                    <p>💰 Price: ₹${h.price} / night</p>
+                    <p>⭐ Rating: ${h.rating.toFixed(1)} Stars</p>
+                </div>
+
+                <div class="detail-section">
+                    <h4>⚡ Amenities</h4>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        ${h.essentials.map(e => `<span class="hotel-tag" style="padding:5px 15px; font-size:0.9rem;">${e}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div class="detail-actions" style="margin-top:30px;">
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}" target="_blank" class="btn-primary" style="text-align:center; display:block;">Start Navigation 📍</a>
+                </div>
+            `;
+        }
+
+        function toggleView() {
+            const grid = document.getElementById('hotelsGrid');
+            const mapDiv = document.getElementById('hotelMap');
+            const btn = document.getElementById('viewToggle');
+
+            if (currentView === 'grid') {
+                currentView = 'map';
+                grid.style.display = 'none';
+                mapDiv.style.display = 'block';
+                btn.innerHTML = `<span class="material-symbols-outlined">list</span><span>Show List View</span>`;
+                initMap();
+            } else {
+                currentView = 'grid';
+                grid.style.display = 'grid';
+                mapDiv.style.display = 'none';
+                btn.innerHTML = `<span class="material-symbols-outlined">map</span><span>Show Map View</span>`;
+            }
+        }
+
+        function initMap() {
+            if (map) return;
+            const params = new URLSearchParams(window.location.search);
+            const lat = parseFloat(params.get('lat')) || 19.0760;
+            const lng = parseFloat(params.get('lng')) || 72.8777;
+
+            map = L.map('hotelMap').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+            updateMap(allHotels);
+        }
+
+        function updateMap(hotels) {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            hotels.forEach(h => {
+                const color = h.safety >= 4.5 ? '#00e676' : (h.safety >= 3.8 ? '#ffab40' : '#ff5252');
+                const m = L.circleMarker([h.lat, h.lng], {
+                    radius: 8,
+                    fillColor: color,
+                    color: "#fff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(map).bindPopup(`<b>${h.name}</b><br>Safety: ${h.safety.toFixed(1)}<br>₹${h.price}`);
+                markers.push(m);
+            });
+        }
+
+        function getDist(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2-lat1)*Math.PI/180;
+            const dLon = (lon2-lon1)*Math.PI/180;
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        document.getElementById('detailClose').onclick = () => document.getElementById('detailOverlay').classList.remove('active');
+    </script>
+</body>
+</html>

@@ -476,6 +476,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (closeModal) closeModal.style.display = 'block';
+      const adminMob = document.getElementById('adminMobileLink');
+      if (adminMob) {
+        adminMob.style.display = localStorage.getItem('kyc_isAdmin') === 'true' ? 'block' : 'none';
+      }
       const appContent = document.getElementById('mainAppContent');
       if (appContent) appContent.style.filter = 'none';
       const heroSec = document.getElementById('hero');
@@ -607,6 +611,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('signupEmail').value.trim();
     const dob = document.getElementById('signupDOB').value;
     const password = document.getElementById('signupPassword').value;
+    const signupError = document.getElementById('signupError');
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      showError(signupError, 'Only genuine Google accounts (@gmail.com) are accepted.');
+      return;
+    }
 
     if (password.length < 6) {
       showError(signupError, 'Password must be at least 6 characters.');

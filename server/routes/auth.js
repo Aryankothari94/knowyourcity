@@ -35,6 +35,12 @@ router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, phone, email, dob, password } = req.body;
 
+        // Domain Validation: Only @gmail.com allowed
+        if (!email || !email.toLowerCase().endsWith('@gmail.com')) {
+            console.log(`[SIGNUP BLOCKED] Non-Gmail address: ${email}`);
+            return res.status(400).json({ message: 'Only genuine Google accounts (@gmail.com) are accepted.' });
+        }
+
         // Check if user exists
         // Case-insensitive check to see if email already exists
         const existingUser = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
