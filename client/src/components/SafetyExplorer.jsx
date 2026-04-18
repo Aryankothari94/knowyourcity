@@ -45,7 +45,7 @@ const SafetyExplorer = () => {
 
             if (lat === null || lon === null) {
                 // 1. Get Coordinates via Nominatim if not provided
-                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`);
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1&countrycodes=in`);
                 const geoData = await geoRes.json();
                 if (geoData.length === 0) throw new Error("City not found");
                 lat = geoData[0].lat;
@@ -93,7 +93,7 @@ const SafetyExplorer = () => {
             }
 
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput.trim())}&format=json&limit=5&addressdetails=1`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput.trim())}&format=json&limit=5&addressdetails=1&countrycodes=in`);
                 const data = await res.json();
                 setSuggestions(data);
                 setShowSuggestions(true);
@@ -125,7 +125,7 @@ const SafetyExplorer = () => {
         if (!searchInput.trim()) return;
         setLoading(true);
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput.trim())}&format=json&limit=1`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput.trim())}&format=json&limit=1&countrycodes=in`);
             const data = await res.json();
             if (data && data.length > 0) {
                 const { lat, lon, display_name } = data[0];

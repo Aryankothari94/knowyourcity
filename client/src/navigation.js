@@ -79,7 +79,7 @@ export const initNavigation = () => {
         }
 
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&countrycodes=in`);
             const data = await res.json();
             
             if (resultsDiv && data) {
@@ -143,7 +143,7 @@ export const initNavigation = () => {
         // If query is long enough, it might have already triggered suggestions.
         // But for a direct click, we fetch the top result.
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=in`);
             const data = await res.json();
             if (data && data.length > 0) {
                 const { lat, lon, display_name } = data[0];

@@ -1442,7 +1442,7 @@
         
         const fetchPromise = forcedLat 
            ? Promise.resolve([{ lat: forcedLat, lon: forcedLng, display_name: areaName }])
-           : fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(areaName)}&format=json&limit=1`).then(r => r.json());
+           : fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(areaName)}&format=json&limit=1&countrycodes=in`).then(r => r.json());
 
         fetchPromise
         .then(data => {

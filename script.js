@@ -930,23 +930,27 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
 
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=6&featuretype=city`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=10&countrycodes=in`);
         const data = await response.json();
 
         if (data && data.length > 0) {
           resultsContainer.innerHTML = data.map((place, index) => {
-            const cityName = place.address.city || place.address.town || place.address.village || place.display_name.split(',')[0];
-            const stateName = place.address.state || place.address.country || 'Region';
-            const countryCode = place.address.country_code?.toUpperCase() || 'IN';
+            // Priority for name: Neighborhood -> Suburb -> City -> Town -> Village
+            const areaName = place.address.neighbourhood || place.address.suburb || place.address.city_district || '';
+            const cityName = place.address.city || place.address.town || place.address.village || '';
+            
+            // Format the display title: "Area, City" or just "City"
+            let displayTitle = areaName && cityName && areaName !== cityName ? `${areaName}, ${cityName}` : (areaName || cityName || place.display_name.split(',')[0]);
+            const subTitle = place.address.state || place.address.country || 'India';
             
             return `
-              <div class="location-result-item" style="animation-delay: ${index * 50}ms" onclick="selectNavbarCity('${cityName.replace(/'/g, "\\'")}', ${place.lat}, ${place.lon})">
+              <div class="location-result-item" style="animation-delay: ${index * 50}ms" onclick="selectNavbarCity('${displayTitle.replace(/'/g, "\\'")}', ${place.lat}, ${place.lon})">
                 <div class="location-result-icon">
-                  <span class="material-symbols-outlined">location_city</span>
+                  <span class="material-symbols-outlined">${areaName ? 'location_on' : 'location_city'}</span>
                 </div>
                 <div class="location-result-info">
-                  <div class="location-result-name">${cityName}</div>
-                  <div class="location-result-sub">${stateName}, ${countryCode}</div>
+                  <div class="location-result-name">${displayTitle}</div>
+                  <div class="location-result-sub">${subTitle}, IN</div>
                 </div>
               </div>
             `;
@@ -1156,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.placeholder = "Analyzing safety records...";
 
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in`);
       const data = await response.json();
 
       if (data && data.length > 0) {
