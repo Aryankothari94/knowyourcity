@@ -249,7 +249,6 @@
 
           const grid = document.getElementById('resultsGrid');
           unique.forEach((hosp, i) => {
-            const rating = calcRating(hosp);
             const card = document.createElement('div');
             card.className = 'result-card glass-card clickable-card';
             card.style.animationDelay = `${i * 0.05}s`;
