@@ -500,34 +500,21 @@ document.addEventListener('DOMContentLoaded', () => {
         heroBtn.href = "#";
         heroBtn.setAttribute('onclick', 'event.preventDefault(); document.getElementById("authModal").classList.add("active"); document.body.style.overflow="hidden";');
       }
-      if (heroSecBtn) heroSecBtn.style.display = 'none';
-      if (locationBadge) locationBadge.style.display = 'none';
-      if (mobileLocationBadge) mobileLocationBadge.style.display = 'none';
-      if (weatherBadge) weatherBadge.style.display = 'none';
-      if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'none';
+      if (heroSecBtn) heroSecBtn.style.display = 'inline-flex'; // Keep visible for UI preview
+      if (locationBadge) locationBadge.style.display = 'flex';
+      if (mobileLocationBadge) mobileLocationBadge.style.display = 'block';
+      if (weatherBadge) weatherBadge.style.display = 'flex';
+      if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'block';
 
-      // Strict Auth Enforcement: Hide close capabilities and force modal
-      if (closeModal) closeModal.style.setProperty('display', 'none', 'important');
-
+      // Allow users to see the UI clearly without any blur
       const appContent = document.getElementById('mainAppContent');
-      if (appContent) appContent.style.filter = 'blur(10px)';
+      if (appContent) appContent.style.filter = 'none';
       const heroSec = document.getElementById('hero');
-      if (heroSec) heroSec.style.filter = 'blur(10px)';
+      if (heroSec) heroSec.style.filter = 'none';
       const navBar = document.getElementById('navbar');
-      if (navBar) navBar.style.filter = 'blur(8px)';
+      if (navBar) navBar.style.filter = 'none';
 
-      // Delay slightly to ensure DOM & styles are fully settled
-      setTimeout(() => {
-        if (!localStorage.getItem('kyc_isLoggedIn') || localStorage.getItem('kyc_isLoggedIn') === 'false') {
-          openAuthModal('login');
-          // Double verify strictly visible
-          if (authModal) {
-            authModal.classList.add('active');
-            authModal.style.display = 'flex';
-            authModal.style.zIndex = '100000';
-          }
-        }
-      }, 600);
+      // No automatic modal popup on load — allow users to explore first
     }
   };
 
@@ -1623,18 +1610,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
     if (isLoggedIn) return;
 
-    // Allowed areas that DON'T trigger the login wall
+    // Allowed areas that DON'T trigger the login wall (Strict Authentication UI)
     const isAuthModal = e.target.closest('#authModal') || e.target.closest('.auth-modal');
     const isLogoutModal = e.target.closest('#logoutConfirmModal');
-    const isLoginBtn = e.target.closest('#loginBtn') || e.target.closest('.nav-login') || e.target.closest('#mobileLoginNav');
-    const isHamburger = e.target.closest('#hamburger');
-    const isCloseBtn = e.target.closest('.modal-close') || e.target.closest('#closeModal');
-    // Mobile widgets and their children
-    const isMobileNav = e.target.closest('#mobileLocationBadge') || e.target.closest('#mobileWeatherBadge') || e.target.closest('#mobileAccountNav');
-    const isDropdown = e.target.closest('.location-dropdown');
+    const isLoginBtn = e.target.closest('#loginBtn') || e.target.closest('.nav-login') || e.target.closest('#mobileLoginNav') || e.target.closest('.auth-trigger');
+    const isHamburger = e.target.closest('#hamburger') || e.target.closest('.mobile-nav-toggle');
+    const isCloseBtn = e.target.closest('.modal-close') || e.target.closest('#closeModal') || e.target.closest('.chatbot-close-btn');
+    
+    // Explicitly allow interaction with the mobile hamburger menu AND login buttons inside it
+    const isMobileMenu = e.target.closest('#mobileMenu') || e.target.closest('.mobile-nav-wrapper');
 
     // If clicking on anything else, show login modal
-    if (!isAuthModal && !isLogoutModal && !isLoginBtn && !isHamburger && !isCloseBtn && !isMobileNav && !isDropdown) {
+    if (!isAuthModal && !isLogoutModal && !isLoginBtn && !isHamburger && !isCloseBtn && !isMobileMenu) {
       const authModal = document.getElementById('authModal');
       if (authModal && !authModal.classList.contains('active')) {
         e.preventDefault();
@@ -1646,7 +1633,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           authModal.classList.add('active');
           document.body.style.overflow = 'hidden';
-          // If generateCaptcha exists in scope, call it
           if (typeof generateCaptcha === 'function') generateCaptcha();
         }
       }
