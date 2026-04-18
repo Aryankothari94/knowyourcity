@@ -879,6 +879,110 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ===== NAVBAR LOCATION DROPDOWN LOGIC =====
+  let navbarSearchTimeout;
+  window.toggleLocationDropdown = (e) => {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('locationDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('active');
+      if (dropdown.classList.contains('active')) {
+        document.getElementById('navbarLocationSearch')?.focus();
+      }
+    }
+  };
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('locationDropdown');
+    const badge = document.getElementById('locationBadge');
+    if (dropdown && dropdown.classList.contains('active') && !badge.contains(e.target)) {
+      dropdown.classList.remove('active');
+    }
+  });
+
+  window.handleLocationSearch = (query) => {
+    const resultsContainer = document.getElementById('navbarLocationResults');
+    if (!query || query.length < 2) {
+      resultsContainer.innerHTML = '';
+      resultsContainer.style.display = 'none';
+      return;
+    }
+
+    clearTimeout(navbarSearchTimeout);
+    navbarSearchTimeout = setTimeout(async () => {
+      resultsContainer.style.display = 'block';
+      resultsContainer.innerHTML = '<div class="location-searching">Searching cities...</div>';
+
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=city`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          resultsContainer.innerHTML = data.map(place => {
+            const cityName = place.address.city || place.address.town || place.address.village || place.display_name.split(',')[0];
+            const stateName = place.address.state || place.address.country || '';
+            return `
+              <div class="location-result-item" onclick="selectNavbarCity('${cityName.replace(/'/g, "\\'")}', ${place.lat}, ${place.lon})">
+                <div class="location-result-name">${cityName}</div>
+                <div class="location-result-sub">${stateName}</div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          resultsContainer.innerHTML = '<div class="location-no-results">No cities found.</div>';
+        }
+      } catch (err) {
+        console.error("Location search failed:", err);
+        resultsContainer.innerHTML = '<div class="location-no-results">Search failed.</div>';
+      }
+    }, 400); // 400ms debounce
+  };
+
+  window.selectNavbarCity = async (city, lat, lng) => {
+    console.log('📍 New City Selected via Navbar:', city, lat, lng);
+    
+    // Update local storage
+    localStorage.setItem('kyc_userCity', city);
+    localStorage.setItem('kyc_userLat', lat);
+    localStorage.setItem('kyc_userLng', lng);
+
+    // Update UI elements
+    const cityEl = document.getElementById('userCityName');
+    const mobileCityEl = document.getElementById('mobileUserCityName');
+    if (cityEl) cityEl.textContent = city;
+    if (mobileCityEl) mobileCityEl.textContent = city;
+
+    // Refresh data across site
+    if (typeof window.kycFetchWeather === 'function') {
+      window.kycFetchWeather(lat, lng);
+    }
+
+    // Trigger map update if on homepage
+    const interactiveMap = document.getElementById('interactive-map');
+    if (interactiveMap && interactiveMap.style.display !== 'none' && typeof initCrimeMap === 'function') {
+       // Re-init map at new location
+       if (crimeMap) {
+         crimeMap.remove();
+         crimeMap = null;
+       }
+       initCrimeMap(lat, lng);
+    }
+
+    // Update dynamic safety explorer card if it exists
+    const dynCityName = document.getElementById('dynamicCityName');
+    if (dynCityName) {
+       dynCityName.textContent = city;
+       // Trigger calculation of new safety score (if defined) or simple update
+       if (typeof updateUserCityCard === 'function') {
+         updateUserCityCard(city, lat, lng);
+       }
+    }
+
+    // Close the dropdown
+    window.toggleLocationDropdown();
+  };
+
 
   // ===== FEATURE GATING (RESTRICT ACCESS) =====
   const gateFeature = (e) => {

@@ -289,7 +289,19 @@
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
           <span id="userCityName">Detecting...</span>
+          
           <!-- Location Search Dropdown -->
+          <div id="locationDropdown" class="location-dropdown glass-card" onclick="event.stopPropagation()">
+            <div class="location-search-box">
+              <input type="text" id="navbarLocationSearch" placeholder="Search major cities (Mumbai, Pune...)" oninput="handleLocationSearch(this.value)" autocomplete="off">
+              <span class="material-symbols-outlined search-icon-nav">search</span>
+            </div>
+            <div id="navbarLocationResults" class="location-results"></div>
+            <button class="location-current-btn" onclick="detectUserCity(); toggleLocationDropdown(event)">
+              <span class="material-symbols-outlined">my_location</span>
+              Use My Current Location
+            </button>
+          </div>
         </li>
 
 
