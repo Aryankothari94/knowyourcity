@@ -884,10 +884,16 @@ document.addEventListener('DOMContentLoaded', () => {
   window.toggleLocationDropdown = (e) => {
     if (e) e.stopPropagation();
     const dropdown = document.getElementById('locationDropdown');
+    const badge = document.getElementById('locationBadge');
     if (dropdown) {
-      dropdown.classList.toggle('active');
-      if (dropdown.classList.contains('active')) {
+      const isActive = dropdown.classList.toggle('active');
+      if (isActive) {
         document.getElementById('navbarLocationSearch')?.focus();
+        // Desktop positioning fallback (CSS handles most, but ensures alignment)
+        if (window.innerWidth > 768 && badge) {
+          const rect = badge.getBoundingClientRect();
+          dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+        }
       }
     }
   };
@@ -896,8 +902,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (e) => {
     const dropdown = document.getElementById('locationDropdown');
     const badge = document.getElementById('locationBadge');
-    if (dropdown && dropdown.classList.contains('active') && !badge.contains(e.target)) {
-      dropdown.classList.remove('active');
+    const mobBadge = document.getElementById('mobileLocationBadge');
+    
+    if (dropdown && dropdown.classList.contains('active')) {
+      const isClickInside = dropdown.contains(e.target) || badge?.contains(e.target) || mobBadge?.contains(e.target);
+      if (!isClickInside) {
+        dropdown.classList.remove('active');
+      }
     }
   });
 
@@ -912,29 +923,44 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(navbarSearchTimeout);
     navbarSearchTimeout = setTimeout(async () => {
       resultsContainer.style.display = 'block';
-      resultsContainer.innerHTML = '<div class="location-searching">Searching cities...</div>';
+      resultsContainer.innerHTML = `
+        <div class="location-searching" style="padding:20px; text-align:center; color:var(--text-muted); font-size:0.85rem;">
+          <div class="loader-mini" style="margin-bottom:10px;"></div>
+          Scanning coordinates...
+        </div>`;
 
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=city`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=6&featuretype=city`);
         const data = await response.json();
 
         if (data && data.length > 0) {
-          resultsContainer.innerHTML = data.map(place => {
+          resultsContainer.innerHTML = data.map((place, index) => {
             const cityName = place.address.city || place.address.town || place.address.village || place.display_name.split(',')[0];
-            const stateName = place.address.state || place.address.country || '';
+            const stateName = place.address.state || place.address.country || 'Region';
+            const countryCode = place.address.country_code?.toUpperCase() || 'IN';
+            
             return `
-              <div class="location-result-item" onclick="selectNavbarCity('${cityName.replace(/'/g, "\\'")}', ${place.lat}, ${place.lon})">
-                <div class="location-result-name">${cityName}</div>
-                <div class="location-result-sub">${stateName}</div>
+              <div class="location-result-item" style="animation-delay: ${index * 50}ms" onclick="selectNavbarCity('${cityName.replace(/'/g, "\\'")}', ${place.lat}, ${place.lon})">
+                <div class="location-result-icon">
+                  <span class="material-symbols-outlined">location_city</span>
+                </div>
+                <div class="location-result-info">
+                  <div class="location-result-name">${cityName}</div>
+                  <div class="location-result-sub">${stateName}, ${countryCode}</div>
+                </div>
               </div>
             `;
           }).join('');
         } else {
-          resultsContainer.innerHTML = '<div class="location-no-results">No cities found.</div>';
+          resultsContainer.innerHTML = `
+            <div style="padding:30px 20px; text-align:center;">
+              <span class="material-symbols-outlined" style="font-size:2rem; color:rgba(255,255,255,0.1); margin-bottom:10px;">distance</span>
+              <div style="color:var(--text-muted); font-size:0.85rem;">No cities matched your search.</div>
+            </div>`;
         }
       } catch (err) {
         console.error("Location search failed:", err);
-        resultsContainer.innerHTML = '<div class="location-no-results">Search failed.</div>';
+        resultsContainer.innerHTML = '<div class="location-no-results">Connection error. Please try again.</div>';
       }
     }, 400); // 400ms debounce
   };
