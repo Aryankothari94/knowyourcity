@@ -11,14 +11,18 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
     model: 'gemini-flash-latest',
-    systemInstruction: `You are "City Scout", a high-precision city information specialist. 
+    systemInstruction: `You are "City Scout", a friendly and helpful AI local guide for "Know Your City". 
+    
+    YOUR PERSONALITY:
+    - Warm, welcoming, and professional. 
+    - Use occasional emojis like 🏙️, 📍, or ✨ to make the chat feel alive.
     
     STRICT OPERATIONAL RULES:
-    1. ANSWER ONLY THE USER QUERY: Do not provide any extra information, safety stats, or conversational filler unless the user specifically asks for it.
-    2. EXHAUSTIVE LISTS (GENERAL QUERIES): If the user asks for a category in a city (e.g. "cafes in Ahmedabad", "schools in Delhi"), respond ONLY with an exhaustive list of NAMES. Do not provide descriptions or secondary details yet.
-    3. DETAILED INFO (SPECIFIC QUERIES): If the user follows up about a SPECIFIC name from the list, then provide the full details (location, specialty, safety) for that specific spot.
-    4. DATA GROUNDING: If the user explicitly asks for "safety", "stats", or "infrastructure", use the [REAL-TIME CITY SCOUT DATABASE] section from the prompt. Otherwise, ignore it.
-    5. STYLE: Be extremely concise, direct, and factual.`
+    1. FRIENDLY GUIDANCE: Do not just list data. Provide a brief, helpful introduction and conclusion.
+    2. SMART LISTS: If the user asks for multiple spots (e.g. "cafes in Mumbai"), format them as a clear bulleted list with bold names. Example: "- **Blue Tokai**: Best for artisanal coffee."
+    3. DATA GROUNDING: Use the [REAL-TIME CITY SCOUT DATABASE] section when the user specifically mentions "safety", "stats", or infrastructure counts.
+    4. NO DESCRIBING YOURSELF: Don't talk about being an AI. Just be "City Scout".
+    5. SPACING: Use proper line breaks (\\n) between paragraphs and list items for readability.`
 });
 
 const CityData = require('../models/CityData');
@@ -32,10 +36,9 @@ router.post('/query', async (req, res) => {
 
         // GROUNDING: Look for city data in the database
         let databaseInfo = "";
-        const cityToSearch = userContext?.city || message; // Try to extract city from message if context is missing
+        const cityToSearch = userContext?.city || message; 
         
         try {
-            // Find city data (case-insensitive)
             const cityInfo = await CityData.findOne({ 
                 cityName: new RegExp('^' + cityToSearch.trim() + '$', 'i') 
             });
@@ -48,47 +51,38 @@ router.post('/query', async (req, res) => {
                 - Fire Stations: ${cityInfo.safetyStats.fireCount}
                 - CCTV Cameras: ${cityInfo.safetyStats.cctvCount}
                 - Overall Safety Score: ${cityInfo.safetyStats.totalScore}%
-                - Density: ${cityInfo.safetyStats.densityPerKm} per km
                 `;
             } else {
-                databaseInfo = "[DATABASE STATUS]: No live mapping data available for this specific city yet.";
+                databaseInfo = "[DATABASE STATUS]: No live mapping data available for this city yet.";
             }
         } catch (dbError) {
-            console.error('Database grounding error:', dbError.message);
-            databaseInfo = "[DATABASE STATUS]: Unable to reach primary city stats database.";
+            databaseInfo = "[DATABASE STATUS]: Primary database offline.";
         }
 
-        // Build context string
-        const contextStr = userContext ? 
-            `User Location: ${userContext.city} (Lat: ${userContext.lat}, Lng: ${userContext.lng}). ` : 
-            "User location is unknown.";
-
-        // Start chat with history
         const chat = model.startChat({
             history: history || [],
             generationConfig: { 
                 maxOutputTokens: 1000, 
-                temperature: 0.7 
+                temperature: 0.8 
             },
         });
 
         const prompt = `
-        DATABASE INFO (FOR REFERENCE):
+        DATABASE CONTEXT:
         ${databaseInfo}
 
-        USER QUERY: ${message}
+        USER REQUEST: ${message}
 
-        REPLY RULES:
-        1. IF THE QUERY IS GENERAL (e.g. "cafes in Ahmedabad"): List ONLY the names of as many spots as possible.
-        2. IF THE QUERY IS FOR A SPECIFIC SPOT: Give full details for THAT spot only.
-        3. IF THE QUERY ASKS FOR SAFETY/STATS: Use the DATABASE INFO above.
-        4. STAY STRICTLY ON TOPIC.
-        5. OUTPUT FORMAT: Respond ONLY with a valid JSON object in this format:
+        RESPONSE RULES:
+        1. Speak like a helpful local guide.
+        2. Use bullet points for lists.
+        3. Bold the names of places using **name**.
+        4. Provide 2-3 relevant "suggestions" for follow-up questions.
+        5. OUTPUT FORMAT: Respond ONLY with a valid JSON object:
            {
-             "response": "the text of your answer here",
-             "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
+             "response": "Your friendly, well-formatted answer here",
+             "suggestions": ["Follow-up 1", "Follow-up 2"]
            }
-        Ensure the suggestions are relevant follow-ups to the user's current query.
         `;
 
         const result = await chat.sendMessage(prompt);

@@ -1724,7 +1724,16 @@ class CityScout {
         let charIndex = 0;
         const typeChar = () => {
           if (charIndex < line.length) {
-            lineDiv.innerHTML += line.charAt(charIndex);
+            // Check for bold markers **text**
+            let processedLine = line.substring(0, charIndex + 1);
+            // Simple markdown Bold replacement
+            processedLine = processedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Simple bullet point replacement if line starts with - or *
+            if (processedLine.startsWith('- ') || processedLine.startsWith('* ')) {
+               processedLine = '• ' + processedLine.substring(2);
+            }
+            
+            element.lastElementChild.innerHTML = processedLine;
             charIndex++;
             this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
             setTimeout(typeChar, 10);

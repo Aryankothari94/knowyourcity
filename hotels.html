@@ -208,6 +208,17 @@
                         <option value="luxury">₹3000+</option>
                     </select>
                 </div>
+                <!-- Type Dropdown -->
+                <div class="filter-item">
+                    <select class="filter-select" id="typeFilter" onchange="applyFilters()">
+                        <option value="all">All Stay Types</option>
+                        <option value="hotel">Hotels & Motels</option>
+                        <option value="resort">Luxury Resorts</option>
+                        <option value="hostel">Hostels & PGs</option>
+                        <option value="guest_house">Guest Houses</option>
+                        <option value="apartment">Service Apartments</option>
+                    </select>
+                </div>
                 <!-- Area Dropdown -->
                 <div class="filter-item">
                     <select class="filter-select" id="areaFilter" onchange="applyFilters()">
@@ -314,25 +325,52 @@
         });
 
         async function fetchHotels(lat, lng, city) {
-            const radius = 25000;
+            document.getElementById('loadingSpinner').style.display = 'flex';
+            const radius = 30000; // Expanded to 30km
+            
+            // Broad OSM Query for all stay types
             const query = `[out:json][timeout:30];
-                (node["tourism"="hotel"](around:${radius},${lat},${lng});
-                 way["tourism"="hotel"](around:${radius},${lat},${lng}););
+                (node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng});
+                 way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng}););
                 out center tags;`;
             
             try {
-                const res = await fetch('https://overpass-api.de/api/interpreter', {
+                // Fetch OSM data
+                const osmTask = fetch('https://overpass-api.de/api/interpreter', {
                     method: 'POST',
                     body: 'data=' + encodeURIComponent(query)
-                });
-                const data = await res.json();
+                }).then(r => r.json());
+
+                // Fetch Wikipedia data for notable hotels
+                const wikiTask = fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=10000&gscoord=${lat}|${lng}&gslimit=20&format=json&origin=*&gsprop=type|name`)
+                    .then(r => r.json());
+
+                const [osmData, wikiData] = await Promise.all([osmTask, wikiTask]);
                 
-                if (!data.elements || data.elements.length === 0) {
+                let results = [];
+                if (osmData.elements) {
+                    results = osmData.elements.map(el => processHotel(el, lat, lng));
+                }
+
+                // Merge Wikipedia notable hotels (avoiding simple duplicates)
+                if (wikiData.query && wikiData.query.geosearch) {
+                    wikiData.query.geosearch.forEach(place => {
+                        const isStay = place.title.toLowerCase().includes('hotel') || 
+                                       place.title.toLowerCase().includes('resort') ||
+                                       place.title.toLowerCase().includes('palace');
+                        
+                        if (isStay && !results.some(h => h.name.toLowerCase() === place.title.toLowerCase())) {
+                            results.push(processWikiHotel(place, lat, lng));
+                        }
+                    });
+                }
+
+                if (results.length === 0) {
                     showEmpty();
                     return;
                 }
 
-                allHotels = data.elements.map(el => processHotel(el, lat, lng));
+                allHotels = results;
                 populateAreas();
                 applyFilters();
                 document.getElementById('loadingSpinner').style.display = 'none';
@@ -342,23 +380,51 @@
             }
         }
 
+        function processWikiHotel(place, userLat, userLng) {
+            const hash = place.pageid % 100;
+            const price = 4000 + (hash * 50); // Wikipedia entries are usually notable (pricier)
+            return {
+                id: 'w' + place.pageid,
+                name: place.title,
+                lat: place.lat,
+                lng: place.lon,
+                rating: 4.5 + (hash % 5) / 10,
+                price,
+                safety: 4.6 + (hash % 4) / 10,
+                area: "Landmark District",
+                essentials: ["WiFi", "AC", "Concierge", "Elite"],
+                type: place.title.toLowerCase().includes('resort') ? 'resort' : 'hotel',
+                distance: getDist(userLat, userLng, place.lat, place.lon),
+                source: 'wikipedia'
+            };
+        }
+
         function processHotel(el, userLat, userLng) {
             const tags = el.tags || {};
             const id = el.id;
             const hotelLat = el.lat || el.center.lat;
             const hotelLng = el.lon || el.center.lon;
+            const tourism = tags.tourism || 'hotel';
 
             // Deterministic simulation based on ID
             const hash = (id * 97) % 100;
-            const rating = 3.5 + (hash % 15) / 10;
-            const price = 800 + (hash * 45); // Range 800 - 5300
-            const safety = 3.5 + (hash % 16) / 10;
             
-            const areas = ["Railway Station Area", "City Center", "Gateway", "Financial Hub", "Airport Zone", "Beachfront"];
+            // Type-aware pricing
+            let basePrice = 1500;
+            if (tourism === 'resort') basePrice = 5000;
+            if (tourism === 'hostel') basePrice = 600;
+            if (tourism === 'guest_house') basePrice = 900;
+            
+            const price = basePrice + (hash * 40);
+            const rating = (tourism === 'resort' ? 4.2 : 3.5) + (hash % 10) / 10;
+            const safety = 3.8 + (hash % 12) / 10;
+            
+            const areas = ["Railway Station Area", "City Center", "Gateway", "Financial Hub", "Tourist Circle", "Quiet Enclave"];
             const area = tags['addr:suburb'] || tags['addr:neighbourhood'] || areas[hash % areas.length];
 
-            const amenitiesList = ["WiFi", "AC", "Parking", "Family", "Couple"];
-            const essentials = amenitiesList.filter((_, i) => (hash + i) % 2 === 0);
+            const amenitiesList = ["WiFi", "AC", "Parking", "Family", "CCTV"];
+            let essentials = amenitiesList.filter((_, i) => (hash + i) % 2 === 0);
+            if (tourism === 'resort') essentials.push("Pool", "Spa");
 
             return {
                 id,
@@ -369,6 +435,7 @@
                 price,
                 safety,
                 area,
+                type: tourism,
                 essentials,
                 distance: getDist(userLat, userLng, hotelLat, hotelLng),
                 tags: tags
@@ -388,6 +455,7 @@
 
         function applyFilters() {
             const priceVal = document.getElementById('priceFilter').value;
+            const typeVal = document.getElementById('typeFilter').value;
             const areaVal = document.getElementById('areaFilter').value;
             const ratingVal = document.getElementById('ratingFilter').value;
             const safetyVal = document.getElementById('safetyFilter').value;
@@ -402,6 +470,7 @@
                     (priceVal === 'mid' && h.price > 1000 && h.price <= 3000) ||
                     (priceVal === 'luxury' && h.price > 3000);
                 
+                const matchesType = typeVal === 'all' || h.type === typeVal || (typeVal === 'hotel' && h.type === 'motel');
                 const matchesArea = areaVal === 'all' || h.area === areaVal;
                 const matchesRating = ratingVal === 'all' || h.rating >= parseFloat(ratingVal);
                 
@@ -412,7 +481,7 @@
 
                 const matchesEssentials = selectedEssentials.every(e => h.essentials.includes(e));
 
-                return matchesPrice && matchesArea && matchesRating && matchesSafety && matchesEssentials;
+                return matchesPrice && matchesType && matchesArea && matchesRating && matchesSafety && matchesEssentials;
             });
 
             // Sorting
@@ -445,14 +514,21 @@
                 card.className = 'result-card glass-card clickable-card';
                 
                 const safetyClass = h.safety >= 4.5 ? '' : (h.safety >= 3.8 ? 'medium' : 'low');
-                const safetyText = h.safety >= 4.5 ? 'High' : (h.safety >= 3.8 ? 'Medium' : 'Low');
+                
+                // Dynamic icons and type labels
+                let typeLabel = h.type.charAt(0).toUpperCase() + h.type.slice(1).replace('_', ' ');
+                let typeIcon = '🏨';
+                if (h.type === 'resort') { typeIcon = '🏝️'; typeLabel = 'Luxury Resort'; }
+                if (h.type === 'hostel') { typeIcon = '🏠'; typeLabel = 'Hostel / PG'; }
+                if (h.type === 'guest_house') { typeIcon = '🏘️'; typeLabel = 'Guest House'; }
+                if (h.type === 'apartment') { typeIcon = '🏢'; typeLabel = 'Svc Apartment'; }
 
                 card.innerHTML = `
                     <div class="card-image-wrapper">
-                        <div class="image-placeholder">🏨</div>
+                        <div class="image-placeholder">${typeIcon}</div>
                         <div class="card-image-overlay">
                             <span class="result-badge result-badge-green">${h.distance.toFixed(1)} km</span>
-                            <span class="result-type-badge">Hotel</span>
+                            <span class="result-type-badge" style="background:var(--accent-gradient)">${typeLabel}</span>
                         </div>
                     </div>
                     <div class="card-content">
@@ -494,11 +570,20 @@
             const body = document.getElementById('detailBody');
             overlay.classList.add('active');
             
+            let typeIcon = '🏨';
+            if (h.type === 'resort') typeIcon = '🏝️';
+            if (h.type === 'hostel') typeIcon = '🏠';
+            if (h.type === 'guest_house') typeIcon = '🏘️';
+            if (h.type === 'apartment') typeIcon = '🏢';
+
             body.innerHTML = `
-                <div class="image-placeholder" style="height:250px; border-radius:15px;">🏨</div>
+                <div class="image-placeholder" style="height:250px; border-radius:15px;">${typeIcon}</div>
                 <h2 style="margin-top:20px;">${h.name}</h2>
-                <div class="hotel-safety-badge ${h.safety >= 4.5 ? '' : (h.safety >= 3.8 ? 'medium' : 'low')}" style="margin-bottom:20px;">
-                    Safety Score: ${h.safety.toFixed(1)}/5.0
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <div class="hotel-safety-badge ${h.safety >= 4.5 ? '' : (h.safety >= 3.8 ? 'medium' : 'low')}">
+                        Safety Score: ${h.safety.toFixed(1)}/5.0
+                    </div>
+                    <span class="hotel-tag" style="background:var(--accent-gradient); color:white; border:none; padding:5px 12px;">${h.type.toUpperCase()}</span>
                 </div>
                 
                 <div class="detail-section">
@@ -506,6 +591,7 @@
                     <p>📍 Area: ${h.area}</p>
                     <p>💰 Price: ₹${h.price} / night</p>
                     <p>⭐ Rating: ${h.rating.toFixed(1)} Stars</p>
+                    ${h.source ? `<p>ℹ️ Source: ${h.source.charAt(0).toUpperCase() + h.source.slice(1)}</p>` : ''}
                 </div>
 
                 <div class="detail-section">
@@ -557,6 +643,7 @@
 
             hotels.forEach(h => {
                 const color = h.safety >= 4.5 ? '#00e676' : (h.safety >= 3.8 ? '#ffab40' : '#ff5252');
+                const typeLabel = h.type.toUpperCase().replace('_', ' ');
                 const m = L.circleMarker([h.lat, h.lng], {
                     radius: 8,
                     fillColor: color,
@@ -564,7 +651,17 @@
                     weight: 2,
                     opacity: 1,
                     fillOpacity: 1
-                }).addTo(map).bindPopup(`<b>${h.name}</b><br>Safety: ${h.safety.toFixed(1)}<br>₹${h.price}`);
+                }).addTo(map).bindPopup(`
+                    <div style="color:#000; font-family:'Outfit', sans-serif;">
+                        <strong style="font-size:1.1rem;">${h.name}</strong><br>
+                        <span style="font-size:0.8rem; color:#666;">${typeLabel}</span><br>
+                        <hr style="margin:8px 0; border:0; border-top:1px solid #eee;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="color:#00e676; font-weight:700;">₹${h.price}</span>
+                            <span style="background:${color}; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.7rem;">S: ${h.safety.toFixed(1)}</span>
+                        </div>
+                    </div>
+                `);
                 markers.push(m);
             });
         }
