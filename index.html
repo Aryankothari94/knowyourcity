@@ -30,7 +30,7 @@
     #safety .safety-grid {
       display: grid !important;
       grid-template-columns: repeat(4, 1fr) !important;
-      gap: 12px !important;
+      gap: 15px !important;
       margin-top: 40px !important;
       width: 100% !important;
       max-width: 1400px !important;
@@ -38,8 +38,8 @@
       margin-right: auto !important;
       padding: 0 15px 40px 15px !important;
     }
-    #safety .area-card {
-      padding: 16px !important;
+    #safety .area-card, .safety-card {
+      padding: 20px !important;
       width: 100% !important;
       flex: 0 0 auto !important;
       display: flex !important;
@@ -51,17 +51,34 @@
       backdrop-filter: blur(16px) !important;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
       transition: all 0.3s ease !important;
+      border-radius: 20px !important;
+      position: relative !important;
+      overflow: hidden !important;
     }
-    #safety .area-card:hover {
+    .card-title, .area-card-header {
+      margin-bottom: 20px !important;
+      padding-bottom: 12px !important;
+      border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+    }
+    .safety-card-content, .area-card-content {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 15px !important;
+    }
+    #safety .area-card:hover, .safety-card:hover {
       transform: translateY(-5px) !important;
-      border-color: rgba(255,255,255,0.3) !important;
+      border-color: var(--accent-cyan) !important;
       background: rgba(35,38,55,0.85) !important;
     }
     @media (max-width: 1100px) {
-      #safety .safety-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      #safety .safety-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
     }
     @media (max-width: 650px) {
       #safety .safety-grid { grid-template-columns: 1fr !important; }
+      #safety .area-card, .safety-card { padding: 16px !important; }
     }
     /* Mandatory Authentication Gate Styling */
     .modal-overlay.active {
@@ -630,16 +647,16 @@
     async function updateAreaCards(globalLat, globalLng, city) {
       console.log(`🔄 Fetching regional safety comparison for members of ${city}...`);
       
-      const grid = document.querySelector('.safety-grid');
+      // Only update cards if they belong to a discovery grid, not the primary Safety Explorer
+      const grid = document.getElementById('discoveryGrid');
       const cards = grid?.querySelectorAll('.area-card');
       
-      // We want to populate Card 2 and Card 4 with nearby areas
-      // Card 1 is the main dynamicCityCard, Card 3 is Tourist Insights
       const targetCards = [];
-      if(cards && cards.length >= 4) {
-        targetCards.push(cards[1]); // Card 2
-        targetCards.push(cards[3]); // Card 4
+      if(cards && cards.length >= 2) {
+        targetCards.push(cards[0]); 
+        targetCards.push(cards[1]);
       }
+      if (targetCards.length === 0) return;
 
       // 1. Fetch nearby suburbs/neighborhoods using Overpass
       const radius = 15000; // 15km
@@ -869,7 +886,7 @@
               <span style="color: #ff5252; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
                 <span class="material-symbols-outlined" style="font-size: 16px;">report</span> ${inc.type || 'Incident'}
               </span>
-              <span style="color: #64748b; font-size: 0.75rem;">${inc.timestamp ? new Date(inc.timestamp).toLocaleDateString('en-IN', {day:'numeric', month:'short'}) : 'Recent'}</span>
+              <span style="color: #64748b; font-size: 0.75rem;">${inc.timestamp ? new Date(inc.timestamp).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) : 'Recent'}</span>
             </div>
             <div style="color: #cbd5e1; font-size: 0.82rem; line-height: 1.5;">${inc.description || 'Verified local report'}</div>
           </div>
@@ -1052,23 +1069,22 @@
         <p class="section-subtitle">Explore areas with detailed safety ratings, amenities, and community insights.</p>
         
         <!-- Area Search Bar -->
-        <div class="area-search-wrapper" style="max-width: 600px; margin: 30px auto; position: relative; z-index: 9999;">
-          <input type="text" id="areaSearchInput" class="search-input" placeholder="Search any neighborhood (e.g. Bandra, Mumbai)..." style="width: 100%; padding: 16px 24px; padding-right: 120px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); background: rgba(30, 32, 47, 0.8); color: white; font-size: 1.1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.3); backdrop-filter: blur(10px);" autocomplete="off">
-          <button class="btn-primary" onclick="searchAreaCard()" style="position: absolute; right: 8px; top: 8px; border-radius: 50px; padding: 8px 20px; border: none; font-weight: 600;">Explore</button>
+        <div class="search-bar-wrapper" style="position: relative; max-width: 650px; margin: 30px auto; z-index: 20000; overflow: visible;">
+          <input type="text" id="areaSearchInput" class="search-input" placeholder="Search any neighborhood (e.g. Bandra, Mumbai)..." style="width: 100%; padding: 16px 24px; padding-right: 120px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); background: rgba(30, 32, 47, 0.8); color: white; font-size: 1.1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.3); backdrop-filter: blur(10px); position: relative; z-index: 20001;" autocomplete="off">
+          <button class="btn-primary" onclick="searchAreaCard()" style="position: absolute; right: 8px; top: 8px; border-radius: 50px; padding: 8px 20px; border: none; font-weight: 600; z-index: 20002;">Explore</button>
           
-          <div id="areaSearchResults" style="position: absolute; top: calc(100% + 10px); left: 0; width: 100%; display: none; background: rgba(15, 10, 30, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; backdrop-filter: blur(20px); max-height: 300px; overflow-y: auto; text-align: left; z-index: 9999;"></div>
+          <div id="areaSearchResults" style="position: absolute; top: calc(100% + 5px); left: 0; width: 100%; display: none; background: #1a1b2e; border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 12px; backdrop-filter: blur(25px); max-height: 400px; overflow-y: auto; text-align: left; z-index: 20005; box-shadow: 0 20px 50px rgba(0,0,0,0.6);"></div>
         </div>
       </div>
-
       <div class="safety-grid">
-        <!-- Dynamic User City Card -->
-        <div class="area-card active-card glass-card reveal" id="dynamicCityCard">
+        <!-- Card 1: Safety & Crimes (Dynamic) -->
+        <div class="area-card glass-card reveal" id="dynamicCityCard">
           <div class="area-card-header">
-            <div class="area-icon-box">
-              <span class="material-symbols-outlined">location_city</span>
+            <div class="area-icon-box" style="background: rgba(0,230,118,0.1); color: var(--safe-green);">
+              <span class="material-symbols-outlined">shield_with_heart</span>
             </div>
-            <h3 class="area-name" id="dynamicCityName">Your City</h3>
-            <span class="area-badge badge-safe" id="dynamicCityBadge">Safe</span>
+            <h3 class="area-name" id="dynamicCityName">Safety Analysis</h3>
+            <span class="area-badge badge-safe" id="dynamicCityBadge">Score</span>
           </div>
           
           <div class="area-card-content">
@@ -1076,164 +1092,129 @@
               <div class="metric">
                 <div class="metric-info">
                   <span class="metric-label" id="dynamicCitySafeLabel">Safety Score</span>
-                  <span class="metric-value" id="dynamicCitySafe">85/100</span>
+                  <span class="metric-value" id="dynamicCitySafe">--</span>
                 </div>
                 <div class="metric-bar">
-                  <div class="metric-fill green" id="dynamicCitySafeBar" style="width: 85%"></div>
+                  <div class="metric-fill" id="dynamicCitySafeBar" style="width: 0%"></div>
                 </div>
               </div>
               <div class="metric">
                 <div class="metric-info">
                   <span class="metric-label">Family Friendly</span>
-                  <span class="metric-value" id="dynamicCityFam">80/100</span>
+                  <span class="metric-value" id="dynamicCityFam">--</span>
                 </div>
                 <div class="metric-bar">
-                  <div class="metric-fill green" id="dynamicCityFamBar" style="width: 80%"></div>
+                  <div class="metric-fill" id="dynamicCityFamBar" style="width: 0%"></div>
                 </div>
               </div>
               <div class="metric">
                 <div class="metric-info">
                   <span class="metric-label">Walkability</span>
-                  <span class="metric-value" id="dynamicCityWalk">75/100</span>
+                  <span class="metric-value" id="dynamicCityWalk">--</span>
                 </div>
                 <div class="metric-bar">
-                  <div class="metric-fill amber" id="dynamicCityWalkBar" style="width: 75%"></div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="area-tags" id="dynamicCityTags">
-              <span class="area-tag"><span class="material-symbols-outlined mi">park</span> Parks</span>
-              <span class="area-tag"><span class="material-symbols-outlined mi">school</span> Schools</span>
-              <span class="area-tag"><span class="material-symbols-outlined mi">local_hospital</span> Hospital</span>
-              <span class="area-tag"><span class="material-symbols-outlined mi">shopping_cart</span> Market</span>
-            </div>
-
-            <!-- Live Safety Infrastructure Sync -->
-            <div class="area-safety-info" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.08);">
-              <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px; font-weight: 500;">Live Safety Infrastructure:</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
-                  <span class="material-symbols-outlined" style="font-size: 16px; color: #00e676;">local_police</span>
-                  Police: <span id="searchPoliceCount" style="color: #fff; font-weight: 600;">--</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
-                  <span class="material-symbols-outlined" style="font-size: 16px; color: #2196f3;">local_hospital</span>
-                  Hospitals: <span id="searchHospitalCount" style="color: #fff; font-weight: 600;">--</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
-                  <span class="material-symbols-outlined" style="font-size: 16px; color: #ff9800;">local_fire_department</span>
-                  Fire: <span id="searchFireCount" style="color: #fff; font-weight: 600;">--</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1;">
-                  <span class="material-symbols-outlined" style="font-size: 16px; color: #9c27b0;">videocam</span>
-                  CCTV: <span id="searchCctvCount" style="color: #fff; font-weight: 600;">--</span>
+                  <div class="metric-fill" id="dynamicCityWalkBar" style="width: 0%"></div>
                 </div>
               </div>
             </div>
 
-            <!-- START: Recent Crime Activity -->
-            <div id="recentActivityContainer" style="display: none; margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-               <h4 style="color: #ff5252; font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                  <span class="material-symbols-outlined" style="font-size: 20px;">history</span> Recent Incidents
+            <!-- Recent Crime Activity -->
+            <div id="recentActivityContainer" style="display: none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
+               <h4 style="color: #ff5252; font-size: 0.85rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">history</span> Recent Local Incidents
                </h4>
-                   <div class="scrollable-list-container" style="max-height: 120px;">
-                     <div id="recentActivityList" style="display: flex; flex-direction: column; gap: 8px;">
-                        <!-- Crime incidents will be injected here -->
-                     </div>
-                   </div>
-                 </div>
+               <div id="recentActivityList" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+                  <!-- Injected via JS -->
+               </div>
             </div>
+          </div>
         </div>
 
-        <!-- Area Card 2: Marin Drive (Fixed - Featured) -->
-        <div class="area-card glass-card reveal">
+        <!-- Card 2: Strategic Infrastructure (Dynamic) -->
+        <div class="area-card glass-card reveal" id="dynamicInfraCard">
           <div class="area-card-header">
-            <div class="area-icon-box">
-              <span class="material-symbols-outlined">water_lux</span>
+            <div class="area-icon-box" style="background: rgba(33,150,243,0.1); color: #2196f3;">
+              <span class="material-symbols-outlined">map</span>
             </div>
-            <h3 class="area-name">Marin Drive, Mumbai</h3>
-            <span class="area-badge badge-safe">Very Safe</span>
+            <h3 class="area-name">Neighborhood Infra</h3>
+            <span class="area-badge" style="background: rgba(33,150,243,0.1); color: #2196f3; border: 1px solid rgba(33,150,243,0.2);">Verified</span>
           </div>
           
           <div class="area-card-content">
-            <div class="area-metrics">
-              <div class="metric">
-                <div class="metric-info"><span class="metric-label">Safety Index</span><span class="metric-value">94/100</span></div>
-                <div class="metric-bar"><div class="metric-fill green" style="width: 94%"></div></div>
-              </div>
-              <div class="metric">
-                <div class="metric-info"><span class="metric-label">Family Friendliness</span><span class="metric-value">92/100</span></div>
-                <div class="metric-bar"><div class="metric-fill green" style="width: 92%"></div></div>
-              </div>
-              <div class="metric">
-                <div class="metric-info"><span class="metric-label">Walkability</span><span class="metric-value">98/100</span></div>
-                <div class="metric-bar"><div class="metric-fill green" style="width: 98%"></div></div>
-              </div>
+            <div id="dynamicCityAnalysis" style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">
+               Select a location to see infrastructure density and regional safety analysis.
             </div>
-            <div class="area-tags">
-              <span class="area-tag">🌊 Sea Face</span>
-              <span class="area-tag">🚶 Promenade</span>
-              <span class="area-tag">👮 High Vigil</span>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem; color:#888;">
+                  <span class="material-symbols-outlined" style="font-size:16px; color:#00e676;">local_police</span> Police Stations
+                </div>
+                <span id="searchPoliceCount" style="color:#fff; font-size:1.1rem; font-weight:700;">--</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem; color:#888;">
+                  <span class="material-symbols-outlined" style="font-size:16px; color:#2196f3;">local_hospital</span> Medical Centers
+                </div>
+                <span id="searchHospitalCount" style="color:#fff; font-size:1.1rem; font-weight:700;">--</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem; color:#888;">
+                  <span class="material-symbols-outlined" style="font-size:16px; color:#ff9800;">local_fire_department</span> Fire Safety
+                </div>
+                <span id="searchFireCount" style="color:#fff; font-size:1.1rem; font-weight:700;">--</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem; color:#888;">
+                  <span class="material-symbols-outlined" style="font-size:16px; color:#9c27b0;">videocam</span> CCTV Nodes
+                </div>
+                <span id="searchCctvCount" style="color:#fff; font-size:1.1rem; font-weight:700;">--</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Area Card 3: Dynamic Tourist Places -->
+        <!-- Card 3: City Specialty (Dynamic) -->
         <div class="area-card glass-card reveal" id="dynamicTouristCard">
           <div class="area-card-header">
-            <div class="area-icon-box">
-              <span class="material-symbols-outlined">photo_camera</span>
+            <div class="area-icon-box" style="background: var(--accent-gradient); color: #000;">
+              <span class="material-symbols-outlined">auto_awesome</span>
             </div>
-            <h3 class="area-name" id="touristCardTitle">Tourist Places</h3>
-            <span class="area-badge badge-safe">Explore</span>
+            <h3 class="area-name" id="touristCardTitle">City Specialty</h3>
+            <span class="area-badge" style="background: rgba(0,229,255,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,229,255,0.2);">Famous For</span>
           </div>
           <div class="area-card-content">
-            <div class="scrollable-list-container" style="max-height: 120px;">
-              <div id="touristPlacesList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px; text-align: left;"></div>
+            <div id="citySpecialties" style="margin-bottom: 20px;">
+              <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">✨ Heritage & Identity</div>
+              <div id="specialtiesContent" style="color: #fff; font-size: 0.85rem; line-height: 1.5; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; border-left: 3px solid var(--accent-cyan);">
+                Select a city to discover its unique industries and cultural landmarks.
+              </div>
             </div>
-            <!-- Dynamic Incident Activity for Tourist Card -->
-            <div id="recentActivityContainerT" style="display: none; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-              <h4 style="color: #ff5252; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">history</span> Recent Incidents
-              </h4>
-              <div class="scrollable-list-container" style="max-height: 100px;">
-                <div id="recentActivityListT" style="display: flex; flex-direction: column; gap: 6px;"></div>
+
+            <div id="topAttractions">
+              <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">🏛️ Top Attractions</div>
+              <div id="touristPlacesList" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Landmarks injected here -->
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Area Card 4: Jubilee Hills (Fixed - Featured) -->
-        <div class="area-card glass-card reveal">
+        <!-- Card 4: Newcomer Safety Tips (Dynamic) -->
+        <div class="area-card glass-card reveal" id="dynamicSafetyTipsCard">
           <div class="area-card-header">
-            <div class="area-icon-box">
-              <span class="material-symbols-outlined">diamond</span>
+            <div class="area-icon-box" style="background: rgba(255,152,0,0.1); color: #ff9800;">
+              <span class="material-symbols-outlined">lightbulb</span>
             </div>
-            <h3 class="area-name">Jubilee Hills, HYD</h3>
-            <span class="area-badge badge-safe">Ultra Safe</span>
+            <h3 class="area-name">Pro Tips</h3>
+            <span class="area-badge" style="background: rgba(255,152,0,0.1); color: #ff9800; border: 1px solid rgba(255,152,0,0.2);">Guidance</span>
           </div>
           
           <div class="area-card-content">
-            <div class="area-metrics">
-              <div class="metric">
-                <div class="metric-info"><span class="metric-label">Safety Score</span><span class="metric-value">96/100</span></div>
-                <div class="metric-bar"><div class="metric-fill green" style="width: 96%"></div></div>
-              </div>
-              <div class="metric">
-                <div class="metric-info"><span class="metric-label">Family Friendly</span><span class="metric-value">94/100</span></div>
-                <div class="metric-bar"><div class="metric-fill green" style="width: 94%"></div></div>
-              </div>
-              <div class="metric">
-                <div class="metric-info"><span class="metric-label">Infrastructure</span><span class="metric-value">90/100</span></div>
-                <div class="metric-bar"><div class="metric-fill green" style="width: 90%"></div></div>
-              </div>
-            </div>
-            <div class="area-tags">
-              <span class="area-tag">🏰 Elite Zone</span>
-              <span class="area-tag">🌳 Greenary</span>
-              <span class="area-tag">🛡️ Gated Community</span>
-            </div>
+            <div style="font-size: 0.8rem; font-weight: 600; color: #ff9800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">🛡️ Safe Settling Advice</div>
+            <ul id="topMapProTipsList" style="list-style: none; padding: 0; margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.6;">
+              <li style="margin-bottom:8px;">Analyzing regional facts...</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1241,6 +1222,9 @@
   </section>
 
   <script>
+    let _areaSearchTimeout;
+    let _areaActiveIndex = -1;
+
     // Initialize Safety Explorer in NULL state until city selection
     document.addEventListener('DOMContentLoaded', () => {
       // Hide explorer components until first search is performed
@@ -1293,7 +1277,7 @@
       }
 
       document.addEventListener('click', (e) => {
-        if(!e.target.closest('.area-search-wrapper')) {
+        if(!e.target.closest('.search-bar-wrapper')) {
           const el = document.getElementById('areaSearchResults');
           if(el) el.style.display = 'none';
         }
@@ -1333,30 +1317,29 @@
         }
 
         results.innerHTML = data.map((place, idx) => {
-          const addr = place.address;
-          const name = addr.city || addr.town || addr.village || addr.suburb || addr.neighbourhood || place.display_name.split(',')[0];
+          const addr = place.address || {};
+          const name = addr.city || addr.town || addr.village || addr.suburb || addr.neighbourhood || (place.display_name ? place.display_name.split(',')[0] : 'Unknown');
           
-          // Construct premium sub-label
           const regions = [];
           if(addr.suburb && addr.suburb !== name) regions.push(addr.suburb);
           if(addr.city && addr.city !== name) regions.push(addr.city);
           if(addr.state) regions.push(addr.state);
-          const full = regions.join(', ') || 'India';
+          const fullLabel = regions.join(', ') || (place.display_name ? place.display_name.split(',').slice(1,3).join(',') : 'India');
 
           return `
             <div 
               class="area-suggestion-item"
-              style="padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s;" 
-              onclick="selectAreaSuggestion('${name.replace(/'/g, "\\'")}', '${place.lat}', '${place.lon}', '${full.replace(/'/g, "\\'")}')" 
-              onmouseover="this.style.background='rgba(0, 229, 255, 0.08)'" 
+              style="padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px;" 
+              onclick="selectAreaSuggestion('${name.replace(/'/g, "\\'")}', '${place.lat}', '${place.lon}', '${fullLabel.replace(/'/g, "\\'")}')" 
+              onmouseover="this.style.background='rgba(0, 229, 255, 0.1)'" 
               onmouseout="if(_areaActiveIndex !== ${idx}) this.style.background='transparent'"
             >
-              <div style="font-weight: 600; font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 10px;">
-                <span class="material-symbols-outlined" style="font-size: 20px; color: var(--accent-cyan);">location_on</span>
-                ${name}
+              <div style="width: 34px; height: 34px; background: rgba(0,229,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
+                <span class="material-symbols-outlined" style="font-size: 18px;">${addr.neighbourhood || addr.suburb ? 'location_on' : 'location_city'}</span>
               </div>
-              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 30px;">
-                ${full}
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 0.95rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</div>
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">${fullLabel}</div>
               </div>
             </div>`;
         }).join('');
@@ -1416,7 +1399,6 @@
        localStorage.setItem('kyc_userLng', lng);
        localStorage.setItem('kyc_userCity', cityName);
 
-       // 2. Sync Map View
        if(!_safetyMap) {
           initSafetyMap();
        } else {
@@ -1427,7 +1409,13 @@
        // 3. Sync Safety Explorer Main Card
        generateSafetyCard(cityName, lat, lng);
 
-       // 4. Sync Discovery Cards
+       // 4. Sync Pro Tips
+       if(typeof generateCityProTips === 'function') generateCityProTips(cityName);
+       
+       const recentBox = document.getElementById('recentActivityContainer');
+       if(recentBox) recentBox.style.display = 'block';
+       
+       // 5. Sync Discovery Cards
        updateAreaCards(lat, lng, cityName);
     }
 
@@ -1451,7 +1439,6 @@
             globalLng = data[0].lon;
             globalCity = data[0].display_name.split(',')[0];
             
-            // Sync map view
             const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
                 ? 'http://localhost:10000/api' 
                 : 'https://knowyourcity.onrender.com/api';
@@ -1463,8 +1450,6 @@
             if(!data.safetyStats) throw new Error("Analytics failed");
             const { safetyStats } = data;
             
-            
-            // Sync Infrastructure counts for the primary card
             const pC = data.infrastructures.filter(el => el.nodeType === 'police').length;
             const hC = data.infrastructures.filter(el => el.nodeType === 'hospital' || el.nodeType === 'clinic').length;
             const fC = data.infrastructures.filter(el => el.nodeType === 'fire_station').length;
@@ -1482,8 +1467,6 @@
             cname.innerHTML = areaName;
             
             document.getElementById('dynamicCitySafe').textContent = sSafe + '/100';
-            const safeLabel = document.getElementById('dynamicCitySafeLabel');
-            if(safeLabel) safeLabel.textContent = 'Safety Score';
             document.getElementById('dynamicCitySafeBar').style.width = sSafe + '%';
             document.getElementById('dynamicCitySafeBar').className = 'metric-fill ' + (sSafe > 75 ? 'green' : sSafe > 50 ? 'amber' : 'red');
             
@@ -1511,7 +1494,6 @@
               .then(wData => {
                  let extract = wData.query?.pages[0]?.extract;
                  if(!extract || extract.trim().endsWith('may refer to:')) {
-                    // fall back to areaName if exact globalCity doesn't exist or is a disambiguation
                     return fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=3&exlimit=1&titles=${encodeURIComponent(areaName)}&explaintext=1&formatversion=2&format=json&origin=*`)
                            .then(r=>r.json()).then(d=>d.query?.pages[0]?.extract);
                  }
@@ -1529,111 +1511,10 @@
               });
             }
 
-            // Populate Recent Crime Activity
             renderRecentCrimes(data.recentIncidents, 'recentActivityList', 'recentActivityContainer');
-
-            // Populate Tourist Card
-            const touristCard = document.getElementById('dynamicTouristCard');
-            if(touristCard) {
-               touristCard.style.display = 'block';
-               document.getElementById('touristCardTitle').innerHTML = `📸 Explore ${globalCity}`;
-               
-               // Fetch incidents for tourist card
-               const API_BASE_TOURIST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-                 ? 'http://localhost:10000/api' 
-                 : 'https://knowyourcity.onrender.com/api';
-               
-               fetch(`${API_BASE_TOURIST}/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(globalCity)}`)
-                 .then(r => r.json())
-                 .then(data => {
-                   if (data.recentIncidents) renderRecentCrimes(data.recentIncidents, 'recentActivityListT', 'recentActivityContainerT');
-                 }).catch(() => {});
-               // Reset Tourist List 
-               const tList = document.getElementById('touristPlacesList');
-               tList.innerHTML = '<div style="padding:15px; color:#aaa; font-size:0.85rem;">Generating live local guide...</div>';
-               
-               // Dynamic Knowledge Fetch (Wikipedia as Source of Truth)
-               fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(globalCity)}`)
-                 .then(r => r.json())
-                 .then(sum => {
-                    tList.innerHTML = ''; // Clear loader
-                    const hb = document.createElement('div');
-                    hb.style.cssText = 'padding: 16px; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius: 12px; margin-bottom: 16px;';
-                    
-                    if(sum.extract) {
-                       hb.innerHTML = `<div style="color:#00e5ff; font-weight:700; font-size:0.95rem;">🏙️ About ${globalCity}:</div>
-                                       <div style="color:#fff; font-size:0.85rem; line-height:1.4; margin-top:6px;">${sum.extract.split('.')[0]}. ${sum.extract.split('.')[1] || ''}.</div>
-                                       <div style="margin-top:10px; color:#00e5ff; font-size:0.8rem; font-weight:600;">✨ Verified Local Insight</div>`;
-                    } else {
-                       hb.innerHTML = `<div style="color:#00e5ff; font-weight:700; font-size:0.95rem;">📍 Location Insight:</div>
-                                       <div style="color:#fff; font-size:0.85rem; line-height:1.4; margin-top:6px;">Dynamic metrics tracking 10km radius coverage for emergency and surveillance infra in ${globalCity}.</div>`;
-                    }
-                    tList.appendChild(hb);
-                    
-                    // Add generic dynamic tips since CITY_DATA is removed
-                    const tips = [
-                      'Check multi-location safety indices below.',
-                      'Real-time infrastructure sync active.',
-                      'Verified security patrolling verified through backend.'
-                    ];
-                    
-                    tips.forEach(tip => {
-                      const tipDiv = document.createElement('div');
-                      tipDiv.style.cssText = 'font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; padding-left: 12px; border-left: 2px solid var(--accent-cyan);';
-                      tipDiv.textContent = `• ${tip}`;
-                      tList.appendChild(tipDiv);
-                    });
-
-                    // Fetch live local landmarks/historical points for the guide
-                    fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=5&format=json&origin=*`)
-                    .then(r => r.json())
-                    .then(geoData => {
-                       const places = geoData.query?.geosearch || [];
-                       if(places.length > 0) {
-                          places.forEach(p => appendTouristCard(p.title, 'Landmark', globalCity, tList));
-                       } else if((data.touristZones || []).length > 0) {
-                          data.touristZones.slice(0, 4).forEach(tz => appendTouristCard(tz.name, tz.type, globalCity, tList));
-                       } else {
-                          tList.innerHTML += `<div style="padding:15px; border-radius:12px; text-align:center; color:#aaa; font-size:0.85rem; border:1px dashed rgba(255,255,255,0.1);">Exploring local history markers for safety baseline.</div>`;
-                       }
-                     });
-                });
-             }
-          }
-
-            function appendTouristCard(name, type, globalCityStr, container) {
-               const placeDiv = document.createElement('div');
-               placeDiv.style.cssText = 'padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 12px;';
-               placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#888; font-size:0.8rem;">Loading Wikipedia insight...</div>`;
-               container.appendChild(placeDiv);
-
-               fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=2&exlimit=1&titles=${encodeURIComponent(name)}&explaintext=1&formatversion=2&format=json&origin=*`)
-               .then(r => r.json())
-               .then(wData => {
-                  let ext = wData.query?.pages[0]?.extract;
-                  if(ext && ext.length > 20 && !ext.trim().endsWith('may refer to:')) {
-                     placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">${ext}</div>`;
-                  } else {
-                     placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">A notable ${type} attraction located in ${globalCityStr}. Highly recommended for exploring!</div>`;
-                  }
-               }).catch(() => {
-                  placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">A popular landmark to visit around ${globalCityStr}.</div>`;
-               });
-            }
-
-            const card = document.getElementById('dynamicCityCard');
-            if(card) {
-               card.style.transform = 'scale(1.02)';
-               card.style.boxShadow = '0 0 20px rgba(0, 230, 118, 0.4)';
-               setTimeout(() => { card.style.transform = ''; card.style.boxShadow = ''; }, 500);
-            }
-            
-            // Update scroll hints after data injection
-            
+            syncSecondaryCityData(globalCity, globalLat, globalLng);
         })
         .catch(err => {
-            console.error("Backend Error - Using Wikipedia frontend fallback:", err);
-            
             const city = globalCity || areaName;
             const fallbackLat = globalLat || 20;
             const fallbackLng = globalLng || 79;
@@ -1665,80 +1546,94 @@
             else if(sSafe > 50) { badge.textContent = 'Moderate'; badge.className = 'area-badge badge-moderate'; }
             else { badge.textContent = 'Caution'; badge.className = 'area-badge badge-caution'; }
 
-            const analysisDiv = document.getElementById('dynamicCityAnalysis');
-            if(analysisDiv) {
-              analysisDiv.innerHTML = '<div class="spinner-small"></div>';
-              fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=4&exlimit=1&titles=${encodeURIComponent(city)}&explaintext=1&formatversion=2&format=json&origin=*`)
-              .then(r => r.json())
-              .then(wData => {
-                 let extract = wData.query?.pages[0]?.extract;
-                 analysisDiv.innerHTML = (extract && extract.length > 20) ? `<strong style="color: var(--accent-cyan);">Wikipedia Real-Time Insights:</strong><br/>${extract}` : `<strong style="color: var(--accent-cyan);">Area Analytics:</strong><br/>${areaName} baseline security is rated at ${sSafe}% based on geographical markers.`;
-              }).catch(() => { analysisDiv.innerHTML = 'Data reflects local geographic safety baseline.'; });
-            }
-
-            const touristCard = document.getElementById('dynamicTouristCard');
-            if(touristCard) {
-               touristCard.style.display = 'block';
-               document.getElementById('touristCardTitle').innerHTML = `📸 Explore ${city}`;
-               const tList = document.getElementById('touristPlacesList');
-               
-               const normalizedCity = city.toLowerCase().trim();
-               const cityData = CITY_DATA[normalizedCity];
-
-               if (cityData) {
-                  const hb = document.createElement('div');
-                  hb.style.cssText = 'padding: 16px; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.2); border-radius: 12px; margin-bottom: 16px;';
-                  hb.innerHTML = `<div style="color:#00e5ff; font-weight:700; font-size:0.95rem;">✨ Famous For:</div><div style="color:#fff; margin-bottom:8px;">${cityData.famousFor}</div><div style="color:#00e5ff; font-weight:700; font-size:0.95rem;">💎 Most Attractive:</div><div style="color:#fff;">${cityData.attractiveThing}</div>`;
-                  tList.appendChild(hb);
-                  cityData.tips.forEach(tip => {
-                    const tipDiv = document.createElement('div');
-                    tipDiv.style.cssText = 'font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; padding-left: 12px; border-left: 2px solid rgba(255,255,255,0.1);';
-                    tipDiv.textContent = `• ${tip}`;
-                    tList.appendChild(tipDiv);
-                  });
-                  tList.innerHTML += '<div style="height:12px;"></div>';
-                  cityData.landmarks.forEach(p => appendTouristCardFallback(p.title, 'Attraction', city, tList));
-               } else {
-                  tList.innerHTML = '<span style="color:#aaa;">Searching Wikipedia for nearby landmarks...</span>';
-                  fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${fallbackLat}|${fallbackLng}&gsradius=10000&gslimit=5&format=json&origin=*`)
-                  .then(r => r.json())
-                   .then(geoData => {
-                      const places = geoData.query?.geosearch || [];
-                      if(places.length === 0) {
-                         tList.innerHTML = `<div style="padding:15px; background:rgba(255,255,255,0.03); border-radius:12px; text-align:center;">
-                           <div style="font-size:1.5rem;">🏘️</div>
-                           <div style="color:#fff; font-weight:600;">Exploring City Soul</div>
-                           <div style="color:#aaa; font-size:0.8rem;">Analyzing local transit and history for <strong>${city}</strong>.</div>
-                         </div>`;
-                         return;
-                      }
-                      tList.innerHTML = '';
-                      places.forEach(p => appendTouristCardFallback(p.title, 'Landmark', city, tList));
-                   }).catch(() => { tList.innerHTML = `<span style="color:#ff5252;">Failed to fetch regional landmarks.</span>`; });
-               }
-
-               function appendTouristCardFallback(name, type, cityStr, container) {
-                  const placeDiv = document.createElement('div');
-                  placeDiv.style.cssText = 'padding: 14px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; margin-bottom:12px;';
-                  placeDiv.innerHTML = `<strong style="color:#00e5ff; font-size: 1.05rem;">📍 ${name}</strong><br/><span style="color:#888; font-size:0.8rem;">Connecting to Wikipedia...</span>`;
-                  container.appendChild(placeDiv);
-                  fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=2&exlimit=1&titles=${encodeURIComponent(name)}&explaintext=1&formatversion=2&format=json&origin=*`)
-                  .then(r=>r.json()).then(wData => {
-                     let ext = wData.query?.pages[0]?.extract;
-                     if(ext && ext.length>15 && !ext.trim().endsWith('may refer to:')) { placeDiv.innerHTML = `<strong style="color:#00e5ff; font-size: 1.05rem;">📍 ${name}</strong><div style="margin-top:6px; color:#cbd5e1; font-size:0.85rem; line-height:1.4;">${ext}</div>`; }
-                     else { placeDiv.innerHTML = `<strong style="color:#00e5ff; font-size: 1.05rem;">📍 ${name}</strong><div style="margin-top:6px; color:#cbd5e1; font-size:0.85rem; line-height:1.4;">A notable attraction in ${cityStr}.</div>`; }
-                  });
-               }
-            }
-            
-            const card = document.getElementById('dynamicCityCard');
-            card.style.transform = 'scale(1.02)';
-            card.style.boxShadow = '0 0 20px rgba(0, 230, 118, 0.4)';
-            setTimeout(() => { card.style.transform = ''; card.style.boxShadow = ''; }, 500);
-            
-            showFactPopup(city);
+            renderRecentCrimes([], 'recentActivityList', 'recentActivityContainer');
+            syncSecondaryCityData(city, fallbackLat, fallbackLng);
         });
-      }
+    }
+
+    function syncSecondaryCityData(globalCity, globalLat, globalLng) {
+        const touristCard = document.getElementById('dynamicTouristCard');
+        if(touristCard) {
+            touristCard.style.display = 'block';
+            document.getElementById('touristCardTitle').innerHTML = `${globalCity}`;
+            const specContent = document.getElementById('specialtiesContent');
+            const tList = document.getElementById('touristPlacesList');
+            specContent.innerHTML = 'Analyzing city specialty...';
+            tList.innerHTML = '<div style="padding:10px; color:#aaa; font-size:0.8rem;">Searching landmarks...</div>';
+            
+            const cleanCity = globalCity.split(',')[0].trim();
+            const wikiSearchUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=5&titles=${encodeURIComponent(cleanCity)}&explaintext=1&formatversion=2&format=json&origin=*`;
+            
+            fetch(wikiSearchUrl)
+                .then(r => r.json())
+                .then(res => {
+                    const page = res.query?.pages[0];
+                    let extract = page?.extract;
+                    
+                    if(!extract || extract.includes('may refer to')) {
+                        return fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanCity)}&format=json&origin=*`)
+                        .then(r => r.json())
+                        .then(sRes => {
+                            const topResult = sRes.query?.search[0]?.title;
+                            if(topResult) {
+                                return fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=5&titles=${encodeURIComponent(topResult)}&explaintext=1&formatversion=2&format=json&origin=*`)
+                                    .then(r => r.json()).then(r2 => r2.query?.pages[0]?.extract);
+                            }
+                            return null;
+                        });
+                    }
+                    return extract;
+                })
+                .then(extract => {
+                    if(extract) {
+                        const sentences = extract.split('.');
+                        const kywds = ['famous', 'known for', 'hub', 'industry', 'temple', 'shrine', 'heritage', 'palace', 'lake', 'royal', 'royality', 'textile', 'chadar', 'sholapur', 'siddheshwar', 'jyotiling', 'monument', 'fort', 'ghat', 'pilgrimage', 'architecture', 'culture', 'silk', 'handloom', 'market'];
+                        let topS = sentences[0], topScore = -1;
+                        sentences.forEach(s => {
+                            let score = kywds.filter(k => s.toLowerCase().includes(k)).length;
+                            if(score > topScore) { topScore = score; topS = s; }
+                        });
+                        const specialtyText = topS.trim();
+                        const nextSentence = sentences[sentences.indexOf(topS)+1] ? sentences[sentences.indexOf(topS)+1].trim() + '.' : '';
+                        specContent.innerHTML = `<div style="margin-bottom:8px; line-height:1.6;"><strong>${specialtyText}${specialtyText.endsWith('.') ? '' : '.'}</strong></div><div style="opacity:0.8; font-size:0.8rem;">${nextSentence}</div>`;
+                    } else { 
+                        specContent.innerHTML = `<strong>${cleanCity}</strong> is a major city in its region, famous for its unique textiles, heritage sites, and local delicacies.`; 
+                    }
+                }).catch(() => { specContent.innerHTML = `<strong>${cleanCity}</strong> is one of the most prominent cities in the region, known for its vibrant culture and history.`; });
+
+            fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=5&format=json&origin=*`)
+                .then(r => r.json())
+                .then(geoData => {
+                    tList.innerHTML = '';
+                    const places = geoData.query?.geosearch || [];
+                    if(places.length > 0) {
+                        places.forEach(p => appendTouristCard(p.title, 'Landmark', globalCity, tList));
+                    } else {
+                        tList.innerHTML = '<div style="color:#aaa; font-size:0.8rem;">No landmarks found nearby.</div>';
+                    }
+                });
+                });
+        }
+    }
+    
+    function appendTouristCard(name, type, globalCityStr, container) {
+        const placeDiv = document.createElement('div');
+        placeDiv.style.cssText = 'padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 12px;';
+        placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#888; font-size:0.8rem;">Loading Wikipedia insight...</div>`;
+        container.appendChild(placeDiv);
+
+        fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=2&exlimit=1&titles=${encodeURIComponent(name)}&explaintext=1&formatversion=2&format=json&origin=*`)
+        .then(r => r.json())
+        .then(wData => {
+            let ext = wData.query?.pages[0]?.extract;
+            if(ext && ext.length > 20 && !ext.trim().endsWith('may refer to:')) {
+                placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">${ext}</div>`;
+            } else {
+                placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">A notable ${type} attraction located in ${globalCityStr}. Highly recommended for exploring!</div>`;
+            }
+        }).catch(() => {
+            placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">A popular landmark to visit around ${globalCityStr}.</div>`;
+        });
     }
   </script>
 
