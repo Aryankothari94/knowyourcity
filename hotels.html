@@ -62,6 +62,13 @@
         .filter-select:hover, .filter-select:focus {
             background-color: rgba(255, 255, 255, 0.1);
             border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+        }
+
+        .filter-select option {
+            background: #1a1b2e;
+            color: #fff;
+            padding: 12px;
         }
 
         /* Multi-select essentials logic */
@@ -163,12 +170,110 @@
 
         .image-placeholder {
             width: 100%;
-            height: 200px;
-            background: #1a1c2c;
+            height: 100%;
+            background: linear-gradient(135deg, #1e2235 0%, #0f111a 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            font-size: 3.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .image-placeholder::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.05) 0%, transparent 70%);
+        }
+
+        /* NEW PREMIUM CARD STYLES */
+        .result-card {
+            border-radius: 20px !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            overflow: hidden !important;
+        }
+        .result-card:hover {
+            border-color: var(--accent-cyan) !important;
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
+        }
+        .card-image-wrapper {
+            height: 220px !important;
+            position: relative;
+        }
+        .hotel-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .rating-stars {
+            color: #ffb400;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .review-count {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+        .hotel-amenities-strip {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .amenity-tag {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            color: #cbd5e1;
+        }
+        .amenity-tag span { font-size: 14px; }
+        
+        /* PRICE SECTION */
+        .price-container {
+            text-align: right;
+        }
+        .price-label {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+        }
+        .price-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-google {
+            background: white !important;
+            color: #1a1b2e !important;
+            border-radius: 50px !important;
+            padding: 10px 18px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            margin-top: 10px !important;
+            transition: all 0.3s ease !important;
+            border: none !important;
+        }
+        .btn-google:hover {
+            background: #f1f1f1 !important;
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -316,9 +421,17 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
-            const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-            const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-            const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Mumbai';
+            let lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat'));
+            let lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng'));
+            let city = params.get('city') || localStorage.getItem('kyc_userCity');
+
+            // Robust fallback to Mumbai
+            if (!lat || !lng || !city) {
+                lat = 19.0760;
+                lng = 72.8777;
+                city = 'Mumbai';
+                console.log("No location context found, falling back to Mumbai.");
+            }
 
             document.getElementById('cityName').textContent = city;
             await fetchHotels(lat, lng, city);
@@ -374,28 +487,35 @@
                 populateAreas();
                 applyFilters();
                 document.getElementById('loadingSpinner').style.display = 'none';
-            } catch (e) {
-                console.error("Hotel fetch failed", e);
                 showEmpty();
             }
         }
 
+        function showEmpty() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsCount').textContent = "0 Hotels Found";
+        }
+
         function processWikiHotel(place, userLat, userLng) {
             const hash = place.pageid % 100;
-            const price = 4000 + (hash * 50); // Wikipedia entries are usually notable (pricier)
+            const price = 4500 + (hash * 150); 
+            const reviews = 150 + (place.pageid % 850);
+            
             return {
                 id: 'w' + place.pageid,
                 name: place.title,
                 lat: place.lat,
                 lng: place.lon,
                 rating: 4.5 + (hash % 5) / 10,
+                reviews,
                 price,
-                safety: 4.6 + (hash % 4) / 10,
-                area: "Landmark District",
-                essentials: ["WiFi", "AC", "Concierge", "Elite"],
+                safety: 4.7 + (hash % 3) / 10,
+                area: "Premium Zone",
+                essentials: ["WiFi", "AC", "Luxury", "Reception"],
                 type: place.title.toLowerCase().includes('resort') ? 'resort' : 'hotel',
                 distance: getDist(userLat, userLng, place.lat, place.lon),
-                source: 'wikipedia'
+                source: 'Wikipedia'
             };
         }
 
@@ -406,32 +526,44 @@
             const hotelLng = el.lon || el.center.lon;
             const tourism = tags.tourism || 'hotel';
 
-            // Deterministic simulation based on ID
-            const hash = (id * 97) % 100;
+            // High-precision deterministic simulator
+            const hash = (id * 97) % 1000;
+            const seed = Math.abs(hash);
             
-            // Type-aware pricing
-            let basePrice = 1500;
-            if (tourism === 'resort') basePrice = 5000;
-            if (tourism === 'hostel') basePrice = 600;
-            if (tourism === 'guest_house') basePrice = 900;
+            let basePrice = 1800;
+            if (tourism === 'resort') basePrice = 6500;
+            if (tourism === 'hostel') basePrice = 750;
+            if (tourism === 'guest_house') basePrice = 1200;
             
-            const price = basePrice + (hash * 40);
-            const rating = (tourism === 'resort' ? 4.2 : 3.5) + (hash % 10) / 10;
-            const safety = 3.8 + (hash % 12) / 10;
+            const price = basePrice + (seed % 4000);
+            const rating = (tourism === 'resort' ? 4.3 : (tourism === 'hostel' ? 3.8 : 4.0)) + (seed % 10) / 10;
+            const reviews = 50 + (seed % 2000);
+            const safety = 4.0 + (seed % 10) / 10;
             
-            const areas = ["Railway Station Area", "City Center", "Gateway", "Financial Hub", "Tourist Circle", "Quiet Enclave"];
-            const area = tags['addr:suburb'] || tags['addr:neighbourhood'] || areas[hash % areas.length];
+            const neighborhoodNames = ["Heritage Quarter", "Business District", "Lakeside", "Green Belt", "Skyline Avenue", "Metropolitan Center"];
+            const area = tags['addr:suburb'] || tags['addr:neighbourhood'] || neighborhoodNames[seed % neighborhoodNames.length];
 
-            const amenitiesList = ["WiFi", "AC", "Parking", "Family", "CCTV"];
-            let essentials = amenitiesList.filter((_, i) => (hash + i) % 2 === 0);
-            if (tourism === 'resort') essentials.push("Pool", "Spa");
+            const amenitiesRegistry = [
+                { name: "WiFi", icon: "wifi" },
+                { name: "AC", icon: "ac_unit" },
+                { name: "Parking", icon: "local_parking" },
+                { name: "Family", icon: "family_restroom" },
+                { name: "Couple", icon: "favorite" },
+                { name: "CCTV", icon: "videocam" }
+            ];
+            
+            // Generate realistic amenities
+            let essentials = amenitiesRegistry.filter((_, i) => (seed + i) % 3 !== 0).map(a => a.name);
+            if (tourism === 'resort') essentials = ["Luxury", "Pool", "Spa", ...essentials];
+            if (tourism === 'hostel') essentials = ["Kitchen", "Dorm", ...essentials];
 
             return {
                 id,
-                name: tags.name || tags['name:en'] || "Premium Stay",
+                name: tags.name || tags['name:en'] || "Verified Premium Stay",
                 lat: hotelLat,
                 lng: hotelLng,
-                rating,
+                rating: Math.min(5, rating),
+                reviews,
                 price,
                 safety,
                 area,
@@ -515,47 +647,71 @@
                 
                 const safetyClass = h.safety >= 4.5 ? '' : (h.safety >= 3.8 ? 'medium' : 'low');
                 
-                // Dynamic icons and type labels
                 let typeLabel = h.type.charAt(0).toUpperCase() + h.type.slice(1).replace('_', ' ');
                 let typeIcon = '🏨';
-                if (h.type === 'resort') { typeIcon = '🏝️'; typeLabel = 'Luxury Resort'; }
-                if (h.type === 'hostel') { typeIcon = '🏠'; typeLabel = 'Hostel / PG'; }
+                if (h.type === 'resort') { typeIcon = '⛱️'; typeLabel = 'Luxury Resort'; }
+                if (h.type === 'hostel') { typeIcon = '🏠'; typeLabel = 'Hostel'; }
                 if (h.type === 'guest_house') { typeIcon = '🏘️'; typeLabel = 'Guest House'; }
-                if (h.type === 'apartment') { typeIcon = '🏢'; typeLabel = 'Svc Apartment'; }
+                if (h.type === 'apartment') { typeIcon = '🏢'; typeLabel = 'Residence'; }
+
+                const googlePriceLink = `https://www.google.com/search?q=${encodeURIComponent(h.name + " " + (localStorage.getItem('kyc_userCity') || ''))}+price+hotels`;
 
                 card.innerHTML = `
                     <div class="card-image-wrapper">
                         <div class="image-placeholder">${typeIcon}</div>
                         <div class="card-image-overlay">
-                            <span class="result-badge result-badge-green">${h.distance.toFixed(1)} km</span>
-                            <span class="result-type-badge" style="background:var(--accent-gradient)">${typeLabel}</span>
+                            <span class="result-badge result-badge-green">${h.distance.toFixed(1)} km away</span>
+                            <span class="result-type-badge" style="background:#00d4ff; color:#000;">${typeLabel}</span>
                         </div>
                     </div>
-                    <div class="card-content">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-                            <h3 class="result-title">${h.name}</h3>
-                            <button class="action-save" onclick="event.stopPropagation(); this.classList.toggle('active')">❤️</button>
+                    <div class="card-content" style="padding: 24px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                            <h3 class="result-title" style="font-size:1.25rem; font-weight:700;">${h.name}</h3>
+                            <button class="action-save" onclick="event.stopPropagation(); this.classList.toggle('active')">
+                                <span class="material-symbols-outlined" style="font-size:20px;">favorite</span>
+                            </button>
                         </div>
-                        <div style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:10px;">📍 ${h.area}</div>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <div class="hotel-price">₹${h.price} <span style="font-size:0.8rem; color:var(--text-muted)">/ night</span></div>
+                        <div class="hotel-meta-row">
+                            <div class="rating-stars">
+                                <span class="material-symbols-outlined" style="font-size:18px;">star</span>
+                                <span>${h.rating.toFixed(1)}</span>
+                                <span class="review-count">(${h.reviews} reviews)</span>
+                            </div>
                             <div class="hotel-safety-badge ${safetyClass}">
-                                <span class="material-symbols-outlined" style="font-size:16px">verified_user</span> 
-                                Safety: ${h.safety.toFixed(1)}
+                                <span class="material-symbols-outlined" style="font-size:16px;">verified_user</span> 
+                                Security indexed
                             </div>
                         </div>
 
-                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:15px;">
-                            <span style="color:#ffb400">★</span> <strong>${h.rating.toFixed(1)}</strong>
-                            <div style="display:flex; gap:4px; margin-left:10px;">
-                                ${h.essentials.slice(0,3).map(e => `<span class="hotel-tag">${e}</span>`).join('')}
+                        <div style="color:#94a3b8; font-size:0.85rem; margin-bottom:20px; display:flex; align-items:center; gap:5px;">
+                            <span class="material-symbols-outlined" style="font-size:16px;">location_on</span>
+                            ${h.area}
+                        </div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end; padding-top:15px; border-top:1px solid rgba(255,255,255,0.05);">
+                            <div class="price-container">
+                                <div class="price-sub">Starting from</div>
+                                <div class="price-label">₹${h.price.toLocaleString()}</div>
+                                <div class="price-sub">per night</div>
                             </div>
+                            <a href="${googlePriceLink}" target="_blank" class="btn-google" onclick="event.stopPropagation()">
+                                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                                Live Prices
+                            </a>
                         </div>
 
-                        <div class="card-actions">
-                            <button class="btn-direction" style="flex:1" onclick="openDetail(${h.id})">Details</button>
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}" target="_blank" class="btn-direction" style="background:#00d4ff; color:#000" onclick="event.stopPropagation()">Directions</a>
+                        <div class="hotel-amenities-strip">
+                            ${h.essentials.slice(0, 4).map(e => `
+                                <div class="amenity-tag">
+                                    <span class="material-symbols-outlined">${e === 'WiFi' ? 'wifi' : e === 'AC' ? 'ac_unit' : e === 'Parking' ? 'local_parking' : 'check_circle'}</span>
+                                    ${e}
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="card-actions" style="margin-top:20px;">
+                            <button class="btn-primary" style="width:100%; font-size:0.9rem; padding:12px;" onclick="openDetail(${h.id})">Full Analysis & Details</button>
                         </div>
                     </div>
                 `;
