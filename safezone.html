@@ -22,38 +22,101 @@
       margin-bottom: 30px;
       flex-wrap: wrap;
     }
-    .filter-controls {
+    
+    /* Custom Searchable Dropdown */
+    .custom-area-dropdown {
+      position: relative;
+      width: 240px;
+      z-index: 1000;
+    }
+    .dropdown-trigger {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 20px !important;
+      gap: 10px;
+      padding: 8px 16px !important;
       border-radius: 50px !important;
       border: 1px solid rgba(255,255,255,0.15) !important;
-      background: rgba(30,32,47,0.6) !important;
-    }
-    .filter-controls label {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--accent-cyan);
-      white-space: nowrap;
-    }
-    .filter-controls select {
-      background: transparent;
-      border: none;
+      background: rgba(30,32,47,0.8) !important;
       color: #fff;
-      font-family: inherit;
-      font-size: 0.9rem;
       cursor: pointer;
-      outline: none;
-      padding-right: 10px;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+      font-weight: 500;
+      justify-content: space-between;
+      user-select: none;
     }
-    .filter-controls select option {
-      background: #1a1b2e;
+    .dropdown-trigger:hover {
+      border-color: var(--accent-cyan) !important;
+      background: rgba(35,38,55,0.9) !important;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    }
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      background: rgba(20, 22, 35, 0.95);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideDown 0.3s ease forwards;
+    }
+    .dropdown-menu.active {
+      display: flex;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown-search-wrapper {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .dropdown-search {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    .dropdown-search:focus {
+      border-color: var(--accent-cyan);
+    }
+    .dropdown-list {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .dropdown-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dropdown-item:hover {
+      background: rgba(0, 229, 255, 0.1);
       color: #fff;
     }
+    .dropdown-item.active {
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+    .dropdown-list::-webkit-scrollbar { width: 4px; }
+    .dropdown-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
     @media (max-width: 768px) {
       .results-header { flex-direction: column; align-items: flex-start; }
-      .filter-controls { width: 100%; justify-content: space-between; }
+      .custom-area-dropdown { width: 100%; }
     }
   </style>
 </head>
@@ -109,11 +172,22 @@
           <h2 id="resultsCount">Searching for attractions...</h2>
           <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
         </div>
-        <div class="filter-controls glass-card">
-          <label for="areaFilter"><span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">location_on</span> Your Area</label>
-          <select id="areaFilter">
-            <option value="all">Whole City (All Spots)</option>
-          </select>
+        <div class="custom-area-dropdown">
+          <div class="dropdown-trigger" id="areaDropdownTrigger">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: var(--accent-cyan);">location_on</span>
+              <span id="selectedAreaText">Select your area</span>
+            </div>
+            <span class="material-symbols-outlined" style="font-size: 18px; opacity: 0.6;">expand_more</span>
+          </div>
+          <div class="dropdown-menu" id="areaDropdownMenu">
+            <div class="dropdown-search-wrapper">
+              <input type="text" class="dropdown-search" id="areaSearchInput" placeholder="Search area...">
+            </div>
+            <div class="dropdown-list" id="areaDropdownList">
+              <div class="dropdown-item active" data-value="all">Whole City (All Spots)</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="loading-spinner" id="loadingSpinner">
@@ -141,11 +215,48 @@
       const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
       document.getElementById('cityName').textContent = city;
 
-      let masterPlaces = []; // To store all city-wide attractions
-      let cityAreas = []; // To store city neighbourhoods
+      let masterPlaces = []; 
+      let cityAreas = []; 
 
-      const areaFilter = document.getElementById('areaFilter');
-      areaFilter.addEventListener('change', () => filterByArea());
+      // Initialize Custom Dropdown
+      const dropdownTrigger = document.getElementById('areaDropdownTrigger');
+      const dropdownMenu = document.getElementById('areaDropdownMenu');
+      const areaSearchInput = document.getElementById('areaSearchInput');
+      const areaDropdownList = document.getElementById('areaDropdownList');
+      const selectedAreaText = document.getElementById('selectedAreaText');
+
+      dropdownTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('active');
+        if(dropdownMenu.classList.contains('active')) areaSearchInput.focus();
+      });
+
+      document.addEventListener('click', () => dropdownMenu.classList.remove('active'));
+      dropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+
+      areaSearchInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        const items = areaDropdownList.querySelectorAll('.dropdown-item');
+        items.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(q) ? 'block' : 'none';
+        });
+      });
+
+      function selectArea(value, text) {
+        // Update UI
+        selectedAreaText.textContent = text;
+        areaDropdownList.querySelectorAll('.dropdown-item').forEach(item => {
+          item.classList.toggle('active', item.getAttribute('data-value') === value);
+        });
+        dropdownMenu.classList.remove('active');
+        areaSearchInput.value = '';
+        
+        // Trigger Filter
+        filterByArea(value, text);
+      }
+
+      window.selectArea = selectArea; // Expose for internal list clicks
 
       const CACHE_KEY = `kyc_cache_safezone_${Math.round(lat*100)}_${Math.round(lng*100)}`;
       const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
@@ -179,20 +290,30 @@
 
           // Populate Dropdown
           cityAreas.forEach(area => {
-            const opt = document.createElement('option');
-            opt.value = JSON.stringify({lat: area.lat, lng: area.lng});
-            opt.textContent = area.name;
-            areaFilter.appendChild(opt);
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            const val = JSON.stringify({lat: area.lat, lng: area.lng});
+            item.setAttribute('data-value', val);
+            item.textContent = area.name;
+            item.onclick = () => selectArea(val, area.name);
+            areaDropdownList.appendChild(item);
           });
+          
+          // Ensure "Whole City" also has click handler
+          const allItem = areaDropdownList.querySelector('[data-value="all"]');
+          if(allItem) allItem.onclick = () => selectArea('all', 'Whole City (All Spots)');
+          
           console.log(`✅ Loaded ${cityAreas.length} areas.`);
         } catch (err) {
           console.warn("Could not fetch city areas:", err);
         }
       }
 
-      function filterByArea() {
-        const val = areaFilter.value;
+      function filterByArea(val, text) {
+        if (!val) return;
+        
         if (val === 'all') {
+          document.getElementById('resultsMeta').textContent = `Fetching real-time data`;
           renderResults(masterPlaces, city, lat, lng, false);
           return;
         }
@@ -203,8 +324,7 @@
           return dist <= 5.0; // 5km radius as requested
         });
         
-        const selectedText = areaFilter.options[areaFilter.selectedIndex].text;
-        document.getElementById('resultsMeta').textContent = `Showing tourist spots within 5km of ${selectedText}`;
+        document.getElementById('resultsMeta').textContent = `Showing tourist spots within 5km of ${text}`;
         renderResults(filtered, city, lat, lng, false, true);
       }
 
