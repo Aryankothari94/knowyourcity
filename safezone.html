@@ -355,17 +355,6 @@
       if (cached) {
         document.getElementById('loadingText').textContent = 'Loading from cache...';
         setTimeout(() => renderResults(cached, city, lat, lng, true), 100);
-      } else if (SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity]) {
-        document.getElementById('loadingText').textContent = 'Loading curated safe zones...';
-        setTimeout(() => {
-           const curated = SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity].map(p => ({
-             ...p,
-             typeIcon: getTypeIcon(p.type),
-             distance: getDistance(lat, lng, p.lat, p.lng)
-           }));
-           masterPlaces = curated;
-           renderResults(curated, city, lat, lng, false);
-        }, 500);
       } else {
         fetchAllAttractions(lat, lng, city);
       }
@@ -391,43 +380,35 @@
       //  MAIN FETCH — with expanded queries + dynamic radius
       // ========================
       async function fetchAllAttractions(lat, lng, city) {
-        document.getElementById('loadingText').textContent = 'Searching tourist attractions, temples, forts, parks...';
+        const cityName = city.split(',')[0].trim();
+        const normalizedCity = cityName.toLowerCase();
+        document.getElementById('loadingText').textContent = `Deep scanning ${cityName} for every tourist spot, temple, and landmark...`;
 
         let allPlaces = [];
 
-        // Try with 20km first
+        // 0. Include Curated Safe Zones from Knowledge Base first
+        if (SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity]) {
+          const curated = SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity].map(p => ({
+            ...p,
+            typeIcon: getTypeIcon(p.type),
+            distance: getDistance(lat, lng, p.lat, p.lng),
+            source: 'curated'
+          }));
+          allPlaces = [...curated];
+        }
+
+        // 1. Primary High-Density Fetch (City-Wide Area)
         try {
-          allPlaces = await fetchOverpass(lat, lng, 20000, 15000);
+          allPlaces = await fetchOverpass(lat, lng, 30000, 20000, cityName);
         } catch (err) {
-          console.log('First Overpass attempt failed:', err.message);
+          console.log('Primary fetch failed, falling back to radius...');
         }
 
-        // If too few results, expand to 40km
-        if (allPlaces.length < 10) {
-          document.getElementById('loadingText').textContent = 'Expanding search area for more results...';
+        // 2. Wikipedia Deep Scrape (Expanded)
+        if (allPlaces.length < 50) {
+          document.getElementById('loadingText').textContent = 'Cross-referencing with Wikipedia for missing landmarks...';
           try {
-            const expanded = await fetchOverpass(lat, lng, 40000, 30000);
-            // Merge without duplicates
-            const existingNames = new Set(allPlaces.map(p => p.name));
-            expanded.forEach(p => { if (!existingNames.has(p.name)) allPlaces.push(p); });
-          } catch {}
-        }
-
-        // If STILL too few, expand to 60km
-        if (allPlaces.length < 8) {
-          document.getElementById('loadingText').textContent = 'Searching wider area...';
-          try {
-            const wider = await fetchOverpass(lat, lng, 60000, 50000);
-            const existingNames = new Set(allPlaces.map(p => p.name));
-            wider.forEach(p => { if (!existingNames.has(p.name)) allPlaces.push(p); });
-          } catch {}
-        }
-
-        // Supplement with Wikipedia if still sparse
-        if (allPlaces.length < 15) {
-          document.getElementById('loadingText').textContent = 'Fetching additional data from Wikipedia...';
-          try {
-            const wikiPlaces = await fetchWikipediaAttractions(city, lat, lng);
+            const wikiPlaces = await fetchWikipediaAttractions(cityName, lat, lng);
             const existingNames = new Set(allPlaces.map(p => p.name.toLowerCase()));
             wikiPlaces.forEach(p => {
               if (!existingNames.has(p.name.toLowerCase())) allPlaces.push(p);
@@ -435,7 +416,17 @@
           } catch {}
         }
 
-        // Deduplicate by name
+        // 3. Last Resort Radius Expansion
+        if (allPlaces.length < 15) {
+          document.getElementById('loadingText').textContent = 'Expanding search to metropolitan outskirts...';
+          try {
+            const wider = await fetchOverpass(lat, lng, 60000, 50000, null);
+            const existingNames = new Set(allPlaces.map(p => p.name));
+            wider.forEach(p => { if (!existingNames.has(p.name)) allPlaces.push(p); });
+          } catch {}
+        }
+
+        // Deduplicate by name and fuzzy coordinates
         const seen = new Set();
         const unique = allPlaces.filter(p => {
           const key = p.name.toLowerCase().trim();
@@ -454,28 +445,36 @@
       // ========================
       //  OVERPASS QUERY — massively expanded POI types
       // ========================
-      async function fetchOverpass(lat, lng, mainRadius, secondaryRadius) {
+      async function fetchOverpass(lat, lng, mainRadius, secondaryRadius, cityName = null) {
+        const areaPart = cityName ? `area["name"="${cityName}"]->.searchArea;` : '';
+        const filter = cityName ? `(area.searchArea)` : `(around:${mainRadius},${lat},${lng})`;
+        const filterSmall = cityName ? `(area.searchArea)` : `(around:${secondaryRadius},${lat},${lng})`;
+
         const query = `
-          [out:json][timeout:25];
+          [out:json][timeout:35];
+          ${areaPart}
           (
-            // Residential Neighborhoods
-            node["place"~"suburb|neighbourhood|quarter"](around:${mainRadius},${lat},${lng});
-            way["place"~"suburb|neighbourhood|quarter"](around:${mainRadius},${lat},${lng});
+            // High-Value Tourism
+            node["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort"]${filter};
+            way["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort"]${filter};
             
-            // Safe Public Spaces & Parks
-            node["leisure"~"park|garden"](around:${secondaryRadius},${lat},${lng});
-            way["leisure"~"park|garden"](around:${secondaryRadius},${lat},${lng});
-            node["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium"](around:${mainRadius},${lat},${lng});
-            way["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium"](around:${mainRadius},${lat},${lng});
+            // Historic & Heritage (Google/Wiki common)
+            node["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage"]${filter};
+            way["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage"]${filter};
             
-            // Historic sites
-            node["historic"](around:${mainRadius},${lat},${lng});
-            way["historic"](around:${mainRadius},${lat},${lng});
+            // Religious Landmarks (High priority for city coverage)
+            node["amenity"="place_of_worship"]${filterSmall};
+            way["amenity"="place_of_worship"]${filterSmall};
             
-            // Places of worship
-            node["amenity"="place_of_worship"](around:${secondaryRadius},${lat},${lng});
+            // Nature & Public Spots
+            node["leisure"~"park|garden|nature_reserve|water_park"]${filterSmall};
+            way["leisure"~"park|garden|nature_reserve|water_park"]${filterSmall};
+            node["natural"~"waterfall|beach|peak|cave_entrance"]${filter};
+            
+            // Modern Entertainment
+            node["amenity"~"theatre|planetarium|stadium"]${filterSmall};
           );
-          out center tags 200;
+          out center tags 500;
         `;
 
         try {
@@ -622,85 +621,66 @@
       // ========================
       //  WIKIPEDIA SUPPLEMENTARY FETCH
       // ========================
-      async function fetchWikipediaAttractions(city, userLat, userLng) {
-        const places = [];
+      async function fetchWikipediaAttractions(city, lat, lng) {
         const searchTerms = [
           `Tourist attractions in ${city}`,
-          `${city} landmarks`,
-          `${city} heritage sites`
+          `Landmarks in ${city}`,
+          `${city} heritage sites`,
+          `National Monuments of ${city}`,
+          `Historical places in ${city}`,
+          `${city} tourism hotspots`
         ];
+        
+        const allWikiData = [];
+        const seenTitles = new Set();
 
         for (const term of searchTerms) {
           try {
-            const controller = new AbortController();
-            const tid = setTimeout(() => controller.abort(), 8000);
-            const res = await fetch(
-              `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&srlimit=15&format=json&origin=*`,
-              { signal: controller.signal }
-            );
-            clearTimeout(tid);
-            const data = await res.json();
+            const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*&srlimit=25`;
+            const searchRes = await fetch(searchUrl);
+            const searchData = await searchRes.json();
+            
+            if (searchData.query?.search) {
+              const titles = searchData.query.search
+                .map(s => s.title)
+                .filter(t => !seenTitles.has(t) && !t.includes('(disambiguation)') && !t.startsWith('List of'));
+              
+              titles.forEach(t => seenTitles.add(t));
+              if (titles.length === 0) continue;
 
-            if (data.query?.search) {
-              for (const result of data.query.search) {
-                const title = result.title;
-                // Skip disambiguation and list pages
-                if (title.includes('(disambiguation)') || title.startsWith('List of')) continue;
-
-                // Get geo coordinates from Wikipedia
-                try {
-                  const geoRes = await fetch(
-                    `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=coordinates|pageimages|extracts&exintro=1&explaintext=1&exsentences=3&piprop=thumbnail&pithumbsize=400&format=json&origin=*`
-                  );
-                  const geoData = await geoRes.json();
-                  const pages = geoData.query?.pages;
-                  if (!pages) continue;
-
-                  const page = Object.values(pages)[0];
-                  if (!page || page.missing !== undefined) continue;
-
-                  const coords = page.coordinates?.[0];
-                  const pLat = coords?.lat || userLat;
-                  const pLng = coords?.lon || userLng;
-                  const dist = getDistance(userLat, userLng, pLat, pLng);
-
-                  // Only include if within 80km of user
-                  if (dist > 80) continue;
-
-                  places.push({
-                    name: title,
-                    type: 'Attraction',
-                    typeIcon: '⭐',
-                    description: page.extract || '',
-                    website: '',
-                    phone: '',
-                    opening: '',
-                    fee: '',
-                    charge: '',
-                    wheelchair: '',
-                    wikipedia: `en:${title}`,
-                    wikidata: '',
-                    image: page.thumbnail?.source || '',
-                    architect: '',
-                    heritage: '',
-                    religion: '',
-                    denomination: '',
-                    year: '',
-                    lit: '',
-                    lat: pLat,
-                    lng: pLng,
-                    distance: dist,
-                    source: 'wikipedia'
-                  });
-                } catch {}
+              // Batch fetch content for these titles
+              const contentUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts|coordinates|pageimages&exintro&explaintext&titles=${encodeURIComponent(titles.join('|'))}&format=json&origin=*&pithumbsize=600`;
+              const contentRes = await fetch(contentUrl);
+              const contentData = await contentRes.json();
+              
+              if (contentData.query?.pages) {
+                Object.values(contentData.query.pages).forEach(page => {
+                  if (page.coordinates || page.extract) {
+                    const pLat = page.coordinates ? page.coordinates[0].lat : lat;
+                    const pLng = page.coordinates ? page.coordinates[0].lon : lng;
+                    
+                    const dist = getDistance(lat, lng, pLat, pLng);
+                    if (dist < 50) { // Limit to city region
+                      allWikiData.push({
+                        name: page.title,
+                        lat: pLat,
+                        lng: pLng,
+                        description: page.extract ? page.extract.substring(0, 300) + '...' : 'A famous landmark in ' + city,
+                        image: page.thumbnail ? page.thumbnail.source : null,
+                        type: 'Attraction',
+                        typeIcon: '⭐',
+                        source: 'wikipedia',
+                        distance: dist,
+                        wikipedia: `en:${page.title}`
+                      });
+                    }
+                  }
+                });
               }
             }
-          } catch {}
-          // Stop after getting enough
-          if (places.length >= 10) break;
+          } catch (err) { console.warn("Wiki error for term " + term, err); }
         }
-
-        return places;
+        return allWikiData;
       }
 
       // ========================
