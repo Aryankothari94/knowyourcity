@@ -14,27 +14,34 @@ async function fetchCrimeData(lat, lng, distance = 10) {
 }
 
 // Adaptive infrastructure fetching from OpenStreetMap (Overpass API)
-// We use a progressive expansion strategy: 15km -> 40km to ensure 0-counts are avoided.
-async function fetchOverpassData(lat, lng, radius = 15000) {
-    const r2 = Math.floor(radius * 0.7); // adaptive radius for dense items (police/hospitals)
-    const rSparse = radius * 2; // extended radius for rare items (fire stations/surveillance)
+// Support city-wide area search or around:radius fallback
+async function fetchOverpassData(lat, lng, radius = 15000, city = null) {
+    const r2 = Math.floor(radius * 0.7); 
+    const rSparse = radius * 2; 
 
-    const query = `[out:json][timeout:35];(
-        node["amenity"="police"](around:${radius},${lat},${lng});
-        way["amenity"="police"](around:${radius},${lat},${lng});
-        node["amenity"="hospital"](around:${radius},${lat},${lng});
-        way["amenity"="hospital"](around:${radius},${lat},${lng});
-        node["amenity"="clinic"](around:${r2},${lat},${lng});
-        way["amenity"="clinic"](around:${r2},${lat},${lng});
-        node["amenity"="fire_station"](around:${rSparse},${lat},${lng});
-        way["amenity"="fire_station"](around:${rSparse},${lat},${lng});
-        node["emergency"~"fire_station|fire_hydrant"](around:${rSparse},${lat},${lng});
-        node["man_made"~"surveillance|security"](around:${rSparse},${lat},${lng});
-        way["man_made"~"surveillance|security"](around:${rSparse},${lat},${lng});
-        node["surveillance:type"](around:${rSparse},${lat},${lng});
-        node["camera:type"](around:${rSparse},${lat},${lng});
-        node["amenity"="cctv"](around:${rSparse},${lat},${lng});
-    );out center tags 1500;`;
+    const areaPart = city ? `area[name="${city}"]->.searchArea;` : '';
+    const filterPart = city ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
+    const filterSparse = city ? `(area.searchArea)` : `(around:${rSparse},${lat},${lng})`;
+    const filterR2 = city ? `(area.searchArea)` : `(around:${r2},${lat},${lng})`;
+
+    const query = `[out:json][timeout:35];
+        ${areaPart}
+        (
+            node["amenity"="police"]${filterPart};
+            way["amenity"="police"]${filterPart};
+            node["amenity"="hospital"]${filterPart};
+            way["amenity"="hospital"]${filterPart};
+            node["amenity"="clinic"]${filterR2};
+            way["amenity"="clinic"]${filterR2};
+            node["amenity"="fire_station"]${filterSparse};
+            way["amenity"="fire_station"]${filterSparse};
+            node["emergency"~"fire_station|fire_hydrant"]${filterSparse};
+            node["man_made"~"surveillance|security"]${filterSparse};
+            way["man_made"~"surveillance|security"]${filterSparse};
+            node["surveillance:type"]${filterSparse};
+            node["camera:type"]${filterSparse};
+            node["amenity"="cctv"]${filterSparse};
+        );out center tags 1500;`;
     try {
         const res = await fetch('https://overpass-api.de/api/interpreter', {
             method: 'POST',
@@ -92,13 +99,13 @@ router.get('/insights', async (req, res) => {
             }
         }
 
-        // 2. Initial Fetch (15km)
-        let mainData = await fetchOverpassData(lat, lng, 15000);
+        // 2. Initial Fetch (City-Wide Priority)
+        let mainData = await fetchOverpassData(lat, lng, 15000, city);
         
-        // Expansion logic: if we find 0 police/hospitals, retry with 40km (Deep Search)
+        // Expansion logic: if we find 0 police/hospitals in area, retry with 40km around center (Deep Search)
         const checkCount = (t) => (mainData.elements || []).filter(e => e.tags?.amenity === t).length;
         if (checkCount('police') === 0) {
-            const deepData = await fetchOverpassData(lat, lng, 45000);
+            const deepData = await fetchOverpassData(lat, lng, 45000); // 45km radius as last resort
             if ((deepData.elements || []).length > (mainData.elements || []).length) mainData = deepData;
         }
 

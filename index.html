@@ -148,6 +148,20 @@
     .metric-fill.red { background: #ff5252 !important; }
     .metric-fill.green { background: #00e676 !important; }
 
+    /* Map Pulse Animations */
+    @keyframes pulse-police {
+      0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+    }
+    @keyframes pulse-hosp {
+      0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+    }
+    .pulse-marker-police { animation: pulse-police 2s infinite; }
+    .pulse-marker-hospital { animation: pulse-hosp 2s infinite; }
+
     /* Interactive Mobile Widgets */
     .mobile-nav-li {
       width: 100%;
@@ -565,11 +579,30 @@
       // Draw safety grid heatmap
       const c = map.getCenter();
       const currentLat = c.lat, currentLng = c.lng;
+      
+      // DYNAMIC BOUNDS: Heatmap grid should cover all data points if they are sparse, or the view area
+      let minLat = currentLat - 0.13, maxLat = currentLat + 0.13;
+      let minLng = currentLng - 0.13, maxLng = currentLng + 0.13;
+      
+      const allPoints = [...police, ...hosp, ...fire, ...cctv];
+      if (allPoints.length > 0) {
+        allPoints.forEach(p => {
+          const plat = p.globalLat || p.lat;
+          const plng = p.globalLng || p.lng;
+          minLat = Math.min(minLat, plat); maxLat = Math.max(maxLat, plat);
+          minLng = Math.min(minLng, plng); maxLng = Math.max(maxLng, plng);
+        });
+      }
+
       const step = 0.015;
-      for (let gLat = currentLat - 0.13; gLat <= currentLat + 0.13; gLat += step) {
-        for (let gLng = currentLng - 0.13; gLng <= currentLng + 0.13; gLng += step) {
+      for (let gLat = minLat; gLat <= maxLat; gLat += step) {
+        for (let gLng = minLng; gLng <= maxLng; gLng += step) {
           let count = 0;
-          const within = (p) => p.lat >= gLat && p.lat < gLat + step && p.lng >= gLng && p.lng < gLng + step;
+          const within = (p) => {
+            const plat = p.globalLat || p.lat;
+            const plng = p.globalLng || p.lng;
+            return plat >= gLat && plat < gLat + step && plng >= gLng && plng < gLng + step;
+          };
           count += police.filter(within).length * 2.5;
           count += hosp.filter(within).length * 1.5;
           count += fire.filter(within).length * 1.5;
@@ -578,15 +611,33 @@
           if (count >= 4) { color = '#00e676'; fillOp = 0.4; }
           else if (count >= 1.5) { color = '#ffab40'; fillOp = 0.3; }
           else if (count === 0) { fillOp = 0.05; }
-          L.rectangle([[gLat, gLng], [gLat + step, gLng + step]], { color, weight: 1, fillOpacity: fillOp, opacity: 0.5 }).addTo(map);
+          L.rectangle([[gLat, gLng], [gLat + step, gLng + step]], { color, weight: 1, fillOpacity: fillOp, opacity: 0.3, stroke: false }).addTo(map);
         }
       }
 
-      // Plot real markers
-      police.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 6, fillColor: '#00e676', fillOpacity: 0.8, color: '#00e676', weight: 1 }).addTo(map).bindPopup((p.name || 'Police Station')));
-      hosp.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 6, fillColor: '#2196f3', fillOpacity: 0.8, color: '#2196f3', weight: 1 }).addTo(map).bindPopup((p.name || 'Hospital')));
-      fire.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#ff9800', weight: 1 }).addTo(map).bindPopup((p.name || 'Fire Station')));
-      cctv.forEach(p => L.circleMarker([p.globalLat, p.globalLng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#9c27b0', weight: 1 }).addTo(map).bindPopup((p.name || 'CCTV')));
+      // Plot real markers with Enhanced Visuals
+      police.forEach(p => {
+        L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { 
+          radius: 7, 
+          fillColor: '#00e676', 
+          fillOpacity: 0.9, 
+          color: '#fff', 
+          weight: 2,
+          className: 'pulse-marker-police'
+        }).addTo(map).bindPopup(`<strong>Police Station</strong><br>${p.name || 'Verified Station'}`);
+      });
+      hosp.forEach(p => {
+        L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { 
+          radius: 7, 
+          fillColor: '#2196f3', 
+          fillOpacity: 0.9, 
+          color: '#fff', 
+          weight: 2,
+          className: 'pulse-marker-hospital'
+        }).addTo(map).bindPopup(`<strong>Hospital/Clinic</strong><br>${p.name || 'Verified Facility'}`);
+      });
+      fire.forEach(p => L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#fff', weight: 1 }).addTo(map).bindPopup((p.name || 'Fire Station')));
+      cctv.forEach(p => L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#fff', weight: 1 }).addTo(map).bindPopup((p.name || 'CCTV')));
 
       // Accurate safety summary based on real data
       const tot = police.length + hosp.length + fire.length + cctv.length;
@@ -614,7 +665,7 @@
         <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
         <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252'}">${lv}</span></div>
         <div class="summary-item"><strong>Total Safety Points:</strong> ${tot} (${police.length} police, ${hosp.length} hospitals/clinics, ${fire.length} fire, ${cctv.length} CCTV)</div>
-        <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis covers ~15km radius. Only verified OSM data. Source: ${source}.</div>`;
+        <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis coverage: ${source.includes('City-Wide') ? 'Full City Boundary' : '~15km radius'}. Only verified OSM data. Source: ${source}.</div>`;
 
       generateCityProTips(city);
     }
@@ -740,19 +791,26 @@
     }
 
     // HIGH-PRECISION CONCURRENT OVERPASS RACE (Police, Hospital, Fire, CCTV)
-    async function fetchSafetyDataDirect(lat, lng) {
-      const radius = 10000; // 10km for safety context
-      const query = `[out:json][timeout:30];
+    async function fetchSafetyDataDirect(lat, lng, city) {
+      const radius = 15000; // 15km fallback
+      
+      // SMART QUERY: Try searching by area first for "Whole City" context, fallback to around:radius
+      const areaPart = city ? `area[name="${city}"]->.searchArea;` : '';
+      const filterPart = city ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
+      
+      const query = `[out:json][timeout:35];
+        ${areaPart}
         (
-          node['amenity'='police'](around:${radius},${lat},${lng});
-          way['amenity'='police'](around:${radius},${lat},${lng});
-          node['amenity'='hospital'](around:${radius},${lat},${lng});
-          way['amenity'='hospital'](around:${radius},${lat},${lng});
-          node['amenity'='clinic'](around:${radius},${lat},${lng});
-          node['amenity'='fire_station'](around:${radius},${lat},${lng});
-          way['amenity'='fire_station'](around:${radius},${lat},${lng});
-          node['man_made'='surveillance'](around:${radius},${lat},${lng});
-          node['amenity'='cctv'](around:${radius},${lat},${lng});
+          node['amenity'='police']${filterPart};
+          way['amenity'='police']${filterPart};
+          node['amenity'='hospital']${filterPart};
+          way['amenity'='hospital']${filterPart};
+          node['amenity'='clinic']${filterPart};
+          way['amenity'='hospital']${filterPart};
+          node['amenity'='fire_station']${filterPart};
+          way['amenity'='fire_station']${filterPart};
+          node['man_made'='surveillance']${filterPart};
+          node['amenity'='cctv']${filterPart};
         );
         out center body;`;
       
@@ -769,10 +827,12 @@
             body: 'data=' + encodeURIComponent(query)
           }).then(r => r.ok ? r.json() : Promise.reject())
         ));
-        return { source: 'Live High-Precision OSM', elements: fastestResponse.elements || [] };
+        return { source: city ? `City-Wide Data for ${city}` : 'Live High-Precision OSM', elements: fastestResponse.elements || [] };
       } catch (e) {
         console.warn('Overpass Direct Fetch failed:', e);
-        throw new Error('High-traffic detected on global safety mirrors. Please wait or retry.');
+        // Secondary fallback: simpler around query if area fetch fails
+        if (city) return fetchSafetyDataDirect(lat, lng, null);
+        throw new Error('High-traffic detected on global safety mirrors.');
       }
     }
 
@@ -810,7 +870,7 @@
               return data;
             }),
           
-          fetchSafetyDataDirect(globalLat, globalLng).then(osm => ({ 
+          fetchSafetyDataDirect(globalLat, globalLng, city).then(osm => ({ 
             infrastructures: osm.elements.map(e => ({
               nodeType: e.tags?.amenity === 'police' ? 'police' : 
                         (e.tags?.amenity === 'hospital' || e.tags?.amenity === 'clinic') ? 'hospital' : 
