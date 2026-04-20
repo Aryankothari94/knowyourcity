@@ -19,10 +19,13 @@ async function fetchOverpassData(lat, lng, radius = 15000, city = null) {
     const r2 = Math.floor(radius * 0.7); 
     const rSparse = radius * 2; 
 
-    const areaPart = city ? `area[name="${city}"]->.searchArea;` : '';
-    const filterPart = city ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
-    const filterSparse = city ? `(area.searchArea)` : `(around:${rSparse},${lat},${lng})`;
-    const filterR2 = city ? `(area.searchArea)` : `(around:${r2},${lat},${lng})`;
+    // CLEAN CITY NAME: "Mumbai, Maharashtra" -> "Mumbai"
+    const searchName = city ? city.split(',')[0].trim() : null;
+
+    const areaPart = searchName ? `area[name="${searchName}"]->.searchArea;` : '';
+    const filterPart = searchName ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
+    const filterSparse = searchName ? `(area.searchArea)` : `(around:${rSparse},${lat},${lng})`;
+    const filterR2 = searchName ? `(area.searchArea)` : `(around:${r2},${lat},${lng})`;
 
     const query = `[out:json][timeout:35];
         ${areaPart}
@@ -49,7 +52,14 @@ async function fetchOverpassData(lat, lng, radius = 15000, city = null) {
             body: 'data=' + encodeURIComponent(query)
         });
         if (!res.ok) return { elements: [] };
-        return await res.json();
+        const data = await res.json();
+        
+        // SMART FALLBACK: If area search returned 0 results, retry with radius search
+        if ((!data.elements || data.elements.length === 0) && searchName) {
+            return fetchOverpassData(lat, lng, radius, null); // Pass null to force radius search
+        }
+        
+        return data;
     } catch (e) { return { elements: [] }; }
 }
 

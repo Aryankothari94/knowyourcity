@@ -794,9 +794,12 @@
     async function fetchSafetyDataDirect(lat, lng, city) {
       const radius = 15000; // 15km fallback
       
-      // SMART QUERY: Try searching by area first for "Whole City" context, fallback to around:radius
-      const areaPart = city ? `area[name="${city}"]->.searchArea;` : '';
-      const filterPart = city ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
+      // CLEAN CITY NAME: "Mumbai, Maharashtra, India" -> "Mumbai"
+      let searchName = city ? city.split(',')[0].trim() : null;
+      
+      // SMART QUERY: Try searching by area first for "Whole City" context
+      const areaPart = searchName ? `area[name="${searchName}"]->.searchArea;` : '';
+      const filterPart = searchName ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
       
       const query = `[out:json][timeout:35];
         ${areaPart}
@@ -827,11 +830,20 @@
             body: 'data=' + encodeURIComponent(query)
           }).then(r => r.ok ? r.json() : Promise.reject())
         ));
-        return { source: city ? `City-Wide Data for ${city}` : 'Live High-Precision OSM', elements: fastestResponse.elements || [] };
+        
+        // SMART FALLBACK: If area search returned 0 results, retry with radius search
+        if ((!fastestResponse.elements || fastestResponse.elements.length === 0) && searchName) {
+           console.log(`⚠️ No area data for "${searchName}", falling back to radius search...`);
+           return fetchSafetyDataDirect(lat, lng, null); // Pass null to force radius search
+        }
+
+        return { 
+          source: searchName && fastestResponse.elements?.length > 0 ? `City-Wide Data for ${searchName}` : 'Live Proximity Search (15km)', 
+          elements: fastestResponse.elements || [] 
+        };
       } catch (e) {
         console.warn('Overpass Direct Fetch failed:', e);
-        // Secondary fallback: simpler around query if area fetch fails
-        if (city) return fetchSafetyDataDirect(lat, lng, null);
+        if (searchName) return fetchSafetyDataDirect(lat, lng, null);
         throw new Error('High-traffic detected on global safety mirrors.');
       }
     }
