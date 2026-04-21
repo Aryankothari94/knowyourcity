@@ -11,6 +11,10 @@ const SafetyExplorer = () => {
     const [incidents, setIncidents] = useState([]);
     const [landmarks, setLandmarks] = useState([]);
     const [isPulsing, setIsPulsing] = useState(false);
+    const [cityAreas, setCityAreas] = useState([]);
+    const [isAreaDropdownOpen, setIsAreaDropdownOpen] = useState(false);
+    const [areaSearchTerm, setAreaSearchTerm] = useState('');
+    const [selectedAreaName, setSelectedAreaName] = useState('Select your area');
 
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:10000/api' 
@@ -22,6 +26,7 @@ const SafetyExplorer = () => {
         const lastLng = localStorage.getItem('kyc_userLng');
         if (lastLat && lastLng) {
             fetchCityInsights(defaultCity, parseFloat(lastLat), parseFloat(lastLng));
+            fetchCityAreas(parseFloat(lastLat), parseFloat(lastLng));
         } else {
             fetchCityInsights(defaultCity);
         }
@@ -29,6 +34,7 @@ const SafetyExplorer = () => {
         const handleUpdate = (e) => {
             const { lat, lng, city } = e.detail;
             fetchCityInsights(city, parseFloat(lat), parseFloat(lng));
+            fetchCityAreas(parseFloat(lat), parseFloat(lng));
         };
 
         window.addEventListener('kyc_locationUpdated', handleUpdate);
@@ -80,6 +86,32 @@ const SafetyExplorer = () => {
         } finally {
             setLoading(false);
             setTimeout(() => setIsPulsing(false), 500);
+        }
+    };
+
+    const fetchCityAreas = async (lat, lng) => {
+        try {
+            const query = `[out:json][timeout:25];
+                (
+                    node["place"~"suburb|neighbourhood"](around:25000,${lat},${lng});
+                    way["place"~"suburb|neighbourhood"](around:25000,${lat},${lng});
+                );
+                out center;`;
+            
+            const res = await fetch('https://overpass-api.de/api/interpreter', {
+                method: 'POST',
+                body: 'data=' + encodeURIComponent(query)
+            });
+            const data = await res.json();
+            const areas = data.elements.map(el => ({
+              name: el.tags.name || el.tags['name:en'],
+              lat: el.lat || el.center.lat,
+              lng: el.lon || el.center.lon
+            })).filter(a => a.name).sort((a,b) => a.name.localeCompare(b.name));
+            
+            setCityAreas(areas);
+        } catch (err) {
+            console.warn("Could not fetch city areas:", err);
         }
     };
 
@@ -147,7 +179,22 @@ const SafetyExplorer = () => {
         } finally {
             setLoading(false);
         }
+        setSearchInput('');
     };
+
+    const handleSelectArea = (area) => {
+        setIsAreaDropdownOpen(false);
+        setSelectedAreaName(area.name);
+        // Dispatch global update to sync everything
+        const event = new CustomEvent('kyc_locationUpdated', { 
+            detail: { lat: area.lat, lng: area.lng, city: area.name } 
+        });
+        window.dispatchEvent(event);
+    };
+
+    const filteredAreas = cityAreas.filter(a => 
+        a.name.toLowerCase().includes(areaSearchTerm.toLowerCase())
+    );
 
     const getBadge = (score) => {
         if (score > 80) return { text: 'Very Safe', class: 'badge-safe' };
@@ -213,8 +260,48 @@ const SafetyExplorer = () => {
                             <div className="area-icon-box">
                                 <span className="material-symbols-outlined">location_city</span>
                             </div>
-                            <h3 className="area-name">{searchedCity}</h3>
-                            <span className={`area-badge ${badge.class}`}>{loading ? 'Syncing...' : badge.text}</span>
+                            <div className="custom-area-dropdown" style={{ position: 'relative', flexGrow: 1, textAlign: 'left' }}>
+                                <div 
+                                    className="area-name-trigger" 
+                                    onClick={() => setIsAreaDropdownOpen(!isAreaDropdownOpen)}
+                                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                >
+                                    <h3 className="area-name" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>{selectedAreaName}</h3>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#00e5ff', transform: isAreaDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}>expand_more</span>
+                                </div>
+
+                                {isAreaDropdownOpen && (
+                                    <div className="glass-card area-dropdown-menu" style={{ position: 'absolute', top: 'calc(100% + 12px)', left: '0', width: '280px', zIndex: 100, padding: '12px', border: '1px solid rgba(0, 229, 255, 0.3)', borderRadius: '16px' }}>
+                                        <div className="dropdown-search-wrapper" style={{ marginBottom: '10px' }}>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Search area..." 
+                                                value={areaSearchTerm}
+                                                onChange={(e) => setAreaSearchTerm(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 12px', color: 'white', fontSize: '0.85rem' }}
+                                            />
+                                        </div>
+                                        <div className="dropdown-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                            {filteredAreas.length > 0 ? filteredAreas.map((area, idx) => (
+                                                <div 
+                                                    key={idx}
+                                                    className="dropdown-item"
+                                                    onClick={(e) => { e.stopPropagation(); handleSelectArea(area); }}
+                                                    style={{ padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s', color: 'rgba(255,255,255,0.8)' }}
+                                                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0, 229, 255, 0.1)'}
+                                                    onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    {area.name}
+                                                </div>
+                                            )) : (
+                                                <div style={{ padding: '10px', fontSize: '0.8rem', color: '#666', textAlign: 'center' }}>No areas found</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <span className={`area-badge ${badge.class}`} style={{ display: selectedAreaName === 'Select your area' ? 'none' : 'inline-block' }}>{loading ? 'Syncing...' : badge.text}</span>
                         </div>
                         
                         <div className="area-card-content">
