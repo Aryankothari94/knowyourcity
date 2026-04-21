@@ -67,10 +67,16 @@ const SafetyExplorer = () => {
             setSafetyData(data.safetyStats);
             setIncidents(data.recentIncidents || []);
 
-            // 3. Get Landmarks (Wikipedia Geosearch)
-            const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=10000&gslimit=6&format=json&origin=*`);
-            const wikiData = await wikiRes.json();
-            setLandmarks(wikiData.query?.geosearch || []);
+            // 3. Get Elite Tourist Spots (Overpass API)
+            const spots = await fetchBestTouristSpots(lat, lon, cleanCity);
+            if (spots.length > 0) {
+                setLandmarks(spots);
+            } else {
+                // Low-quality fallback to Wikipedia geosearch as last resort
+                const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=10000&gslimit=5&format=json&origin=*`);
+                const wikiData = await wikiRes.json();
+                setLandmarks(wikiData.query?.geosearch || []);
+            }
 
         } catch (err) {
             console.error("Fetch Error:", err);
@@ -112,6 +118,50 @@ const SafetyExplorer = () => {
             setCityAreas(areas);
         } catch (err) {
             console.warn("Could not fetch city areas:", err);
+        }
+    };
+
+    const fetchBestTouristSpots = async (lat, lon, cityName) => {
+        try {
+            const query = `[out:json][timeout:25];
+                (
+                    node["tourism"~"attraction|museum|zoo|theme_park|gallery|viewpoint|resort"](around:20000,${lat},${lon});
+                    way["tourism"~"attraction|museum|zoo|theme_park|gallery|viewpoint|resort"](around:20000,${lat},${lon});
+                    node["historic"~"monument|memorial|castle|fort|heritage"](around:20000,${lat},${lon});
+                    way["historic"~"monument|memorial|castle|fort|heritage"](around:20000,${lat},${lon});
+                );
+                out center tags 60;`;
+
+            const res = await fetch('https://overpass-api.de/api/interpreter', {
+                method: 'POST',
+                body: 'data=' + encodeURIComponent(query)
+            });
+            const data = await res.json();
+            
+            const eliteTags = ['museum', 'fort', 'monument', 'castle', 'attraction', 'theme_park', 'heritage'];
+            
+            const spots = data.elements
+                .map(el => {
+                    const name = el.tags.name || el.tags['name:en'];
+                    if (!name) return null;
+                    
+                    const tType = el.tags.tourism || el.tags.historic || 'Attraction';
+                    const isElite = eliteTags.includes(tType) || el.tags.heritage;
+                    
+                    return {
+                        title: name,
+                        type: tType.charAt(0).toUpperCase() + tType.slice(1),
+                        isElite: isElite,
+                        description: el.tags.description || el.tags['description:en'] || `Premier landmark in ${cityName}.`
+                    };
+                })
+                .filter(s => s !== null)
+                .sort((a, b) => (b.isElite ? 1 : 0) - (a.isElite ? 1 : 0));
+
+            return spots.slice(0, 5); 
+        } catch (err) {
+            console.error("Tourist Fetch Error:", err);
+            return [];
         }
     };
 
@@ -345,9 +395,11 @@ const SafetyExplorer = () => {
                                 {landmarks.length > 0 ? landmarks.slice(0, 4).map((p, i) => (
                                     <div key={i} style={{ marginBottom: '16px', padding: '12px', background: 'rgba(0, 212, 255, 0.05)', borderRadius: '10px', border: '1px solid rgba(0, 212, 255, 0.1)' }}>
                                         <div style={{ color: '#00e5ff', fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>explore</span> {p.title}
+                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>explore</span> {p.title || p.name}
                                         </div>
-                                        <div style={{ color: '#cbd5e1', fontSize: '0.75rem', lineHeight: '1.4' }}>Popular attraction in {searchedCity}. Verified safe for tourists and families.</div>
+                                        <div style={{ color: '#cbd5e1', fontSize: '0.75rem', lineHeight: '1.4' }}>
+                                            {p.description || `Popular attraction in ${searchedCity}. Verified safe for tourists and families.`}
+                                        </div>
                                     </div>
                                 )) : (
                                     <div style={{ color: '#64748b', fontSize: '0.8rem', padding: '20px', textAlign: 'center' }}>
