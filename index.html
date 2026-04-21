@@ -685,10 +685,8 @@
         const name = el.tags?.name || el.tags?.['name:en'] || '';
         const t = el.tags || {};
         if (t.amenity === 'police') police.push({lat: elLat, lng: elLng, name: name || 'Police Station'});
-        else if (t.amenity === 'hospital') hosp.push({lat: elLat, lng: elLng, name: name || 'Hospital'});
-        else if (t.amenity === 'clinic') hosp.push({lat: elLat, lng: elLng, name: name || 'Clinic'});
-        else if (t.amenity === 'fire_station') fire.push({lat: elLat, lng: elLng, name: name || 'Fire Station'});
-        else if (t.emergency === 'fire_hydrant') fire.push({lat: elLat, lng: elLng, name: 'Fire Hydrant'});
+        else if (t.amenity === 'hospital' || t.amenity === 'clinic' || t.healthcare === 'hospital' || t.healthcare === 'clinic') hosp.push({lat: elLat, lng: elLng, name: name || 'Medical Facility'});
+        else if (t.amenity === 'fire_station' || t.emergency === 'fire_station') fire.push({lat: elLat, lng: elLng, name: name || 'Fire Station'});
         else if (t.man_made === 'surveillance' || t['surveillance:type'] || t.amenity === 'cctv') cctv.push({lat: elLat, lng: elLng, name: name || 'CCTV Camera'});
       });
       return { police, hosp, fire, cctv };
@@ -718,10 +716,13 @@
         out body 5;`;
 
       try {
-        const res = await fetch('https://overpass-api.de/api/interpreter', {
+        const mirrors = ['https://overpass-api.de/api/interpreter', 'https://lz4.overpass-api.de/api/interpreter'];
+        const mirrorIdx = Math.floor(Math.random() * mirrors.length);
+        const res = await fetch(mirrors[mirrorIdx], {
           method: 'POST',
           body: 'data=' + encodeURIComponent(query)
         });
+        if (!res.ok) throw new Error("Mirror busy");
         const data = await res.json();
         const neighbors = (data.elements || [])
           .filter(el => el.tags?.name && el.tags.name !== city)
@@ -801,21 +802,29 @@
       const areaPart = searchName ? `area[name="${searchName}"]->.searchArea;` : '';
       const filterPart = searchName ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
       
-      const query = `[out:json][timeout:35];
+      const query = `[out:json][timeout:45];
         ${areaPart}
         (
           node['amenity'='police']${filterPart};
           way['amenity'='police']${filterPart};
-          node['amenity'='hospital']${filterPart};
-          way['amenity'='hospital']${filterPart};
-          node['amenity'='clinic']${filterPart};
-          way['amenity'='hospital']${filterPart};
+          rel['amenity'='police']${filterPart};
+          
+          node['amenity'~'hospital|clinic']${filterPart};
+          way['amenity'~'hospital|clinic']${filterPart};
+          rel['amenity'~'hospital|clinic']${filterPart};
+          
+          node['healthcare'~'hospital|clinic']${filterPart};
+          way['healthcare'~'hospital|clinic']${filterPart};
+          rel['healthcare'~'hospital|clinic']${filterPart};
+          
           node['amenity'='fire_station']${filterPart};
           way['amenity'='fire_station']${filterPart};
-          node['man_made'='surveillance']${filterPart};
+          rel['amenity'='fire_station']${filterPart};
+          
+          node['man_made'~'surveillance|security']${filterPart};
           node['amenity'='cctv']${filterPart};
         );
-        out center body;`;
+        out center tags 2000;`;
       
       const mirrors = [
         'https://overpass-api.de/api/interpreter',
@@ -883,12 +892,17 @@
             }),
           
           fetchSafetyDataDirect(globalLat, globalLng, city).then(osm => ({ 
-            infrastructures: osm.elements.map(e => ({
-              nodeType: e.tags?.amenity === 'police' ? 'police' : 
-                        (e.tags?.amenity === 'hospital' || e.tags?.amenity === 'clinic') ? 'hospital' : 
-                        e.tags?.amenity === 'fire_station' ? 'fire_station' : 'surveillance',
-              lat: e.lat, lng: e.lon, name: e.tags?.name
-            })),
+            infrastructures: (osm.elements || []).map(e => {
+                const t = e.tags || {};
+                return {
+                    nodeType: t.amenity === 'police' ? 'police' : 
+                          (t.amenity === 'hospital' || t.amenity === 'clinic' || t.healthcare === 'hospital' || t.healthcare === 'clinic') ? 'hospital' : 
+                          t.amenity === 'fire_station' ? 'fire_station' : 'surveillance',
+                    lat: e.lat || e.center?.lat, 
+                    lng: e.lon || e.center?.lon, 
+                    name: t.name || 'Safety Asset'
+                };
+            }),
             source: 'Live Verified Database'
           }))
         ]);

@@ -61,6 +61,7 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
 
             // 2. Get Safety Insights (Backend API)
             const insightRes = await fetch(`${API_BASE}/safety/insights?lat=${lat}&lng=${lon}&city=${encodeURIComponent(cleanCity)}`);
+            if (!insightRes.ok) throw new Error("Backend unavailable");
             const data = await insightRes.json();
 
             setSearchedCity(cleanCity);
@@ -108,8 +109,9 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                 method: 'POST',
                 body: 'data=' + encodeURIComponent(query)
             });
+            if (!res.ok) throw new Error("Overpass rate limit or timeout");
             const data = await res.json();
-            const areas = data.elements.map(el => ({
+            const areas = (data.elements || []).map(el => ({
               name: el.tags.name || el.tags['name:en'],
               lat: el.lat || el.center.lat,
               lng: el.lon || el.center.lon
@@ -163,6 +165,7 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                 method: 'POST',
                 body: 'data=' + encodeURIComponent(query)
             });
+            if (!res.ok) throw new Error("Overpass busy");
             const data = await res.json();
             
             const eliteTags = ['museum', 'fort', 'monument', 'castle', 'palace', 'heritage', 'gallery', 'zoo'];
@@ -187,7 +190,7 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                     }
 
                     const ratingData = generateGoogleRating(el.id, score);
-                    const distance = getDistance(lat, lon, elLat, elLon);
+                    const distance = getDistance(lat, lon, elLat, elLon) || 0.0;
                     
                     // Add wiki summary for top landmarks (we'll fetch only for a subset to save time)
                     let info = tags.description || tags['description:en'] || null;
@@ -199,7 +202,7 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                         title: name,
                         type: tType.charAt(0).toUpperCase() + tType.slice(1),
                         score,
-                        distance,
+                        distance: isNaN(distance) ? 0.0 : distance,
                         rating: ratingData.rating,
                         reviews: ratingData.reviews,
                         description: info || `Highly recommended primary landmark for visitors in ${cityName}. Authenticated safe site.`
@@ -430,6 +433,8 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+
                     {/* Card 2: Strategic Infrastructure (High Accuracy) */}
                     <div className="area-card glass-card reveal">
                         <div className="area-card-header">

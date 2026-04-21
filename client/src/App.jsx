@@ -111,23 +111,35 @@ function App() {
   const fetchCityInfra = async (lat, lng) => {
     setInfraLoading(true);
     try {
-      const radius = 50000; // 50km for city-wide accuracy
-      const query = `[out:json][timeout:30];
+      const radius = 50000; // 50km for comprehensive city-wide analysis
+      const query = `[out:json][timeout:45];
         (
           node["amenity"="police"](around:${radius},${lat},${lng});
           way["amenity"="police"](around:${radius},${lat},${lng});
-          node["amenity"="hospital"](around:${radius},${lat},${lng});
-          way["amenity"="hospital"](around:${radius},${lat},${lng});
+          rel["amenity"="police"](around:${radius},${lat},${lng});
+          
+          node["amenity"~"hospital|clinic"](around:${radius},${lat},${lng});
+          way["amenity"~"hospital|clinic"](around:${radius},${lat},${lng});
+          rel["amenity"~"hospital|clinic"](around:${radius},${lat},${lng});
+          
+          node["healthcare"~"hospital|clinic"](around:${radius},${lat},${lng});
+          way["healthcare"~"hospital|clinic"](around:${radius},${lat},${lng});
+          rel["healthcare"~"hospital|clinic"](around:${radius},${lat},${lng});
+          
           node["amenity"="fire_station"](around:${radius},${lat},${lng});
           way["amenity"="fire_station"](around:${radius},${lat},${lng});
-          node["man_made"="surveillance"](around:${radius},${lat},${lng});
+          rel["amenity"="fire_station"](around:${radius},${lat},${lng});
+          
+          node["man_made"~"surveillance|security"](around:${radius},${lat},${lng});
+          node["amenity"="cctv"](around:${radius},${lat},${lng});
         );
-        out center;`;
+        out center tags 2000;`;
 
       const res = await fetch('https://overpass-api.de/api/interpreter', {
         method: 'POST',
         body: 'data=' + encodeURIComponent(query)
       });
+      if (!res.ok) throw new Error("Overpass API busy");
       const data = await res.json();
       
       const infra = {
@@ -138,14 +150,24 @@ function App() {
         counts: { police: 0, hospitals: 0, fire: 0, cctv: 0 }
       };
 
-      data.elements.forEach(el => {
-        const type = el.tags.amenity || el.tags.man_made;
-        const pos = { lat: el.lat || el.center?.lat, lng: el.lon || el.center?.lon, name: el.tags.name || 'Facility' };
-        
-        if (type === 'police') { infra.police.push(pos); infra.counts.police++; }
-        else if (type === 'hospital') { infra.hospitals.push(pos); infra.counts.hospitals++; }
-        else if (type === 'fire_station') { infra.fire.push(pos); infra.counts.fire++; }
-        else if (type === 'surveillance') { infra.cctv.push(pos); infra.counts.cctv++; }
+      (data.elements || []).forEach(el => {
+        const t = el.tags || {};
+        const pos = { lat: el.lat || el.center?.lat, lng: el.lon || el.center?.lon, name: t.name || 'Safety Asset' };
+        if (!pos.lat || !pos.lng) return;
+
+        if (t.amenity === 'police') { 
+            infra.police.push(pos); 
+            infra.counts.police++; 
+        } else if (t.amenity === 'hospital' || t.amenity === 'clinic' || t.healthcare === 'hospital' || t.healthcare === 'clinic') { 
+            infra.hospitals.push(pos); 
+            infra.counts.hospitals++; 
+        } else if (t.amenity === 'fire_station') { 
+            infra.fire.push(pos); 
+            infra.counts.fire++; 
+        } else if (t.man_made === 'surveillance' || t.amenity === 'cctv') { 
+            infra.cctv.push(pos); 
+            infra.counts.cctv++; 
+        }
       });
 
       setSafetyInfra(infra);
