@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const SafetyExplorer = () => {
+const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
     const defaultCity = localStorage.getItem('kyc_userCity') || 'Your City';
     const [searchedCity, setSearchedCity] = useState(localStorage.getItem('kyc_userCity') || 'Your City');
     const [searchInput, setSearchInput] = useState('');
@@ -430,6 +430,43 @@ const SafetyExplorer = () => {
                                 </div>
                             </div>
                         </div>
+                    {/* Card 2: Strategic Infrastructure (High Accuracy) */}
+                    <div className="area-card glass-card reveal">
+                        <div className="area-card-header">
+                            <div className="area-icon-box" style={{ background: 'rgba(33,150,243,0.1)', color: '#2196f3' }}>
+                                <span className="material-symbols-outlined">analytics</span>
+                            </div>
+                            <h3 className="area-name">Safety Analysis</h3>
+                            <span className="area-badge badge-safe" style={{ background: 'rgba(33,150,243,0.1)', color: '#2196f3', border: '1px solid rgba(33,150,243,0.2)' }}>Verified</span>
+                        </div>
+                        
+                        <div className="area-card-content">
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <span className="material-symbols-outlined" style={{ color: '#00e676', fontSize: '24px', marginBottom: '8px' }}>shield</span>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.police}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>Police Stations</div>
+                                </div>
+                                <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <span className="material-symbols-outlined" style={{ color: '#2196f3', fontSize: '24px', marginBottom: '8px' }}>add_box</span>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.hospitals}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>Hospitals</div>
+                                </div>
+                                <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <span className="material-symbols-outlined" style={{ color: '#ff9800', fontSize: '24px', marginBottom: '8px' }}>local_fire_department</span>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.fire}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>Fire Stations</div>
+                                </div>
+                                <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <span className="material-symbols-outlined" style={{ color: '#9c27b0', fontSize: '24px', marginBottom: '8px' }}>videocam</span>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.cctv}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>CCTV/Surveillance</div>
+                                </div>
+                            </div>
+                            <div style={{ marginTop: '15px', fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
+                                Searching official registries across {searchedCity}...
+                            </div>
+                        </div>
                     </div>
 
                     {/* Card 3: Tourist Insights (Dynamic) */}
@@ -487,69 +524,7 @@ const SafetyExplorer = () => {
                         </div>
                     </div>
 
-                    {/* Card 2: Marin Drive (Fixed - Featured) */}
-                    <div className="area-card glass-card reveal">
-                        <div className="area-card-header">
-                            <div className="area-icon-box">
-                                <span className="material-symbols-outlined">water_lux</span>
-                            </div>
-                            <h3 className="area-name">Marin Drive, Mumbai</h3>
-                            <span className="area-badge badge-safe">Very Safe</span>
-                        </div>
-                        <div className="area-card-content">
-                            <div className="area-metrics">
-                                <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Safety Index</span><span className="metric-value">94/100</span></div>
-                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '94%' }}></div></div>
-                                </div>
-                                <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Family Friendliness</span><span className="metric-value">92/100</span></div>
-                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '92%' }}></div></div>
-                                </div>
-                                <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Walkability</span><span className="metric-value">98/100</span></div>
-                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '98%' }}></div></div>
-                                </div>
-                            </div>
-                            <div className="area-tags" style={{ marginTop: '20px' }}>
-                                <span className="area-tag">🌊 Sea Face</span>
-                                <span className="area-tag">🚶 Promenade</span>
-                                <span className="area-tag">👮 High Vigil</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Card 4: Jubilee Hills (Fixed - Featured) */}
-                    <div className="area-card glass-card reveal">
-                        <div className="area-card-header">
-                            <div className="area-icon-box">
-                                <span className="material-symbols-outlined">diamond</span>
-                            </div>
-                            <h3 className="area-name">Jubilee Hills, HYD</h3>
-                            <span className="area-badge badge-safe">Ultra Safe</span>
-                        </div>
-                        <div className="area-card-content">
-                            <div className="area-metrics">
-                                <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Safety Index</span><span className="metric-value">96/100</span></div>
-                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '96%' }}></div></div>
-                                </div>
-                                <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Family Friendliness</span><span className="metric-value">94/100</span></div>
-                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '94%' }}></div></div>
-                                </div>
-                                <div className="metric">
-                                    <div className="metric-info"><span className="metric-label">Infrastructure</span><span className="metric-value">90/100</span></div>
-                                    <div className="metric-bar"><div className="metric-fill green" style={{ width: '90%' }}></div></div>
-                                </div>
-                            </div>
-                            <div className="area-tags" style={{ marginTop: '20px' }}>
-                                <span className="area-tag">🏰 Elite Zone</span>
-                                <span className="area-tag">🌳 Greenary</span>
-                                <span className="area-tag">🛡️ Gated Community</span>
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
             </div>

@@ -20,6 +20,16 @@ function App() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   
+  // Infrastructure Data (Shared across Explorer and Map)
+  const [safetyInfra, setSafetyInfra] = useState({
+    police: [],
+    hospitals: [],
+    fire: [],
+    cctv: [],
+    counts: { police: 0, hospitals: 0, fire: 0, cctv: 0 }
+  });
+  const [infraLoading, setInfraLoading] = useState(false);
+  
   // Navigation & Location State
   const [userCity, setUserCity] = useState(localStorage.getItem('kyc_userCity') || 'Detecting...');
   const [weatherTemp, setWeatherTemp] = useState('--°C');
@@ -97,6 +107,55 @@ function App() {
     if (dropdown) dropdown.classList.toggle('active');
   };
 
+  // Fetch City Infrastructure (High Accuracy City-Wide Search)
+  const fetchCityInfra = async (lat, lng) => {
+    setInfraLoading(true);
+    try {
+      const radius = 50000; // 50km for city-wide accuracy
+      const query = `[out:json][timeout:30];
+        (
+          node["amenity"="police"](around:${radius},${lat},${lng});
+          way["amenity"="police"](around:${radius},${lat},${lng});
+          node["amenity"="hospital"](around:${radius},${lat},${lng});
+          way["amenity"="hospital"](around:${radius},${lat},${lng});
+          node["amenity"="fire_station"](around:${radius},${lat},${lng});
+          way["amenity"="fire_station"](around:${radius},${lat},${lng});
+          node["man_made"="surveillance"](around:${radius},${lat},${lng});
+        );
+        out center;`;
+
+      const res = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: 'data=' + encodeURIComponent(query)
+      });
+      const data = await res.json();
+      
+      const infra = {
+        police: [],
+        hospitals: [],
+        fire: [],
+        cctv: [],
+        counts: { police: 0, hospitals: 0, fire: 0, cctv: 0 }
+      };
+
+      data.elements.forEach(el => {
+        const type = el.tags.amenity || el.tags.man_made;
+        const pos = { lat: el.lat || el.center?.lat, lng: el.lon || el.center?.lon, name: el.tags.name || 'Facility' };
+        
+        if (type === 'police') { infra.police.push(pos); infra.counts.police++; }
+        else if (type === 'hospital') { infra.hospitals.push(pos); infra.counts.hospitals++; }
+        else if (type === 'fire_station') { infra.fire.push(pos); infra.counts.fire++; }
+        else if (type === 'surveillance') { infra.cctv.push(pos); infra.counts.cctv++; }
+      });
+
+      setSafetyInfra(infra);
+    } catch (err) {
+      console.error("Infra Fetch Error:", err);
+    } finally {
+      setInfraLoading(false);
+    }
+  };
+
   // Sync city name from local storage periodically (Backup)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -115,6 +174,7 @@ function App() {
       const { lat, lng, city } = e.detail;
       setUserCity(city);
       setUserLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
+      fetchCityInfra(parseFloat(lat), parseFloat(lng));
       
       // Auto-scroll to map if it's a manual selection
       setTimeout(() => {
@@ -302,12 +362,12 @@ function App() {
 
       {/* Interactive Map (Rendered conditionally) */}
       {userLocation && (
-        <SafetyMap userLocation={userLocation} />
+        <SafetyMap userLocation={userLocation} safetyInfra={safetyInfra} />
       )}
 
       {/* ===== REMAINING SECTIONS ===== */}
       <Features />
-      <SafetyExplorer />
+      <SafetyExplorer safetyInfra={safetyInfra} infraLoading={infraLoading} />
       <Testimonials />
       <Footer />
 

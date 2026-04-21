@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Circle, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Circle, CircleMarker, Popup, useMap } from 'react-leaflet';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 
@@ -10,7 +10,7 @@ function ChangeView({ center, zoom }) {
     return null;
 }
 
-export default function SafetyMap({ userLocation }) {
+export default function SafetyMap({ userLocation, safetyInfra }) {
     const [insights, setInsights] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -61,14 +61,36 @@ export default function SafetyMap({ userLocation }) {
                             </Popup>
                         </Circle>
                     ))}
+
+                    {/* Infrastructure Spots - HIGH ACCURACY */}
+                    {safetyInfra.police.map((p, i) => (
+                        <CircleMarker key={`p-${i}`} center={[p.lat, p.lng]} radius={6} pathOptions={{ color: '#2196f3', fillColor: '#2196f3', fillOpacity: 0.8 }}>
+                            <Popup><strong>Police Station</strong><br/>{p.name}</Popup>
+                        </CircleMarker>
+                    ))}
+                    {safetyInfra.hospitals.map((h, i) => (
+                        <CircleMarker key={`h-${i}`} center={[h.lat, h.lng]} radius={6} pathOptions={{ color: '#00e676', fillColor: '#00e676', fillOpacity: 0.8 }}>
+                            <Popup><strong>Hospital/Medical</strong><br/>{h.name}</Popup>
+                        </CircleMarker>
+                    ))}
+                    {safetyInfra.fire.map((f, i) => (
+                        <CircleMarker key={`f-${i}`} center={[f.lat, f.lng]} radius={6} pathOptions={{ color: '#ff9800', fillColor: '#ff9800', fillOpacity: 0.8 }}>
+                            <Popup><strong>Fire Station</strong><br/>{f.name}</Popup>
+                        </CircleMarker>
+                    ))}
+                    {safetyInfra.cctv.map((c, i) => (
+                        <CircleMarker key={`c-${i}`} center={[c.lat, c.lng]} radius={4} pathOptions={{ color: '#9c27b0', fillColor: '#9c27b0', fillOpacity: 0.8 }}>
+                            <Popup><strong>CCTV Node</strong><br/>Surveillance Active</Popup>
+                        </CircleMarker>
+                    ))}
                 </MapContainer>
             </div>
 
             {/* Insights Overlay */}
             <div className="map-insights glass-card">
                 <div className="insights-header">
-                    <h3>Local Area Insights</h3>
-                    <p>Real-time neighborhood analysis.</p>
+                    <h3>Localized Safety Assets</h3>
+                    <p>Found {safetyInfra.police.length + safetyInfra.hospitals.length + safetyInfra.fire.length + safetyInfra.cctv.length} verified safety nodes in {localStorage.getItem('kyc_userCity') || 'the city'}.</p>
                 </div>
 
                 {loading ? (
