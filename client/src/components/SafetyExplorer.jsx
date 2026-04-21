@@ -130,7 +130,7 @@ const SafetyExplorer = () => {
                     node["historic"~"monument|memorial|castle|fort|heritage"](around:20000,${lat},${lon});
                     way["historic"~"monument|memorial|castle|fort|heritage"](around:20000,${lat},${lon});
                 );
-                out center tags 60;`;
+                out center tags 80;`;
 
             const res = await fetch('https://overpass-api.de/api/interpreter', {
                 method: 'POST',
@@ -138,27 +138,38 @@ const SafetyExplorer = () => {
             });
             const data = await res.json();
             
-            const eliteTags = ['museum', 'fort', 'monument', 'castle', 'attraction', 'theme_park', 'heritage'];
+            const eliteTags = ['museum', 'fort', 'monument', 'castle', 'palace', 'heritage', 'gallery', 'zoo'];
             
             const spots = data.elements
                 .map(el => {
-                    const name = el.tags.name || el.tags['name:en'];
+                    const tags = el.tags || {};
+                    const name = tags.name || tags['name:en'];
                     if (!name) return null;
                     
-                    const tType = el.tags.tourism || el.tags.historic || 'Attraction';
-                    const isElite = eliteTags.includes(tType) || el.tags.heritage;
+                    const tType = tags.tourism || tags.historic || 'Attraction';
                     
+                    // Significance Scoring Logic
+                    let score = 0;
+                    if (tags.wikipedia || tags.wikidata) score += 5; // Globally recognized significance
+                    if (tags.heritage) score += 3; // Official heritage designation
+                    if (eliteTags.includes(tType.toLowerCase())) score += 2; // Category priority
+                    
+                    // Filter out minor religious sites or local parks that lack global significance
+                    if (score < 4 && (tType.includes('worship') || tags.amenity === 'place_of_worship' || tags.leisure === 'park')) {
+                        return null; 
+                    }
+
                     return {
                         title: name,
                         type: tType.charAt(0).toUpperCase() + tType.slice(1),
-                        isElite: isElite,
-                        description: el.tags.description || el.tags['description:en'] || `Premier landmark in ${cityName}.`
+                        score: score,
+                        description: tags.description || tags['description:en'] || `Highly recommended primary landmark for visitors in ${cityName}.`
                     };
                 })
                 .filter(s => s !== null)
-                .sort((a, b) => (b.isElite ? 1 : 0) - (a.isElite ? 1 : 0));
+                .sort((a, b) => b.score - a.score);
 
-            return spots.slice(0, 5); 
+            return spots.slice(0, 4); // Show only top 4 highest-rated spots
         } catch (err) {
             console.error("Tourist Fetch Error:", err);
             return [];
