@@ -158,23 +158,11 @@ router.get('/insights', async (req, res) => {
 
         const incidents = crimeData?.incidents || [];
         
-        // DETERMINISTIC INFRASTRUCTURE PREDICTOR (Fallbacks for sparse OSM data)
+        // 100% VERIFIED DATA COUNTS (Pure OSM)
         let pCount = infrastructures.filter(i => i.nodeType === 'police').length;
         let hCount = infrastructures.filter(i => i.nodeType === 'hospital').length;
         let fCount = infrastructures.filter(i => i.nodeType === 'fire_station').length;
         let cCount = infrastructures.filter(i => i.nodeType === 'surveillance').length;
-
-        // If OSM is sparse in this region, seed realistic counts based on city identity hash
-        if (pCount < 1 || hCount < 1 || fCount < 1) {
-            let hash = 0;
-            for (let i = 0; i < cityName.length; i++) hash = cityName.charCodeAt(i) + ((hash << 5) - hash);
-            const seed = Math.abs(hash);
-            
-            if (pCount < 5) pCount = 8 + (seed % 12);
-            if (hCount < 5) hCount = 12 + (seed % 20);
-            if (fCount < 2) fCount = 3 + (seed % 6);
-            if (cCount < 20) cCount = 45 + (seed % 150); 
-        }
 
         // SCORING
         const crimePoints = incidents.length * 2.5; 

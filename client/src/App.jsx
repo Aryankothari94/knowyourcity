@@ -110,6 +110,10 @@ function App() {
   // Fetch City Infrastructure (High Accuracy City-Wide Search)
   const fetchCityInfra = async (lat, lng) => {
     setInfraLoading(true);
+    setSafetyInfra(prev => ({
+        ...prev,
+        counts: { police: '...', hospitals: '...', fire: '...', cctv: '...' }
+    }));
     try {
       const radius = 50000; // 50km for comprehensive city-wide analysis
       const query = `[out:json][timeout:45];
