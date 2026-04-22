@@ -516,10 +516,10 @@
             <div class="legend-item"><span class="legend-color" style="background:#00e676"></span> Safe Zone</div>
             <div class="legend-item"><span class="legend-color" style="background:#ffab40"></span> Moderate</div>
             <div class="legend-item"><span class="legend-color" style="background:#ff5252"></span> Caution Area</div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(0,230,118,0.8)"></span> Police
-            </div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(33,150,243,0.8)"></span> Hospital
-            </div>
+            <div class="legend-item"><span class="legend-color" style="background:#2196f3"></span> Police</div>
+            <div class="legend-item"><span class="legend-color" style="background:#00e676"></span> Hospital</div>
+            <div class="legend-item"><span class="legend-color" style="background:#ff9800"></span> Fire</div>
+            <div class="legend-item"><span class="legend-color" style="background:#9c27b0"></span> CCTV</div>
           </div>
         </div>
         <div class="safety-map-info glass-card" id="safetyMapInfo">
@@ -591,10 +591,18 @@
       if (!window._kyc_listener_set) {
         window.addEventListener('kyc_locationUpdated', (e) => {
           const { lat, lng, city } = e.detail;
-          console.log(`🌐 Global Sync: Refreshing safety data for ${city}`);
+          console.log(`🌐 Global Sync: Refreshing safety data for ${city} [${lat}, ${lng}]`);
+          
+          // Force update local state
+          localStorage.setItem('kyc_userLat', lat);
+          localStorage.setItem('kyc_userLng', lng);
+          localStorage.setItem('kyc_userCity', city);
+
           if (_safetyMap) {
             _safetyMap.setView([lat, lng], 13);
             fetchSafetyData(_safetyMap, lat, lng, city);
+          } else {
+            initSafetyMap();
           }
           // Also sync the explorer cards
           if (typeof generateSafetyCard === 'function') generateSafetyCard(city, lat, lng);
@@ -648,8 +656,15 @@
       document.getElementById('fireCount').textContent = fC;
       document.getElementById('cctvCount').textContent = cC;
 
-      // Clear existing layer groups
-      Object.keys(_mapLayers).forEach(k => _mapLayers[k].clearLayers());
+      document.getElementById('cctvCount').textContent = cC;
+
+      // Clear existing layer groups & heatmap
+      Object.keys(_mapLayers).forEach(k => {
+        if (_mapLayers[k]) _mapLayers[k].clearLayers();
+      });
+      
+      // Clear heatmap rectangles (manual)
+      map.eachLayer(l => { if (l instanceof L.Rectangle && !l.options.interactive) map.removeLayer(l); });
 
       // Sync with search cards if elements exist
       const dP = document.getElementById('searchPoliceCount');
@@ -751,11 +766,12 @@
       const lv = tot > 30 ? 'High' : tot > 10 ? 'Moderate' : 'Low';
       document.getElementById('safetySummary').innerHTML = `
         <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
-        <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252'}">${lv}</span></div>
+        <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lvColor}">${lv}</span></div>
         <div class="summary-item"><strong>Total Safety Points:</strong> ${tot} (${police.length} police, ${hosp.length} hospitals/clinics, ${fire.length} fire, ${cctv.length} CCTV)</div>
         <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis coverage: ${source.includes('City-Wide') ? 'Full City Boundary' : '~25km radius'}. Only verified OSM data. Source: ${source}.</div>`;
 
-      generateCityProTips(city);
+      // Trigger Pro-Tips with the latest counts
+      if (typeof generateCityProTips === 'function') generateCityProTips(city, { policeCount: pC, hospitalCount: hC, fireCount: fC, cctvCount: cC });
     }
 
     function filterMapLayers(type) {
@@ -892,7 +908,7 @@
 
     // HIGH-PRECISION CONCURRENT OVERPASS RACE (Police, Hospital, Fire, CCTV)
     async function fetchSafetyDataDirect(lat, lng, city) {
-      const radius = 15000; // 15km fallback
+      const radius = 25000; // 25km radius for better city-wide coverage
       
       // CLEAN CITY NAME: "Mumbai, Maharashtra, India" -> "Mumbai"
       let searchName = city ? city.split(',')[0].trim() : null;
@@ -980,48 +996,40 @@
         : 'https://knowyourcity.onrender.com/api';
 
       try {
-        const results = await Promise.any([
-          fetch(`${API_BASE}/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`)
-            .then(r => r.ok ? r.json() : Promise.reject())
-            .then(data => {
-              if (data.safetyStats && data.safetyStats.policeCount === 0 && data.safetyStats.hospitalCount === 0) {
-                return Promise.reject("Backend API returned 0 limits, deferring to client-side Live Data");
-              }
-              return data;
-            }),
-          
-          fetchSafetyDataDirect(globalLat, globalLng, city).then(osm => ({ 
-            infrastructures: (osm.elements || []).map(e => {
-                const t = e.tags || {};
-                return {
-                    nodeType: t.amenity === 'police' ? 'police' : 
-                          (t.amenity === 'hospital' || t.amenity === 'clinic' || t.healthcare === 'hospital' || t.healthcare === 'clinic') ? 'hospital' : 
-                          t.amenity === 'fire_station' ? 'fire_station' : 'surveillance',
-                    lat: e.lat || e.center?.lat, 
-                    lng: e.lon || e.center?.lon, 
-                    name: t.name || 'Safety Asset'
-                };
-            }),
-            source: 'Live Verified Database'
-          }))
-        ]);
+        console.log(`🔍 [Safety Data] Initiating high-precision sync for ${city}...`);
+        
+        // Fetch OSM data directly as the primary source of truth for counts and markers
+        const osmResults = await fetchSafetyDataDirect(globalLat, globalLng, city);
+        const parsedOsm = parseOverpassData(osmResults.elements || []);
+        
+        // Fetch backend insights for supplemental data like incidents and crime scores
+        const backendResults = await fetch(`${API_BASE}/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null);
 
         dataFound = true;
         clearTimeout(analyzeTimeout);
 
-        const police = [], hosp = [], fire = [], cctv = [];
-        (results.infrastructures || []).forEach(el => {
-          const item = { globalLat: el.lat, globalLng: el.lng, name: el.name };
-          if (el.nodeType === 'police') police.push(item);
-          else if (el.nodeType === 'hospital') hosp.push(item);
-          else if (el.nodeType === 'fire_station') fire.push(item);
-          else if (el.nodeType === 'surveillance') cctv.push(item);
-        });
+        const police = parsedOsm.police;
+        const hosp = parsedOsm.hosp;
+        const fire = parsedOsm.fire;
+        const cctv = parsedOsm.cctv;
 
-        if (summary) summary.innerHTML = `<p style="color:var(--safe-green)">✓ Verified Search Results from ${results.source || 'Secure Sources'}.</p>`;
-        renderSafetyOnMap(map, police, hosp, fire, cctv, city, results.source || 'Live Data', results.safetyStats);
+        const mergedSource = osmResults.source;
+        // Merge Backend and OSM stats, preferring the higher count to ensure accuracy
+        const safetyStats = {
+            policeCount: Math.max(police.length, (backendResults?.safetyStats?.policeCount || 0)),
+            hospitalCount: Math.max(hosp.length, (backendResults?.safetyStats?.hospitalCount || 0)),
+            fireCount: Math.max(fire.length, (backendResults?.safetyStats?.fireCount || 0)),
+            cctvCount: Math.max(cctv.length, (backendResults?.safetyStats?.cctvCount || 0)),
+            crimeScore: backendResults?.safetyStats?.crimeScore || 85
+        };
+
+        if (summary) summary.innerHTML = `<p style="color:var(--safe-green)">✓ Verified Data Synchronized via ${mergedSource}.</p>`;
         
-        if (results.recentIncidents) renderRecentCrimes(results.recentIncidents, 'recentActivityList', 'recentActivityContainer');
+        renderSafetyOnMap(map, police, hosp, fire, cctv, city, mergedSource, safetyStats);
+        
+        if (backendResults?.recentIncidents) renderRecentCrimes(backendResults.recentIncidents, 'recentActivityList', 'recentActivityContainer');
         updateAreaCards(globalLat, globalLng, city);
 
       } catch (e) {
