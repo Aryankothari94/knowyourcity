@@ -631,7 +631,7 @@
       const cityVal = localStorage.getItem('kyc_userCity');
       if (!cityVal) {
          // Show blank map state
-         _safetyMap = L.map('safetyMap', { zoomControl: false }).setView([20, 78], 4);
+         _safetyMap = L.map('safetyMap', { zoomControl: false, preferCanvas: true }).setView([20, 78], 4);
          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(_safetyMap);
          return;
       }
@@ -640,7 +640,7 @@
       const globalLng = parseFloat(localStorage.getItem('kyc_userLng'));
       const city = cityVal || 'Your Area';
       if (_safetyMap) { _safetyMap.remove(); _safetyMap = null; }
-      _safetyMap = L.map('safetyMap', { scrollWheelZoom: false, zoomControl: true }).setView([globalLat, globalLng], 13);
+      _safetyMap = L.map('safetyMap', { scrollWheelZoom: false, zoomControl: true, preferCanvas: true }).setView([globalLat, globalLng], 13);
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri', maxZoom: 18
       }).addTo(_safetyMap);
@@ -698,8 +698,8 @@
       const currentLat = c.lat, currentLng = c.lng;
       
       // DYNAMIC BOUNDS: Heatmap grid should cover all data points if they are sparse, or the view area
-      let minLat = currentLat - 0.13, maxLat = currentLat + 0.13;
-      let minLng = currentLng - 0.13, maxLng = currentLng + 0.13;
+      let minLat = currentLat - 0.08, maxLat = currentLat + 0.08;
+      let minLng = currentLng - 0.08, maxLng = currentLng + 0.08;
       
       const allPoints = [...police, ...hosp, ...fire, ...cctv];
       if (allPoints.length > 0) {
@@ -711,7 +711,12 @@
         });
       }
 
-      const step = 0.015;
+      }
+      
+      // OPTIMIZATION: Limit grid density to prevent lag
+      const step = 0.016;
+      const heatmapLayer = L.layerGroup();
+      
       for (let gLat = minLat; gLat <= maxLat; gLat += step) {
         for (let gLng = minLng; gLng <= maxLng; gLng += step) {
           let count = 0;
@@ -724,13 +729,19 @@
           count += hosp.filter(within).length * 1.5;
           count += fire.filter(within).length * 1.5;
           count += cctv.filter(within).length * 1;
-          let color = '#ff5252', fillOp = 0.15;
+          
+          if (count === 0) continue; // Skip empty cells to reduce layers
+          
+          let color = '#ffab40', fillOp = 0.3;
           if (count >= 4) { color = '#00e676'; fillOp = 0.4; }
-          else if (count >= 1.5) { color = '#ffab40'; fillOp = 0.3; }
-          else if (count === 0) { fillOp = 0.05; }
-          L.rectangle([[gLat, gLng], [gLat + step, gLng + step]], { color, weight: 1, fillOpacity: fillOp, opacity: 0.3, stroke: false }).addTo(map);
+          else if (count < 1.5) { color = '#ff5252'; fillOp = 0.15; }
+          
+          L.rectangle([[gLat, gLng], [gLat + step, gLng + step]], { 
+            color, weight: 1, fillOpacity: fillOp, opacity: 0.3, stroke: false, interactive: false 
+          }).addTo(heatmapLayer);
         }
       }
+      heatmapLayer.addTo(map);
 
       // Plot real markers with Enhanced Visuals
       police.forEach(p => {
