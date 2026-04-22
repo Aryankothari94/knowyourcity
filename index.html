@@ -162,6 +162,50 @@
     .pulse-marker-police { animation: pulse-police 2s infinite; }
     .pulse-marker-hospital { animation: pulse-hosp 2s infinite; }
 
+    @keyframes pulse-police {
+      0% { filter: drop-shadow(0 0 0 rgba(33, 150, 243, 0.7)); }
+      70% { filter: drop-shadow(0 0 10px rgba(33, 150, 243, 0)); }
+      100% { filter: drop-shadow(0 0 0 rgba(33, 150, 243, 0)); }
+    }
+    @keyframes pulse-hosp {
+      0% { filter: drop-shadow(0 0 0 rgba(0, 230, 118, 0.7)); }
+      70% { filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0)); }
+      100% { filter: drop-shadow(0 0 0 rgba(0, 230, 118, 0)); }
+    }
+
+    /* Map Layer Control Dropdown */
+    .map-layer-control {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+      background: rgba(30, 32, 47, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .map-layer-control select {
+      background: transparent;
+      border: none;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      cursor: pointer;
+      outline: none;
+      padding-right: 5px;
+    }
+    .map-layer-control select option {
+      background: #1a1b2e;
+      color: white;
+    }
+
     /* Interactive Mobile Widgets */
     .mobile-nav-li {
       width: 100%;
@@ -451,6 +495,19 @@
       <div class="safety-map-wrapper">
         <div class="safety-map-box glass-card">
           <div id="safetyMap" class="safety-map-container"></div>
+          
+          <!-- Layer Visibility Control -->
+          <div class="map-layer-control">
+            <span class="material-symbols-outlined" style="font-size: 18px;">layers</span>
+            <select id="mapLayerVisibility" onchange="filterMapLayers(this.value)">
+              <option value="all">Display: All Assets</option>
+              <option value="police">Police Stations</option>
+              <option value="hospital">Hospitals/Clinics</option>
+              <option value="fire">Fire Stations</option>
+              <option value="cctv">CCTV/Surveillance</option>
+            </select>
+          </div>
+
           <div id="safetyStatusBadge" class="safety-status-badge">
             <span class="status-dot"></span>
             <span class="status-text">Analyzing Area...</span>
@@ -522,8 +579,29 @@
     };
 
     var _safetyMap = null;
+    var _mapLayers = {
+      police: L.featureGroup(),
+      hospital: L.featureGroup(),
+      fire: L.featureGroup(),
+      cctv: L.featureGroup()
+    };
 
     function initSafetyMap() {
+      // Global Location Sync Listener
+      if (!window._kyc_listener_set) {
+        window.addEventListener('kyc_locationUpdated', (e) => {
+          const { lat, lng, city } = e.detail;
+          console.log(`🌐 Global Sync: Refreshing safety data for ${city}`);
+          if (_safetyMap) {
+            _safetyMap.setView([lat, lng], 13);
+            fetchSafetyData(_safetyMap, lat, lng, city);
+          }
+          // Also sync the explorer cards
+          if (typeof generateSafetyCard === 'function') generateSafetyCard(city, lat, lng);
+        });
+        window._kyc_listener_set = true;
+      }
+
       // Don't auto-fetch data on init unless we have a specific city from a search session
       const cityVal = localStorage.getItem('kyc_userCity');
       if (!cityVal) {
@@ -541,6 +619,10 @@
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri', maxZoom: 18
       }).addTo(_safetyMap);
+      
+      // Add grouped layers to map
+      Object.keys(_mapLayers).forEach(k => _mapLayers[k].addTo(_safetyMap));
+
       L.circleMarker([globalLat, globalLng], { radius: 8, fillColor: '#00e5ff', fillOpacity: 1, color: '#fff', weight: 2 })
         .addTo(_safetyMap).bindPopup('📍 You — ' + city).openPopup();
       document.getElementById('policeCount').textContent = '--';
@@ -565,6 +647,9 @@
       document.getElementById('hospitalCount').textContent = hC;
       document.getElementById('fireCount').textContent = fC;
       document.getElementById('cctvCount').textContent = cC;
+
+      // Clear existing layer groups
+      Object.keys(_mapLayers).forEach(k => _mapLayers[k].clearLayers());
 
       // Sync with search cards if elements exist
       const dP = document.getElementById('searchPoliceCount');
@@ -619,25 +704,28 @@
       police.forEach(p => {
         L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { 
           radius: 7, 
-          fillColor: '#00e676', 
+          fillColor: '#2196f3', // Standardized Blue
           fillOpacity: 0.9, 
           color: '#fff', 
           weight: 2,
           className: 'pulse-marker-police'
-        }).addTo(map).bindPopup(`<strong>Police Station</strong><br>${p.name || 'Verified Station'}`);
+        }).addTo(_mapLayers.police).bindPopup(`<strong>Police Station</strong><br>${p.name || 'Verified Station'}`);
       });
       hosp.forEach(p => {
         L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { 
           radius: 7, 
-          fillColor: '#2196f3', 
+          fillColor: '#00e676', // Standardized Green
           fillOpacity: 0.9, 
           color: '#fff', 
           weight: 2,
           className: 'pulse-marker-hospital'
-        }).addTo(map).bindPopup(`<strong>Hospital/Clinic</strong><br>${p.name || 'Verified Facility'}`);
+        }).addTo(_mapLayers.hospital).bindPopup(`<strong>Hospital/Clinic</strong><br>${p.name || 'Verified Facility'}`);
       });
-      fire.forEach(p => L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#fff', weight: 1 }).addTo(map).bindPopup((p.name || 'Fire Station')));
-      cctv.forEach(p => L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#fff', weight: 1 }).addTo(map).bindPopup((p.name || 'CCTV')));
+      fire.forEach(p => L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { radius: 6, fillColor: '#ff9800', fillOpacity: 0.8, color: '#fff', weight: 1 }).addTo(_mapLayers.fire).bindPopup((p.name || 'Fire Station')));
+      cctv.forEach(p => L.circleMarker([p.globalLat || p.lat, p.globalLng || p.lng], { radius: 5, fillColor: '#9c27b0', fillOpacity: 0.8, color: '#fff', weight: 1 }).addTo(_mapLayers.cctv).bindPopup((p.name || 'CCTV')));
+
+      // Apply initial filter based on dropdown
+      filterMapLayers(document.getElementById('mapLayerVisibility')?.value || 'all');
 
       // Accurate safety summary based on real data
       const tot = police.length + hosp.length + fire.length + cctv.length;
@@ -665,9 +753,20 @@
         <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
         <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252'}">${lv}</span></div>
         <div class="summary-item"><strong>Total Safety Points:</strong> ${tot} (${police.length} police, ${hosp.length} hospitals/clinics, ${fire.length} fire, ${cctv.length} CCTV)</div>
-        <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis coverage: ${source.includes('City-Wide') ? 'Full City Boundary' : '~15km radius'}. Only verified OSM data. Source: ${source}.</div>`;
+        <div class="summary-item" style="margin-top:8px;font-size:0.78rem;color:var(--text-secondary)">Analysis coverage: ${source.includes('City-Wide') ? 'Full City Boundary' : '~25km radius'}. Only verified OSM data. Source: ${source}.</div>`;
 
       generateCityProTips(city);
+    }
+
+    function filterMapLayers(type) {
+      if (!_safetyMap) return;
+      Object.keys(_mapLayers).forEach(k => {
+        if (type === 'all' || k === type) {
+          if (!_safetyMap.hasLayer(_mapLayers[k])) _mapLayers[k].addTo(_safetyMap);
+        } else {
+          if (_safetyMap.hasLayer(_mapLayers[k])) _safetyMap.removeLayer(_mapLayers[k]);
+        }
+      });
     }
 
     // Parse Overpass API response into categorized arrays
@@ -824,7 +923,7 @@
           node['man_made'~'surveillance|security']${filterPart};
           node['amenity'='cctv']${filterPart};
         );
-        out center tags 2000;`;
+        out center tags 5000;`;
       
       const mirrors = [
         'https://overpass-api.de/api/interpreter',
@@ -1257,6 +1356,19 @@
                 <span id="searchCctvCount" style="color:#fff; font-size:1.1rem; font-weight:700;">--</span>
               </div>
             </div>
+
+            <!-- Stats Grid Summary -->
+            <div id="infraSummaryBlock" style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; line-height: 1.6;">
+                <div style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="font-size:16px;">query_stats</span> Verified Infrastructure Coverage
+                </div>
+                <div id="infraSummaryDetails">
+                   <div style="color: #888;">Calculating regional density...</div>
+                </div>
+                <div style="margin-top: 6px; color: #64748b; font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
+                   <span class="material-symbols-outlined" style="font-size:14px;">info</span> Analysis coverage: ~25km radius. Source: cache.
+                </div>
+            </div>
           </div>
         </div>
 
@@ -1606,6 +1718,10 @@
             }
 
             renderRecentCrimes(data.recentIncidents, 'recentActivityList', 'recentActivityContainer');
+            
+            // Calculate and Show Analytics Summary
+            updateInfraSummaryUI(pC, hC, fC, cC);
+
             syncSecondaryCityData(globalCity, globalLat, globalLng, safetyStats);
         })
         .catch(err => {
@@ -1651,8 +1767,35 @@
             document.getElementById('searchCctvCount').textContent = cC;
 
             renderRecentCrimes([], 'recentActivityList', 'recentActivityContainer');
+            updateInfraSummaryUI(pC, hC, fC, cC);
             syncSecondaryCityData(city, fallbackLat, fallbackLng, { policeCount: pC, hospitalCount: hC, fireCount: fC, cctvCount: cC });
         });
+    }
+
+    function updateInfraSummaryUI(pC, hC, fC, cC) {
+      const summaryDiv = document.getElementById('infraSummaryDetails');
+      if(!summaryDiv) return;
+
+      const tot = pC + hC + fC + cC;
+      const areaKm2 = Math.PI * 25 * 25; // 25km radius
+      const den = (tot / areaKm2).toFixed(2);
+      const lv = den > 0.5 ? 'High' : den > 0.2 ? 'Moderate' : 'Low';
+      const lvColor = lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252';
+
+      summaryDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+          <span style="color: #aaa;">Infrastructure Density:</span>
+          <span style="color: #fff; font-weight: 600;">${den} per km²</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+          <span style="color: #aaa;">Coverage Level:</span>
+          <span style="color: ${lvColor}; font-weight: 700;">${lv}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: #aaa;">Total Safety Points:</span>
+          <span style="color: #fff; font-weight: 600;">${tot} <small style="color:#666; font-weight:400;">(${pC}P, ${hC}H, ${fC}F, ${cC}C)</small></span>
+        </div>
+      `;
     }
 
     function syncSecondaryCityData(globalCity, globalLat, globalLng, safetyStats = null) {
