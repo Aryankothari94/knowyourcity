@@ -4,24 +4,31 @@ const CrimeData = require('../models/CrimeData');
 const SafeRouteFeedback = require('../models/SafeRouteFeedback');
 
 // Helper to fetch safety infrastructure from Overpass (Police/Hospitals)
+// Helper to fetch safety infrastructure from Overpass (Police/Hospitals/Lighting)
 async function fetchSafetyAssets(coords) {
     const lats = coords.map(c => c[0]);
     const lngs = coords.map(c => c[1]);
-    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-    const centerLat = (minLat + maxLat) / 2;
-    const centerLng = (minLng + maxLng) / 2;
-    const radius = 5000; // 5km search
+    
+    // Create a bounding box for the entire route with a small buffer
+    const buffer = 0.01; // ~1km
+    const minLat = Math.min(...lats) - buffer;
+    const maxLat = Math.max(...lats) + buffer;
+    const minLng = Math.min(...lngs) - buffer;
+    const maxLng = Math.max(...lngs) + buffer;
+    const bbox = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-    const query = `[out:json][timeout:25];
+    // Comprehensive query for safety-relevant infrastructure in India
+    const query = `[out:json][timeout:30];
         (
-          node["amenity"="police"](around:${radius},${centerLat},${centerLng});
-          node["amenity"~"hospital|clinic"](around:${radius},${centerLat},${centerLng});
-          node["amenity"~"cafe|restaurant|shop"](around:${radius},${centerLat},${centerLng});
-          node["lit"="yes"](around:${radius},${centerLat},${centerLng});
-          node["women"="yes"](around:${radius},${centerLat},${centerLng});
-          node["amenity"="social_facility"]["social_facility:for"="woman"](around:${radius},${centerLat},${centerLng});
-        );out center tags 500;`;
+          node["amenity"="police"](${bbox});
+          node["police"~"pink|women|booth"](${bbox});
+          node["amenity"~"hospital|clinic|pharmacy"](${bbox});
+          node["amenity"~"cafe|restaurant|shop|convenience|bank|atm"](${bbox});
+          node["lit"="yes"](${bbox});
+          way["highway"~"primary|secondary|tertiary|residential"]["lit"="yes"](${bbox});
+          node["amenity"="social_facility"]["social_facility:for"="woman"](${bbox});
+          node["emergency"="phone"](${bbox});
+        );out center tags 1000;`;
     
     try {
         const response = await fetch('https://overpass-api.de/api/interpreter', {
@@ -30,7 +37,21 @@ async function fetchSafetyAssets(coords) {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         
-        if (!response.ok) return [];
+        if (!response.ok) {
+            // Fallback: If bbox is too complex, try a simpler radius search around the center
+            const centerLat = (minLat + maxLat) / 2;
+            const centerLng = (minLng + maxLng) / 2;
+            const radius = 5000;
+            const fallbackQuery = `[out:json][timeout:15];(node["amenity"~"police|hospital"](around:${radius},${centerLat},${centerLng}););out center tags 100;`;
+            const fbRes = await fetch('https://overpass-api.de/api/interpreter', {
+                method: 'POST',
+                body: 'data=' + encodeURIComponent(fallbackQuery),
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+            const fbData = await fbRes.json();
+            return fbData.elements || [];
+        }
+
         const data = await response.json();
         return data.elements || [];
     } catch (e) {
@@ -77,23 +98,22 @@ router.post('/directions', async (req, res) => {
 
             assets.forEach(asset => {
                 const tags = asset.tags;
-                if (tags.amenity === 'police') policeCount++;
+                if (tags.amenity === 'police' || tags.police) policeCount++;
                 else if (tags.amenity === 'hospital' || tags.amenity === 'clinic') medicalCount++;
-                else if (tags.amenity === 'cafe' || tags.amenity === 'restaurant' || tags.amenity === 'shop') activityCount++;
+                else if (tags.amenity === 'cafe' || tags.amenity === 'restaurant' || tags.amenity === 'shop' || tags.amenity === 'convenience') activityCount++;
                 
                 if (tags.lit === 'yes') litCount++;
-                if (tags.women === 'yes' || tags["social_facility:for"] === 'woman') womenSafetyPoints++;
+                if (tags.women === 'yes' || tags["social_facility:for"] === 'woman' || (tags.police && tags.police.includes('pink'))) womenSafetyPoints++;
             });
 
-            // Fetch Crime Data from DB for the route bounding box
-            const lats = coords.map(c => c[0]);
-            const lngs = coords.map(c => c[1]);
+            // Enhanced Crime Data Query with buffer
+            const buffer = 0.005; // ~500m
             const crimes = await CrimeData.find({
                 'location.coordinates': {
                     $geoWithin: {
                         $box: [
-                            [Math.min(...lngs), Math.min(...lats)],
-                            [Math.max(...lngs), Math.max(...lats)]
+                            [Math.min(...lngs) - buffer, Math.min(...lats) - buffer],
+                            [Math.max(...lngs) + buffer, Math.max(...lats) + buffer]
                         ]
                     }
                 }
