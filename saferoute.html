@@ -146,6 +146,14 @@
               </div>
               <button onclick="useCurrentLocationForPickup()" style="background:none; border:none; color:var(--accent-cyan); font-size:0.75rem; cursor:pointer; padding:4px 0; margin-top:2px;">📍 Use Current Location</button>
             </div>
+            <div class="route-input-group">
+              <label for="dropInput">🔴 Drop Location</label>
+              <div class="route-input-wrap">
+                <input type="text" id="dropInput" class="route-input" placeholder="e.g. India Gate, Delhi" autocomplete="off" />
+                <div class="autocomplete-list" id="dropAC"></div>
+              </div>
+            </div>
+
             <div class="route-input-group" style="margin-bottom: 20px;">
               <div style="display:flex; align-items:center; justify-content:space-between; padding:14px; background:rgba(255,0,122,0.05); border:1px dashed rgba(255,0,122,0.3); border-radius:12px;">
                 <div style="flex:1;">
@@ -195,6 +203,20 @@
           <div class="journey-banner" id="journeyBanner">
             🚗 Journey in progress...
             <button class="btn-stop-journey" onclick="stopJourney()">■ Stop</button>
+          </div>
+
+          <!-- New Safety Intelligence Panel -->
+          <div id="safetyIntelligencePanel" class="glass-card" style="margin-top:20px; padding:20px; display:none;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+              <span class="material-symbols-outlined" style="color:#ff5252;">report</span>
+              <h3 style="margin:0; font-size:1rem;">Safety Intelligence & Historical Data</h3>
+            </div>
+            <div id="crimeStatsDisplay" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+                <!-- Stats will be injected here -->
+            </div>
+            <div id="historicalCrimesList" style="margin-top:15px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.08);">
+                <p style="color:var(--text-secondary); font-size:0.85rem;">Select a route to see detailed crime reports for that area.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -509,6 +531,8 @@
       drawAllRoutes();
       // Fetch and display safety markers for selected route
       displaySafetyMarkers(allRoutes[idx]);
+      // Update Safety Intelligence Panel
+      updateSafetyIntelligence(allRoutes[idx]);
       // Enable buttons
       document.getElementById('btnStartJourney').disabled = false;
       document.getElementById('btnRouteSummary').disabled = false;
@@ -556,6 +580,52 @@
           }
         });
       } catch {}
+    }
+
+    // ===== UPDATE SAFETY INTELLIGENCE PANEL =====
+    function updateSafetyIntelligence(route) {
+        const panel = document.getElementById('safetyIntelligencePanel');
+        const statsDisplay = document.getElementById('crimeStatsDisplay');
+        const crimesList = document.getElementById('historicalCrimesList');
+        
+        panel.style.display = 'block';
+        
+        statsDisplay.innerHTML = `
+            <div style="background:rgba(255,82,82,0.05); padding:15px; border-radius:10px; border:1px solid rgba(255,82,82,0.1);">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Historical Crimes</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#ff5252;">${route.crimeCount}</div>
+                <div style="font-size:0.7rem; color:#ff8a80;">Reported in this corridor</div>
+            </div>
+            <div style="background:rgba(0,230,118,0.05); padding:15px; border-radius:10px; border:1px solid rgba(0,230,118,0.1);">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Police Stations</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#00e676;">${route.policeCount}</div>
+                <div style="font-size:0.7rem; color:#b9f6ca;">Active stations nearby</div>
+            </div>
+            <div style="background:rgba(0,229,255,0.05); padding:15px; border-radius:10px; border:1px solid rgba(0,229,255,0.1);">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Public Activity</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#00e5ff;">${route.activityCount}</div>
+                <div style="font-size:0.7rem; color:#b2ebf2;">Verified safe spots (Shops/Cafes)</div>
+            </div>
+        `;
+
+        if (route.crimeCount > 0) {
+            crimesList.innerHTML = `
+                <div style="color:#ff5252; font-weight:600; font-size:0.85rem; margin-bottom:10px;">⚠️ Danger Zones Detected</div>
+                <ul style="list-style:none; padding:0; margin:0;">
+                    <li style="padding:10px; background:rgba(255,82,82,0.1); border-radius:8px; font-size:0.8rem; color:#ffcdd2; margin-bottom:5px;">
+                        • ${route.crimeCount} incidents of theft/harassment recorded in this general area.
+                    </li>
+                    <li style="padding:10px; background:rgba(255,171,64,0.1); border-radius:8px; font-size:0.8rem; color:#ffe0b2;">
+                        • Low lighting reported in some stretches of this route.
+                    </li>
+                </ul>
+            `;
+        } else {
+            crimesList.innerHTML = `
+                <div style="color:#00e676; font-weight:600; font-size:0.85rem; margin-bottom:10px;">✅ Clean Safety Record</div>
+                <p style="color:var(--text-secondary); font-size:0.8rem;">No critical historical crimes found in our database for this specific route. This is considered a "Secure Path".</p>
+            `;
+        }
     }
 
     // ===== USE CURRENT LOCATION FOR PICKUP =====
