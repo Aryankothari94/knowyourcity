@@ -37,7 +37,7 @@
     .route-btn { width:100%; padding:14px; border:none; border-radius:12px; background:linear-gradient(135deg,var(--accent-cyan),#0097a7); color:#fff; font-size:1rem; font-weight:600; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; font-family:inherit; }
     .route-btn:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,229,255,0.3); }
     .route-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-    #routeMap { height:560px; border-radius:14px; }
+    #routeMap { height:600px; border-radius:14px; }
 
     /* Route Option Cards */
     .route-options { display:flex; flex-direction:column; gap:10px; }
@@ -86,7 +86,14 @@
     .city-list li .city-idx { width:22px; height:22px; border-radius:50%; background:rgba(0,229,255,0.15); color:var(--accent-cyan); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; flex-shrink:0; }
 
     @keyframes slideDown { from { opacity:0; transform:translateX(-50%) translateY(-20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
-    @media(max-width:768px) { .route-page { flex-direction:column; } .route-map-area { min-height:380px; } #routeMap { height:380px; } .route-sidebar { max-width:100%; } }
+    @keyframes pulseGlow { 0%,100% { box-shadow:0 0 8px rgba(255,0,122,0.3); } 50% { box-shadow:0 0 20px rgba(255,0,122,0.6); } }
+    .women-sos-bar { display:none; padding:12px 16px; background:linear-gradient(135deg, rgba(255,0,122,0.12), rgba(124,77,255,0.12)); border:1px solid rgba(255,0,122,0.25); border-radius:12px; margin-top:12px; animation:pulseGlow 2s infinite; }
+    .women-sos-bar.active { display:block; }
+    .route-comparison-strip { display:flex; gap:6px; padding:8px 0; overflow-x:auto; scrollbar-width:none; }
+    .route-comparison-strip::-webkit-scrollbar { display:none; }
+    .route-mini-badge { padding:6px 12px; border-radius:20px; font-size:0.72rem; font-weight:600; cursor:pointer; white-space:nowrap; border:2px solid transparent; transition:all 0.3s; }
+    .route-mini-badge.active { border-color:#fff; transform:scale(1.05); }
+    @media(max-width:768px) { .route-page { flex-direction:column; } .route-map-area { min-height:420px; } #routeMap { height:420px; } .route-sidebar { max-width:100%; } }
   </style>
 </head>
 <body>
@@ -681,20 +688,39 @@
       return { safetyScore:score, safetyLabel:label, safetyColor:color, policeCount, hospitalCount };
     }
 
-    // ===== DRAW ALL ROUTES =====
+    // ===== DRAW ALL ROUTES (Google Maps style) =====
     function drawAllRoutes() {
       routeLayerGroup.clearLayers();
+      // Draw non-selected routes first (behind)
       allRoutes.forEach((r, idx) => {
-        const isSelected = idx === selectedRouteIdx;
+        if (idx === selectedRouteIdx) return;
+        // Shadow line for depth
+        L.polyline(r.coords, { color:'#000', weight:8, opacity:0.25 }).addTo(routeLayerGroup);
         r.polyline = L.polyline(r.coords, {
           color: r.safetyColor,
-          weight: isSelected ? 7 : 4,
-          opacity: isSelected ? 0.95 : 0.4,
-          dashArray: isSelected ? null : '8,6'
+          weight: 5,
+          opacity: 0.55,
+          lineCap: 'round', lineJoin: 'round'
         }).addTo(routeLayerGroup);
         r.polyline.on('click', () => selectRoute(idx));
-        r.polyline.bindTooltip(`Route ${idx+1}: ${r.safetyLabel} (${r.distance} km)`, { sticky:true, className:'', direction:'top' });
+        r.polyline.bindTooltip(`<b>Route ${idx+1}</b><br>${r.safetyLabel} • ${r.distance} km • ${r.time} min<br>🚔 ${r.policeCount} Police  🏥 ${r.hospitalCount} Hospitals`, { sticky:true, direction:'top', className:'route-tooltip' });
       });
+      // Draw selected route last (on top)
+      if (selectedRouteIdx >= 0 && allRoutes[selectedRouteIdx]) {
+        const r = allRoutes[selectedRouteIdx];
+        // Glow effect
+        L.polyline(r.coords, { color:r.safetyColor, weight:14, opacity:0.15 }).addTo(routeLayerGroup);
+        // Shadow
+        L.polyline(r.coords, { color:'#000', weight:10, opacity:0.3 }).addTo(routeLayerGroup);
+        r.polyline = L.polyline(r.coords, {
+          color: r.safetyColor,
+          weight: 7,
+          opacity: 1,
+          lineCap: 'round', lineJoin: 'round'
+        }).addTo(routeLayerGroup);
+        r.polyline.on('click', () => selectRoute(selectedRouteIdx));
+        r.polyline.bindTooltip(`<b>Route ${selectedRouteIdx+1} ✨ Selected</b><br>${r.safetyLabel} • ${r.distance} km • ${r.time} min<br>🚔 ${r.policeCount} Police  🏥 ${r.hospitalCount} Hospitals<br>🛡️ Safety Score: ${r.safetyScore}%`, { sticky:true, direction:'top', className:'route-tooltip' });
+      }
     }
 
     // ===== BUILD ROUTE CARDS =====
@@ -703,53 +729,82 @@
       container.innerHTML = '';
       document.getElementById('routeOptionsPanel').style.display = 'block';
 
+      // Quick comparison strip at top
+      let stripHtml = '<div class="route-comparison-strip">';
+      allRoutes.forEach((r, idx) => {
+        stripHtml += `<div class="route-mini-badge ${idx===0?'active':''}" style="background:${r.safetyColor}22; color:${r.safetyColor};" onclick="selectRoute(${idx})" id="miniBadge${idx}">
+          R${idx+1} • ${r.safetyScore}% • ${r.distance}km
+        </div>`;
+      });
+      stripHtml += '</div>';
+      container.innerHTML = stripHtml;
+
       allRoutes.forEach((r, idx) => {
         const badgeClass = r.safetyLabel==='Safe' ? 'badge-safe' : r.safetyLabel==='Moderate' ? 'badge-moderate' : 'badge-unsafe';
+        const isWomen = document.getElementById('womenSafetyToggle').checked;
         const card = document.createElement('div');
         card.className = 'route-option-card' + (idx===selectedRouteIdx ? ' selected' : '');
         card.id = 'routeCard'+idx;
         card.innerHTML = `
           <div class="route-option-header">
             <div class="route-option-name">
-              <span style="width:10px;height:10px;border-radius:50%;background:${r.safetyColor};display:inline-block;"></span>
-              Route ${idx+1} ${idx===0 ? '✨' : ''}
+              <span style="width:12px;height:12px;border-radius:50%;background:${r.safetyColor};display:inline-block;box-shadow:0 0 8px ${r.safetyColor};"></span>
+              Route ${idx+1} ${idx===0 ? '<span style="font-size:0.7rem;color:#ffd740;">⭐ Safest</span>' : ''}
             </div>
-            <span class="safety-badge ${badgeClass}">${r.safetyLabel}</span>
+            <span class="safety-badge ${badgeClass}">${r.safetyLabel} ${r.safetyScore}%</span>
           </div>
           <div class="route-option-stats">
             <span>📏 ${r.distance} km</span>
             <span>⏱ ${r.time} min</span>
             <span>🚔 ${r.policeCount}</span>
             <span>🏥 ${r.hospitalCount}</span>
+            ${isWomen ? `<span>💡 ${r.litCount||0}</span>` : ''}
           </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px;">
-            🛡️ AI Safety Score: <span style="color:${r.safetyColor}; font-weight:700;">${r.safetyScore}%</span>
-          </div>
-          <div class="route-option-safety" style="margin-top:6px;">
+          <div class="route-option-safety" style="margin-top:8px;">
             <div class="safety-bar-bg">
-              <div class="safety-bar-fill" style="width:${r.safetyScore}%;background:${r.safetyColor};"></div>
+              <div class="safety-bar-fill" style="width:${r.safetyScore}%;background:linear-gradient(90deg, ${r.safetyColor}, ${r.safetyColor}88);"></div>
             </div>
           </div>
+          ${isWomen && r.policeCount >= 2 ? '<div style="margin-top:6px; font-size:0.68rem; color:#00e676;">✅ Police coverage verified</div>' : ''}
+          ${isWomen && r.policeCount < 1 ? '<div style="margin-top:6px; font-size:0.68rem; color:#ff5252;">⚠️ Low police coverage — not recommended for solo travel</div>' : ''}
         `;
         card.addEventListener('click', () => selectRoute(idx));
         container.appendChild(card);
       });
+
+      // Women SOS bar (only when women safety mode ON)
+      if (document.getElementById('womenSafetyToggle').checked) {
+        let sosBar = document.getElementById('womenSOSBar');
+        if (!sosBar) {
+          sosBar = document.createElement('div');
+          sosBar.id = 'womenSOSBar';
+          sosBar.className = 'women-sos-bar active';
+          container.parentNode.appendChild(sosBar);
+        }
+        sosBar.className = 'women-sos-bar active';
+        sosBar.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span class="material-symbols-outlined" style="color:#ff007a;">emergency_share</span>
+            <strong style="color:#ff007a; font-size:0.85rem;">Quick SOS Numbers</strong>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="tel:1091" style="padding:6px 14px; background:rgba(255,0,122,0.15); border:1px solid rgba(255,0,122,0.3); border-radius:20px; color:#ff4081; font-size:0.75rem; font-weight:600; text-decoration:none;">📞 1091 Women</a>
+            <a href="tel:100" style="padding:6px 14px; background:rgba(0,230,118,0.15); border:1px solid rgba(0,230,118,0.3); border-radius:20px; color:#00e676; font-size:0.75rem; font-weight:600; text-decoration:none;">🚔 100 Police</a>
+            <a href="tel:112" style="padding:6px 14px; background:rgba(255,171,64,0.15); border:1px solid rgba(255,171,64,0.3); border-radius:20px; color:#ffab40; font-size:0.75rem; font-weight:600; text-decoration:none;">🆘 112 SOS</a>
+            <a href="tel:108" style="padding:6px 14px; background:rgba(33,150,243,0.15); border:1px solid rgba(33,150,243,0.3); border-radius:20px; color:#2196f3; font-size:0.75rem; font-weight:600; text-decoration:none;">🚑 108 Ambulance</a>
+          </div>
+        `;
+      }
     }
 
     // ===== SELECT ROUTE =====
     function selectRoute(idx) {
       selectedRouteIdx = idx;
-      // Update card styles
-      document.querySelectorAll('.route-option-card').forEach((c,i) => {
-        c.classList.toggle('selected', i===idx);
-      });
-      // Redraw routes with updated prominence
+      document.querySelectorAll('.route-option-card').forEach((c,i) => c.classList.toggle('selected', i===idx));
+      document.querySelectorAll('.route-mini-badge').forEach((b,i) => b.classList.toggle('active', i===idx));
       drawAllRoutes();
-      // Fetch and display safety markers for selected route
       displaySafetyMarkers(allRoutes[idx]);
-      // Update Safety Intelligence Panel
       updateSafetyIntelligence(allRoutes[idx]);
-      // Enable buttons
       document.getElementById('btnStartJourney').disabled = false;
       document.getElementById('btnRouteSummary').disabled = false;
     }
