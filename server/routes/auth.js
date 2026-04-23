@@ -89,7 +89,13 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Use a case-insensitive regex for email lookup to account for different capitalization
+        // Validation Regex
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Only genuine Google accounts (@gmail.com) are accepted.' });
+        }
+
+        // Use a case-insensitive regex for email lookup
         const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
         if (!user) {
             console.log(`[LOGIN ATTEMPT] Email not found: ${email}`);

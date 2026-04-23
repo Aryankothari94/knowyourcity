@@ -579,6 +579,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('loginPassword').value;
       const captchaInput = parseInt(document.getElementById('loginCaptcha').value);
 
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+      if (!emailRegex.test(email)) {
+        showError(loginError, 'Only genuine Google accounts (@gmail.com) are accepted.');
+        return;
+      }
+
       if (captchaInput !== currentCaptchaAnswer) {
         showError(loginError, 'Incorrect Captcha. Please try again.');
         generateCaptcha();
