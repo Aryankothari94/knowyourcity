@@ -146,14 +146,26 @@
               </div>
               <button onclick="useCurrentLocationForPickup()" style="background:none; border:none; color:var(--accent-cyan); font-size:0.75rem; cursor:pointer; padding:4px 0; margin-top:2px;">📍 Use Current Location</button>
             </div>
-            <div class="route-input-group">
-              <label for="dropInput">🔴 Drop Location</label>
-              <div class="route-input-wrap">
-                <input type="text" id="dropInput" class="route-input" placeholder="e.g. India Gate, Delhi" autocomplete="off" />
-                <div class="autocomplete-list" id="dropAC"></div>
+            <div class="route-input-group" style="margin-bottom: 20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:14px; background:rgba(255,0,122,0.05); border:1px dashed rgba(255,0,122,0.3); border-radius:12px;">
+                <div style="flex:1;">
+                  <h4 style="margin:0; font-size:0.85rem; color:#ff007a;">Women Safety Mode</h4>
+                  <p style="margin:2px 0 0; font-size:0.7rem; color:var(--text-secondary);">Prioritize well-lit & safe zones</p>
+                </div>
+                <label class="switch" style="position:relative; display:inline-block; width:40px; height:20px; flex-shrink:0;">
+                  <input type="checkbox" id="womenSafetyToggle" checked style="opacity:0; width:0; height:0;">
+                  <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#333; transition:.4s; border-radius:20px;"></span>
+                </label>
               </div>
             </div>
-            <button class="route-btn" id="findRouteBtn" onclick="findRoutes()">🗺️ Find Routes</button>
+
+            <button class="route-btn" id="findRouteBtn" onclick="findRoutes()">🗺️ Find Safest Route</button>
+
+            <style>
+              #womenSafetyToggle:checked + .slider { background: linear-gradient(135deg, #ff007a, #7c4dff); }
+              #womenSafetyToggle:checked + .slider:before { transform: translateX(20px); }
+              .slider:before { position:absolute; content:""; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.4s; border-radius:50%; }
+            </style>
           </div>
 
           <!-- Route Options -->
@@ -282,10 +294,12 @@
     async function findRoutes() {
       const pickupText = document.getElementById('pickupInput').value.trim();
       const dropText = document.getElementById('dropInput').value.trim();
+      const womenSafetyMode = document.getElementById('womenSafetyToggle').checked;
+
       if (!pickupText||!dropText) { alert('Please enter both pickup and drop locations.'); return; }
 
       const btn = document.getElementById('findRouteBtn');
-      btn.disabled = true; btn.textContent = '🔄 Finding routes...';
+      btn.disabled = true; btn.textContent = '🔄 Analyzing Safety...';
       stopJourney();
 
       try {
@@ -311,27 +325,36 @@
           icon: L.divIcon({ className:'', html:'<div style="background:#ff5252;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #ff5252"></div>', iconSize:[16,16] })
         }).addTo(safetyLayer).bindPopup('🔴 '+dropData.name);
 
-        // Fetch routes from OSRM with alternatives
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickupData.lng},${pickupData.lat};${dropData.lng},${dropData.lat}?overview=full&geometries=geojson&alternatives=3`;
-        const routeRes = await fetch(osrmUrl);
-        const routeData = await routeRes.json();
+        // Fetch routes from MERN BACKEND
+        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+          ? 'http://localhost:10000/api' 
+          : 'https://knowyourcity.onrender.com/api';
 
-        if (!routeData.routes || routeData.routes.length===0) { alert('No routes found.'); return; }
-
-        // Process each route
-        const routePromises = routeData.routes.map(async (r, idx) => {
-          const coords = r.geometry.coordinates.map(c => [c[1], c[0]]);
-          const distKm = (r.distance/1000).toFixed(1);
-          const timeMins = Math.round(r.duration/60);
-          // Calculate safety score for this route by sampling points along it
-          const safety = await calculateRouteSafety(coords);
-          return { coords, distance:distKm, time:timeMins, ...safety, rawCoords:r.geometry.coordinates };
+        const res = await fetch(`${apiBase}/saferoute/directions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                origin: pickupData,
+                destination: dropData,
+                womenSafetyMode
+            })
         });
 
-        allRoutes = await Promise.all(routePromises);
+        if (!res.ok) throw new Error('Backend Analysis Failed');
+        const data = await res.json();
 
-        // Sort by safety score descending (safest first)
-        allRoutes.sort((a,b) => b.safetyScore - a.safetyScore);
+        allRoutes = data.map(r => ({
+            coords: r.geometry.coordinates.map(c => [c[1], c[0]]),
+            distance: r.distance,
+            time: r.duration,
+            safetyScore: r.safetyScore,
+            safetyLabel: r.safetyStatus.charAt(0).toUpperCase() + r.safetyStatus.slice(1),
+            safetyColor: r.safetyColor,
+            policeCount: r.stats.police,
+            hospitalCount: r.stats.medical,
+            activityCount: r.stats.activity,
+            crimeCount: r.stats.crimes
+        }));
 
         // Draw all routes on map
         drawAllRoutes();
@@ -348,9 +371,9 @@
 
       } catch(err) {
         console.error('Route error:', err);
-        alert('Error finding routes. Please try again.');
+        alert('Backend Analysis Error: Please ensure the server is online.');
       } finally {
-        btn.disabled = false; btn.textContent = '🗺️ Find Routes';
+        btn.disabled = false; btn.textContent = '🗺️ Find Safest Route';
       }
     }
 
@@ -451,7 +474,7 @@
           <div class="route-option-header">
             <div class="route-option-name">
               <span style="width:10px;height:10px;border-radius:50%;background:${r.safetyColor};display:inline-block;"></span>
-              Route ${idx+1}
+              Route ${idx+1} ${idx===0 ? '✨' : ''}
             </div>
             <span class="safety-badge ${badgeClass}">${r.safetyLabel}</span>
           </div>
@@ -461,11 +484,13 @@
             <span>🚔 ${r.policeCount}</span>
             <span>🏥 ${r.hospitalCount}</span>
           </div>
-          <div class="route-option-safety" style="margin-top:8px;">
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px;">
+            🛡️ AI Safety Score: <span style="color:${r.safetyColor}; font-weight:700;">${r.safetyScore}%</span>
+          </div>
+          <div class="route-option-safety" style="margin-top:6px;">
             <div class="safety-bar-bg">
               <div class="safety-bar-fill" style="width:${r.safetyScore}%;background:${r.safetyColor};"></div>
             </div>
-            <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:3px; text-align:right;">Safety: ${r.safetyScore}%</div>
           </div>
         `;
         card.addEventListener('click', () => selectRoute(idx));
