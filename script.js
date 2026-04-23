@@ -22,14 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (res.ok) {
+        if (data.mfaRequired) {
+          pendingLoginEmail = data.email;
+          if (authModal) authModal.classList.add('active');
+          switchTab('loginOTP');
+          return;
+        }
         performLogin(data.user.email, data.user.firstName);
         if (authModal) authModal.classList.remove('active');
         document.body.style.overflow = 'auto';
       } else {
-        alert(data.message || "Google Sign-In failed.");
+        console.error('Google Auth Error:', data.message);
       }
     } catch (err) {
-      console.error("Google Auth Error:", err);
+      console.error('Network error during Google auth:', err);
     }
   };
 
@@ -606,13 +612,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (res.ok) {
-          if (data.mfaRequired) {
+          if (data.verificationRequired || data.mfaRequired) {
             pendingLoginEmail = data.email;
             switchTab('loginOTP');
             return;
           }
           performLogin(data.user.email, data.user.firstName);
           loginForm.reset();
+          return;
+        } else if (res.status === 403 && data.verificationRequired) {
+          pendingLoginEmail = data.email;
+          switchTab('loginOTP');
           return;
         } else if (res.status >= 500) {
           throw new Error('Backend error: ' + (data.message || 'Server Unavailable'));
@@ -669,16 +679,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      const formData = { firstName, lastName, phone, email, dob, password };
+
       // Try backend API first
       try {
         const res = await fetch(`${API_BASE}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ firstName, lastName, phone, email, dob, password })
+          body: JSON.stringify(formData)
         });
         const data = await res.json();
 
         if (res.ok) {
+          if (data.verificationRequired) {
+            pendingLoginEmail = data.email;
+            switchTab('loginOTP');
+            return;
+          }
           signupForm.reset();
           performLogin(data.user.email, data.user.firstName);
           const authModal = document.getElementById('authModal');
@@ -706,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const otp = document.getElementById('loginOTPInput').value.trim();
 
       try {
-        const res = await fetch(`${API_BASE}/auth/verify-login-otp`, {
+        const res = await fetch(`${API_BASE}/auth/verify-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: pendingLoginEmail, otp })

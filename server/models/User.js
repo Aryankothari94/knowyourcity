@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema({
     resetOTPExpires: { type: Date }, // Expiration for OTP (e.g. 10-15 minutes)
     loginOTP: { type: String }, // Hashed numeric OTP for 2FA login
     loginOTPExpires: { type: Date }, // Expiration for login OTP
-    isGoogleUser: { type: Boolean, default: false }
+    isGoogleUser: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false }
 }, { 
     timestamps: true,
     bufferCommands: false // Fail fast if DB is down

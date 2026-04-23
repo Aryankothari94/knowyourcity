@@ -71,11 +71,41 @@ router.post('/register', async (req, res) => {
             phone, 
             email, 
             dob, 
-            password: hashedPassword 
+            password: hashedPassword,
+            isVerified: false 
         });
+
+        // GENERATE SIGNUP OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const saltOTP = await bcrypt.genSalt(10);
+        newUser.loginOTP = await bcrypt.hash(otp, saltOTP);
+        newUser.loginOTPExpires = Date.now() + 15 * 60 * 1000; 
+        
         await newUser.save();
 
-        res.status(201).json({ message: 'User registered successfully', user: { firstName, email } });
+        // Send Email
+        const mailOptions = {
+            from: `"Know Your City" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Verify Your Account — Know Your City',
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
+                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Account Verification</h2>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${firstName},</p>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Welcome to Know Your City! Please use the following code to verify your email and complete your registration:</p>
+                    <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
+                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #00e5ff; letter-spacing: 5px;">${otp}</span>
+                    </div>
+                </div>
+            `
+        };
+        await transporter.sendMail(mailOptions);
+
+        res.status(201).json({ 
+            verificationRequired: true, 
+            email, 
+            message: 'Verification code sent to your email.' 
+        });
     } catch (err) {
         if (err.name === 'MongooseServerSelectionError' || err.message.includes('buffering')) {
             return res.status(503).json({ message: 'Registration database is temporarily unreachable. Please try again soon.' });
@@ -100,6 +130,29 @@ router.post('/login', async (req, res) => {
         if (!user) {
             console.log(`[LOGIN ATTEMPT] Email not found: ${email}`);
             return res.status(404).json({ message: 'Email does not exist. Please sign up first.' });
+        }
+
+        if (user.isVerified === false) {
+            // Send new OTP for verification if they try to login but aren't verified
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const salt = await bcrypt.genSalt(10);
+            user.loginOTP = await bcrypt.hash(otp, salt);
+            user.loginOTPExpires = Date.now() + 15 * 60 * 1000;
+            await user.save();
+
+            const mailOptions = {
+                from: `"Know Your City" <${process.env.EMAIL_USER}>`,
+                to: user.email,
+                subject: 'Complete Your Verification — Know Your City',
+                html: `<div style="..."><p>Your verification code is: <b>${otp}</b></p></div>`
+            };
+            await transporter.sendMail(mailOptions);
+            
+            return res.status(403).json({ 
+                verificationRequired: true, 
+                email: user.email, 
+                message: 'Account not verified. A new code has been sent to your email.' 
+            });
         }
 
         // Check password - ATTEMPT 1: Standard Bcrypt Comparison (Normal Flow)
@@ -173,8 +226,8 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Verify Login OTP
-router.post('/verify-login-otp', async (req, res) => {
+// Verify Signup/Login OTP
+router.post('/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
         const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
@@ -192,13 +245,14 @@ router.post('/verify-login-otp', async (req, res) => {
             return res.status(400).json({ message: 'Invalid verification code.' });
         }
 
-        // Clear OTP
+        // Mark as verified and clear OTP
+        user.isVerified = true;
         user.loginOTP = undefined;
         user.loginOTPExpires = undefined;
         await user.save();
 
         res.status(200).json({ 
-            message: 'Login successful', 
+            message: 'Authentication successful', 
             user: { firstName: user.firstName, email: user.email } 
         });
     } catch (err) {
@@ -222,24 +276,38 @@ router.post('/google', async (req, res) => {
 
         if (!user) {
             // Create new user if doesn't exist
-            // For Google users, we might not have DOB or Phone initially
-            // We can set placeholders or ask them later. For now, let's create with placeholders.
             user = new User({
                 firstName: given_name,
                 lastName: family_name || '',
                 email: email,
-                phone: 'GOOGLE_USER', // Placeholder
-                dob: new Date('1900-01-01'), // Placeholder
-                password: await bcrypt.hash(sub, 10), // Use Google Sub as temporary password
-                isGoogleUser: true
+                phone: 'GOOGLE_USER',
+                dob: new Date('1900-01-01'),
+                password: await bcrypt.hash(sub, 10),
+                isGoogleUser: true,
+                isVerified: true // Google users are pre-verified by Google
             });
             await user.save();
-            console.log(`[GOOGLE SIGNUP] New user created: ${email}`);
         }
 
+        // EVEN FOR GOOGLE USERS, SEND A SECURITY OTP IF REQUESTED
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const salt = await bcrypt.genSalt(10);
+        user.loginOTP = await bcrypt.hash(otp, salt);
+        user.loginOTPExpires = Date.now() + 10 * 60 * 1000;
+        await user.save();
+
+        const mailOptions = {
+            from: `"Know Your City" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Google Login Security Code — Know Your City',
+            html: `<div style="..."><p>Your security code is: <b>${otp}</b></p></div>`
+        };
+        await transporter.sendMail(mailOptions);
+
         res.status(200).json({
-            message: 'Google Login successful',
-            user: { firstName: user.firstName, email: user.email }
+            mfaRequired: true,
+            email: user.email,
+            message: 'Security code sent to your Google email.'
         });
     } catch (err) {
         console.error('Google Auth Error:', err.message);
