@@ -727,6 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showError(loginOTPError, 'Verification failed. Please try again.');
       }
     });
+  }
 
   // Forgot Password Form Submission
   if (forgotPasswordForm) {
