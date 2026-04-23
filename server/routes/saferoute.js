@@ -18,6 +18,9 @@ async function fetchSafetyAssets(coords) {
           node["amenity"="police"](around:${radius},${centerLat},${centerLng});
           node["amenity"~"hospital|clinic"](around:${radius},${centerLat},${centerLng});
           node["amenity"~"cafe|restaurant|shop"](around:${radius},${centerLat},${centerLng});
+          node["lit"="yes"](around:${radius},${centerLat},${centerLng});
+          node["women"="yes"](around:${radius},${centerLat},${centerLng});
+          node["amenity"="social_facility"]["social_facility:for"="woman"](around:${radius},${centerLat},${centerLng});
         );out center tags 500;`;
     
     try {
@@ -68,13 +71,18 @@ router.post('/directions', async (req, res) => {
             // Calculate Score
             let policeCount = 0;
             let medicalCount = 0;
-            let activityCount = 0; // Shops/Cafes (Proxy for lighting/people)
+            let activityCount = 0; 
+            let litCount = 0;
+            let womenSafetyPoints = 0;
 
             assets.forEach(asset => {
-                const type = asset.tags.amenity;
-                if (type === 'police') policeCount++;
-                else if (type === 'hospital' || type === 'clinic') medicalCount++;
-                else activityCount++;
+                const tags = asset.tags;
+                if (tags.amenity === 'police') policeCount++;
+                else if (tags.amenity === 'hospital' || tags.amenity === 'clinic') medicalCount++;
+                else if (tags.amenity === 'cafe' || tags.amenity === 'restaurant' || tags.amenity === 'shop') activityCount++;
+                
+                if (tags.lit === 'yes') litCount++;
+                if (tags.women === 'yes' || tags["social_facility:for"] === 'woman') womenSafetyPoints++;
             });
 
             // Fetch Crime Data from DB for the route bounding box
@@ -92,12 +100,13 @@ router.post('/directions', async (req, res) => {
             });
 
             // Scoring Algorithm
-            // Base score 50
-            let score = 50;
-            score += (policeCount * 5); // Police are high weight
+            let score = 40; // Base score
+            score += (policeCount * 6);
             score += (medicalCount * 2);
-            score += (activityCount * 0.5);
-            score -= (crimes.length * 10); // Crimes are heavy penalty
+            score += (activityCount * 0.8);
+            score += (litCount * 3);
+            score += (womenSafetyPoints * 10);
+            score -= (crimes.length * 15);
 
             // Time of day penalty (optional, assume it's night for worst-case if not specified)
             const hour = new Date().getHours();
@@ -130,7 +139,9 @@ router.post('/directions', async (req, res) => {
                     police: policeCount,
                     medical: medicalCount,
                     activity: activityCount,
-                    crimes: crimes.length
+                    crimes: crimes.length,
+                    lighting: litCount,
+                    womenPoints: womenSafetyPoints
                 }
             };
         }));

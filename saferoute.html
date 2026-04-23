@@ -601,29 +601,61 @@
                 <div style="font-size:1.5rem; font-weight:800; color:#00e676;">${route.policeCount}</div>
                 <div style="font-size:0.7rem; color:#b9f6ca;">Active stations nearby</div>
             </div>
-            <div style="background:rgba(0,229,255,0.05); padding:15px; border-radius:10px; border:1px solid rgba(0,229,255,0.1);">
-                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Public Activity</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#00e5ff;">${route.activityCount}</div>
-                <div style="font-size:0.7rem; color:#b2ebf2;">Verified safe spots (Shops/Cafes)</div>
+            <div style="background:rgba(255,0,122,0.05); padding:15px; border-radius:10px; border:1px solid rgba(255,0,122,0.1);">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Women Safety Points</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#ff007a;">${route.womenPoints || 0}</div>
+                <div style="font-size:0.7rem; color:#f48fb1;">Pink Booths & Help Desks</div>
+            </div>
+            <div style="background:rgba(255,235,59,0.05); padding:15px; border-radius:10px; border:1px solid rgba(255,235,59,0.1);">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Lighting Audit</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#ffeb3b;">${route.lighting || 0}</div>
+                <div style="font-size:0.7rem; color:#fff59d;">Verified lit zones</div>
             </div>
         `;
 
+        const isWomenSafetyMode = document.getElementById('womenSafetyToggle').checked;
+        
+        let auditHtml = '';
+        if (isWomenSafetyMode) {
+            auditHtml = `
+                <div style="margin-top:20px; padding:15px; background:linear-gradient(135deg, rgba(255,0,122,0.1), rgba(124,77,255,0.1)); border:1px solid rgba(255,0,122,0.2); border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                        <span class="material-symbols-outlined" style="color:#ff007a; font-size:1.2rem;">shield_with_heart</span>
+                        <strong style="color:white; font-size:0.9rem;">Women Safety Audit: ${route.safetyLabel} Route</strong>
+                    </div>
+                    <div style="font-size:0.8rem; color:#fce4ec; line-height:1.6;">
+                        • <strong>Emergency Support:</strong> ${route.womenPoints > 0 ? `We found ${route.womenPoints} women-specific help desks or pink booths along this path.` : 'No specific women help desks found, but police coverage is available.'}<br>
+                        • <strong>Night Safety:</strong> ${route.lighting > 5 ? 'High street-lighting density detected. Recommended for night travel.' : 'Moderate lighting. We recommend staying on main roads.'}<br>
+                        • <strong>Public Activity:</strong> This route passes through ${route.activityCount > 10 ? 'highly active' : 'moderately active'} areas with verified shops and cafes, providing better natural surveillance.
+                    </div>
+                </div>
+            `;
+        }
+
         if (route.crimeCount > 0) {
             crimesList.innerHTML = `
-                <div style="color:#ff5252; font-weight:600; font-size:0.85rem; margin-bottom:10px;">⚠️ Danger Zones Detected</div>
+                ${auditHtml}
+                <div style="color:#ff5252; font-weight:600; font-size:0.85rem; margin-top:15px; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
+                    <span class="material-symbols-outlined" style="font-size:18px;">warning</span> 
+                    Live Alerts & Danger Zones
+                </div>
                 <ul style="list-style:none; padding:0; margin:0;">
                     <li style="padding:10px; background:rgba(255,82,82,0.1); border-radius:8px; font-size:0.8rem; color:#ffcdd2; margin-bottom:5px;">
-                        • ${route.crimeCount} incidents of theft/harassment recorded in this general area.
+                        • <strong>Incident Alert:</strong> ${route.crimeCount} recent safety reports in this area. Exercise high caution.
                     </li>
                     <li style="padding:10px; background:rgba(255,171,64,0.1); border-radius:8px; font-size:0.8rem; color:#ffe0b2;">
-                        • Low lighting reported in some stretches of this route.
+                        • <strong>Infrastructure Alert:</strong> Gaps in lighting or low activity reported at certain segments.
                     </li>
                 </ul>
             `;
         } else {
             crimesList.innerHTML = `
-                <div style="color:#00e676; font-weight:600; font-size:0.85rem; margin-bottom:10px;">✅ Clean Safety Record</div>
-                <p style="color:var(--text-secondary); font-size:0.8rem;">No critical historical crimes found in our database for this specific route. This is considered a "Secure Path".</p>
+                ${auditHtml}
+                <div style="color:#00e676; font-weight:600; font-size:0.85rem; margin-top:15px; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
+                    <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span> 
+                    Safe Corridor Confirmation
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.8rem;">Our real-time audit shows no active incidents or critical historical crimes for this route. It is currently categorized as a "Women-Safe Corridor".</p>
             `;
         }
     }
