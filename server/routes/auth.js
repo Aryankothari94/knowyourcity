@@ -186,37 +186,9 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Invalid password.' });
         }
 
-        // GENERATE LOGIN OTP (2FA)
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const salt = await bcrypt.genSalt(10);
-        user.loginOTP = await bcrypt.hash(otp, salt);
-        user.loginOTPExpires = Date.now() + 10 * 60 * 1000; // 10 Minutes
-        await user.save();
-
-        // Send Email
-        const mailOptions = {
-            from: `"Know Your City" <${process.env.EMAIL_USER}>`,
-            to: user.email,
-            subject: 'Your Login Verification Code — Know Your City',
-            html: `
-                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
-                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Login Verification</h2>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${user.firstName},</p>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Use the following code to verify your identity and complete your login. This code is valid for 10 minutes:</p>
-                    <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
-                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #00e5ff; letter-spacing: 5px;">${otp}</span>
-                    </div>
-                    <p style="color: #94a3b8; font-size: 14px;">If you did not attempt to login, please secure your account immediately.</p>
-                </div>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
-
         res.status(200).json({ 
-            mfaRequired: true,
-            email: user.email,
-            message: 'Verification code sent to your email.' 
+            message: 'Login successful', 
+            user: { firstName: user.firstName, email: user.email } 
         });
     } catch (err) {
         if (err.name === 'MongooseServerSelectionError' || err.message.includes('buffering')) {
@@ -289,25 +261,9 @@ router.post('/google', async (req, res) => {
             await user.save();
         }
 
-        // EVEN FOR GOOGLE USERS, SEND A SECURITY OTP IF REQUESTED
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const salt = await bcrypt.genSalt(10);
-        user.loginOTP = await bcrypt.hash(otp, salt);
-        user.loginOTPExpires = Date.now() + 10 * 60 * 1000;
-        await user.save();
-
-        const mailOptions = {
-            from: `"Know Your City" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Google Login Security Code — Know Your City',
-            html: `<div style="..."><p>Your security code is: <b>${otp}</b></p></div>`
-        };
-        await transporter.sendMail(mailOptions);
-
         res.status(200).json({
-            mfaRequired: true,
-            email: user.email,
-            message: 'Security code sent to your Google email.'
+            message: 'Google login successful',
+            user: { firstName: user.firstName, email: user.email }
         });
     } catch (err) {
         console.error('Google Auth Error:', err.message);
