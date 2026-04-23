@@ -1,13 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const axios = require('axios');
 const CrimeData = require('../models/CrimeData');
 const SafeRouteFeedback = require('../models/SafeRouteFeedback');
 
 // Helper to fetch safety infrastructure from Overpass (Police/Hospitals)
 async function fetchSafetyAssets(coords) {
-    // We'll sample points along the route and check for assets within 500m
-    // For brevity, we'll do one large search around the bounding box or center
     const lats = coords.map(c => c[0]);
     const lngs = coords.map(c => c[1]);
     const minLat = Math.min(...lats), maxLat = Math.max(...lats);
@@ -24,9 +21,17 @@ async function fetchSafetyAssets(coords) {
         );out center tags 500;`;
     
     try {
-        const res = await axios.post('https://overpass-api.de/api/interpreter', `data=${encodeURIComponent(query)}`);
-        return res.data.elements || [];
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: 'data=' + encodeURIComponent(query),
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+        
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.elements || [];
     } catch (e) {
+        console.error('Overpass Fetch Error:', e.message);
         return [];
     }
 }
@@ -42,8 +47,12 @@ router.post('/directions', async (req, res) => {
     try {
         // 1. Fetch routes from OSRM (up to 3 alternatives)
         const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&alternatives=true`;
-        const routeRes = await axios.get(osrmUrl);
-        const routes = routeRes.data.routes;
+        
+        const response = await fetch(osrmUrl);
+        if (!response.ok) throw new Error('OSRM Route Fetch Failed');
+        
+        const routeData = await response.json();
+        const routes = routeData.routes;
 
         if (!routes || routes.length === 0) {
             return res.status(404).json({ message: 'No routes found' });
