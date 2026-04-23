@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const initGoogleAuth = () => {
     if (window.google && window.google.accounts) {
       google.accounts.id.initialize({
-        client_id: "1078761578330689-placeholder.apps.googleusercontent.com", // REPLACE WITH REAL CLIENT ID
+        client_id: "808171982330-2hrbreabki0uj3aluob8vhbsecnu00ob.apps.googleusercontent.com", // REAL CLIENT ID
         callback: window.handleGoogleSignIn
       });
       const googleBtn = document.getElementById('googleBtn');

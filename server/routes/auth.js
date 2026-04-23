@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const User = require('../models/User');
 const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client("1078761578330689-placeholder.apps.googleusercontent.com");
+const client = new OAuth2Client("808171982330-2hrbreabki0uj3aluob8vhbsecnu00ob.apps.googleusercontent.com");
 
 // Setup the Transporter with high-speed optimization
 const transporter = nodemailer.createTransport({
@@ -212,7 +212,7 @@ router.post('/google', async (req, res) => {
         const { token } = req.body;
         const ticket = await client.verifyIdToken({
             idToken: token,
-            audience: "1078761578330689-placeholder.apps.googleusercontent.com",
+            audience: "808171982330-2hrbreabki0uj3aluob8vhbsecnu00ob.apps.googleusercontent.com",
         });
         const payload = ticket.getPayload();
         const { email, given_name, family_name, picture, sub } = payload;
