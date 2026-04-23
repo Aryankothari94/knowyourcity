@@ -154,6 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle Modal
   const openAuthModal = (tab = 'login') => {
+    if (!authModal) {
+      console.warn('Auth modal not found on this page.');
+      return;
+    }
     console.log('Opening Auth Modal - Tab:', tab);
     authModal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -165,8 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const closeAuthModal = () => {
     if (!isLoggedIn) return; // Strict auth gate
-    authModal.classList.remove('active');
-    document.body.style.overflow = '';
+    if (authModal) {
+      authModal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
   };
   window.closeAuthModal = closeAuthModal; // Expose globally for HTML onclicks
 
@@ -564,106 +570,117 @@ document.addEventListener('DOMContentLoaded', () => {
   // ensure the UI is updated immediately dynamically
   updateAuthUI();
 
-  // Login Form Submission — tries backend API, falls back to localStorage
-    if (captchaInput !== currentCaptchaAnswer) {
-      showError(loginError, 'Incorrect Captcha. Please try again.');
-      generateCaptcha();
-      return;
-    }
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
 
-    // Try backend API first
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const captchaInput = parseInt(document.getElementById('loginCaptcha').value);
 
-      if (res.ok) {
-        performLogin(data.user.email, data.user.firstName);
-        loginForm.reset();
-        return;
-      } else if (res.status >= 500) {
-        throw new Error('Backend error: ' + (data.message || 'Server Unavailable'));
-      } else {
-        showError(loginError, data.message || 'Login failed.');
+      if (captchaInput !== currentCaptchaAnswer) {
+        showError(loginError, 'Incorrect Captcha. Please try again.');
         generateCaptcha();
         return;
       }
-    } catch (err) {
-      // Backend unavailable
-      console.error('Backend connection failed:', err.message);
-      showError(loginError, 'Network issue: Could not reach the server. Please try again later.');
-      generateCaptcha();
-    }
-  });
 
-  signupForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearErrors();
+      // Try backend API first
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
 
-    const firstName = document.getElementById('signupFirstName').value.trim();
-    const lastName = document.getElementById('signupLastName').value.trim();
-    const phone = document.getElementById('signupPhone').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const dob = document.getElementById('signupDOB').value;
-    const password = document.getElementById('signupPassword').value;
-    const signupError = document.getElementById('signupError');
+        if (res.ok) {
+          performLogin(data.user.email, data.user.firstName);
+          loginForm.reset();
+          return;
+        } else if (res.status >= 500) {
+          throw new Error('Backend error: ' + (data.message || 'Server Unavailable'));
+        } else {
+          showError(loginError, data.message || 'Login failed.');
+          generateCaptcha();
+          return;
+        }
+      } catch (err) {
+        // Backend unavailable
+        console.error('Backend connection failed:', err.message);
+        showError(loginError, 'Network issue: Could not reach the server. Please try again later.');
+        generateCaptcha();
+      }
+    });
+  }
 
-    // Validation Regex
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
 
-    if (!emailRegex.test(email)) {
-      showError(signupError, 'Only genuine Google accounts (@gmail.com) are accepted.');
-      return;
-    }
+      const firstName = document.getElementById('signupFirstName').value.trim();
+      const lastName = document.getElementById('signupLastName').value.trim();
+      const phone = document.getElementById('signupPhone').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const dob = document.getElementById('signupDOB').value;
+      const password = document.getElementById('signupPassword').value;
+      const signupError = document.getElementById('signupError');
 
-    if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
-      showError(signupError, 'Please enter a valid phone number.');
-      return;
-    }
+      // Validation Regex
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
-    if (password.length < 6) {
-      showError(signupError, 'Password must be at least 6 characters.');
-      return;
-    }
-
-    const termsCheckbox = document.getElementById('signupTerms');
-    const privacyCheckbox = document.getElementById('signupPrivacy');
-    if (!termsCheckbox.checked || !privacyCheckbox.checked) {
-      showError(signupError, 'You must accept the Terms and Privacy Policy.');
-      return;
-    }
-
-    // Try backend API first
-    try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, phone, email, dob, password })
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        signupForm.reset();
-        performLogin(data.user.email, data.user.firstName);
-        const authModal = document.getElementById('authModal');
-        if (authModal) authModal.classList.remove('active');
-        document.body.style.overflow = 'auto';
-        return;
-      } else if (res.status >= 500) {
-        throw new Error('Backend error: ' + (data.message || 'Server Unavailable'));
-      } else {
-        showError(signupError, data.message || 'Registration failed.');
+      if (!emailRegex.test(email)) {
+        showError(signupError, 'Only genuine Google accounts (@gmail.com) are accepted.');
         return;
       }
-    } catch (err) {
-      console.error('Backend connection failed:', err.message);
-      showError(signupError, 'Registration unavailable: Server cannot be reached. Try again later.');
-    }
-  });
+
+      if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
+        showError(signupError, 'Please enter a valid phone number.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showError(signupError, 'Password must be at least 6 characters.');
+        return;
+      }
+
+      const termsCheckbox = document.getElementById('signupTerms');
+      const privacyCheckbox = document.getElementById('signupPrivacy');
+      if (termsCheckbox && privacyCheckbox && (!termsCheckbox.checked || !privacyCheckbox.checked)) {
+        showError(signupError, 'You must accept the Terms and Privacy Policy.');
+        return;
+      }
+
+      // Try backend API first
+      try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstName, lastName, phone, email, dob, password })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          signupForm.reset();
+          performLogin(data.user.email, data.user.firstName);
+          const authModal = document.getElementById('authModal');
+          if (authModal) authModal.classList.remove('active');
+          document.body.style.overflow = 'auto';
+          return;
+        } else if (res.status >= 500) {
+          throw new Error('Backend error: ' + (data.message || 'Server Unavailable'));
+        } else {
+          showError(signupError, data.message || 'Registration failed.');
+          return;
+        }
+      } catch (err) {
+        console.error('Backend connection failed:', err.message);
+        showError(signupError, 'Registration unavailable: Server cannot be reached. Try again later.');
+      }
+    });
+  }
 
   // Forgot Password Form Submission
   if (forgotPasswordForm) {
