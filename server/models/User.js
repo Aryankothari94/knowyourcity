@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     resetOTP: { type: String }, // Hashed numeric OTP for password recovery
     resetOTPExpires: { type: Date }, // Expiration for OTP (e.g. 10-15 minutes)
+    loginOTP: { type: String }, // Hashed numeric OTP for 2FA login
+    loginOTPExpires: { type: Date }, // Expiration for login OTP
     isGoogleUser: { type: Boolean, default: false }
 }, { 
     timestamps: true,

@@ -133,15 +133,76 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Invalid password.' });
         }
 
+        // GENERATE LOGIN OTP (2FA)
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const salt = await bcrypt.genSalt(10);
+        user.loginOTP = await bcrypt.hash(otp, salt);
+        user.loginOTPExpires = Date.now() + 10 * 60 * 1000; // 10 Minutes
+        await user.save();
+
+        // Send Email
+        const mailOptions = {
+            from: `"Know Your City" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: 'Your Login Verification Code — Know Your City',
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
+                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Login Verification</h2>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${user.firstName},</p>
+                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Use the following code to verify your identity and complete your login. This code is valid for 10 minutes:</p>
+                    <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
+                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #00e5ff; letter-spacing: 5px;">${otp}</span>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 14px;">If you did not attempt to login, please secure your account immediately.</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
         res.status(200).json({ 
-            message: passwordMigrated ? 'Login successful (Security Securely Migrated)' : 'Login successful', 
-            user: { firstName: user.firstName, email: user.email } 
+            mfaRequired: true,
+            email: user.email,
+            message: 'Verification code sent to your email.' 
         });
     } catch (err) {
         if (err.name === 'MongooseServerSelectionError' || err.message.includes('buffering')) {
             return res.status(503).json({ message: 'Database is currently unavailable. Please try again later.' });
         }
         res.status(500).json({ message: 'Server error', error: err.message });
+    }
+});
+
+// Verify Login OTP
+router.post('/verify-login-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
+
+        if (!user || !user.loginOTP || !user.loginOTPExpires) {
+            return res.status(400).json({ message: 'Invalid or expired session.' });
+        }
+
+        if (Date.now() > user.loginOTPExpires) {
+            return res.status(400).json({ message: 'Verification code expired.' });
+        }
+
+        const isMatch = await bcrypt.compare(otp, user.loginOTP);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid verification code.' });
+        }
+
+        // Clear OTP
+        user.loginOTP = undefined;
+        user.loginOTPExpires = undefined;
+        await user.save();
+
+        res.status(200).json({ 
+            message: 'Login successful', 
+            user: { firstName: user.firstName, email: user.email } 
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error during verification.' });
     }
 });
 

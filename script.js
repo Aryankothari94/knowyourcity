@@ -80,8 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const forgotPasswordSuccess = document.getElementById('forgotPasswordSuccess');
   const resetPasswordForm = document.getElementById('resetPasswordForm');
   const resetPasswordError = document.getElementById('resetPasswordError');
+  const loginOTPForm = document.getElementById('loginOTPForm');
+  const loginOTPError = document.getElementById('loginOTPError');
   let currentCaptchaAnswer = 0;
-  let recoveryEmail = ''; // To pass email from forgot screen to reset screen
+  let recoveryEmail = ''; 
+  let pendingLoginEmail = ''; // To store email during 2FA
 
   const loginNav = document.getElementById('loginNav');
   const accountNav = document.getElementById('accountNav');
@@ -146,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminLoginError) adminLoginError.classList.remove('active');
     if (forgotPasswordError) forgotPasswordError.classList.remove('active');
     if (resetPasswordError) resetPasswordError.classList.remove('active');
+    if (loginOTPError) loginOTPError.classList.remove('active');
     if (forgotPasswordSuccess) {
       forgotPasswordSuccess.textContent = '';
       forgotPasswordSuccess.style.display = 'none';
@@ -602,6 +606,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (res.ok) {
+          if (data.mfaRequired) {
+            pendingLoginEmail = data.email;
+            switchTab('loginOTP');
+            return;
+          }
           performLogin(data.user.email, data.user.firstName);
           loginForm.reset();
           return;
@@ -688,6 +697,36 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  if (loginOTPForm) {
+    loginOTPForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const otp = document.getElementById('loginOTPInput').value.trim();
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify-login-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingLoginEmail, otp })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          performLogin(data.user.email, data.user.firstName);
+          loginOTPForm.reset();
+          const authModal = document.getElementById('authModal');
+          if (authModal) authModal.classList.remove('active');
+          document.body.style.overflow = 'auto';
+          return;
+        } else {
+          showError(loginOTPError, data.message || 'Verification failed.');
+        }
+      } catch (err) {
+        showError(loginOTPError, 'Verification failed. Please try again.');
+      }
+    });
 
   // Forgot Password Form Submission
   if (forgotPasswordForm) {
