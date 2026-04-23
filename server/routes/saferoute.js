@@ -17,18 +17,15 @@ async function fetchSafetyAssets(coords) {
     const maxLng = Math.max(...lngs) + buffer;
     const bbox = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-    // Comprehensive query for safety-relevant infrastructure in India
-    const query = `[out:json][timeout:30];
+    // Optimized query for safety infrastructure (BBOX)
+    const query = `[out:json][timeout:20];
         (
-          node["amenity"="police"](${bbox});
+          node["amenity"~"police|hospital|clinic|pharmacy"](${bbox});
           node["police"~"pink|women|booth"](${bbox});
-          node["amenity"~"hospital|clinic|pharmacy"](${bbox});
-          node["amenity"~"cafe|restaurant|shop|convenience|bank|atm"](${bbox});
+          node["amenity"~"cafe|restaurant|shop|convenience"](${bbox});
           node["lit"="yes"](${bbox});
-          way["highway"~"primary|secondary|tertiary|residential"]["lit"="yes"](${bbox});
           node["amenity"="social_facility"]["social_facility:for"="woman"](${bbox});
-          node["emergency"="phone"](${bbox});
-        );out center tags 1000;`;
+        );out center tags 500;`;
     
     try {
         const response = await fetch('https://overpass-api.de/api/interpreter', {

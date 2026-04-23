@@ -312,7 +312,7 @@
       return { lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon), name:d[0].display_name.split(',')[0] };
     }
 
-    // ===== FIND ROUTES (with alternatives) =====
+    // ===== FIND ROUTES (with alternatives) — FRONTEND ONLY =====
     async function findRoutes() {
       const pickupText = document.getElementById('pickupInput').value.trim();
       const dropText = document.getElementById('dropInput').value.trim();
@@ -334,12 +334,10 @@
         if (!pickupData) { alert('Pickup location not found.'); return; }
         if (!dropData)   { alert('Drop location not found.'); return; }
 
-        // Clear layers
         safetyLayer.clearLayers();
         routeLayerGroup.clearLayers();
         allRoutes = []; selectedRouteIdx = -1;
 
-        // Add origin/destination markers
         L.marker([pickupData.lat, pickupData.lng], {
           icon: L.divIcon({ className:'', html:'<div style="background:#00e676;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #00e676"></div>', iconSize:[16,16] })
         }).addTo(safetyLayer).bindPopup('🟢 '+pickupData.name);
@@ -347,56 +345,103 @@
           icon: L.divIcon({ className:'', html:'<div style="background:#ff5252;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #ff5252"></div>', iconSize:[16,16] })
         }).addTo(safetyLayer).bindPopup('🔴 '+dropData.name);
 
-        // Fetch routes from MERN BACKEND
-        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-          ? 'http://localhost:10000/api' 
-          : 'https://knowyourcity.onrender.com/api';
+        // STEP 1: Fetch routes from OSRM (no backend needed)
+        btn.textContent = '🔄 Fetching routes...';
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickupData.lng},${pickupData.lat};${dropData.lng},${dropData.lat}?overview=full&geometries=geojson&alternatives=3`;
+        const routeRes = await fetch(osrmUrl);
+        const routeData = await routeRes.json();
+        if (!routeData.routes || routeData.routes.length === 0) { alert('No routes found.'); return; }
 
-        const res = await fetch(`${apiBase}/saferoute/directions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                origin: pickupData,
-                destination: dropData,
-                womenSafetyMode
-            })
+        // STEP 2: Score each route with real Overpass data
+        btn.textContent = '🛡️ Scanning safety infrastructure...';
+        const routePromises = routeData.routes.map(async (r) => {
+          const coords = r.geometry.coordinates.map(c => [c[1], c[0]]);
+          const distKm = (r.distance / 1000).toFixed(1);
+          const timeMins = Math.round(r.duration / 60);
+          const safety = await fetchRouteSafetyFromOverpass(coords, womenSafetyMode);
+          return { coords, distance: distKm, time: timeMins, ...safety, rawCoords: r.geometry.coordinates };
         });
 
-        if (!res.ok) throw new Error('Backend Analysis Failed');
-        const data = await res.json();
+        allRoutes = await Promise.all(routePromises);
+        allRoutes.sort((a, b) => b.safetyScore - a.safetyScore);
 
-        allRoutes = data.map(r => ({
-            coords: r.geometry.coordinates.map(c => [c[1], c[0]]),
-            distance: r.distance,
-            time: r.duration,
-            safetyScore: r.safetyScore,
-            safetyLabel: r.safetyStatus.charAt(0).toUpperCase() + r.safetyStatus.slice(1),
-            safetyColor: r.safetyColor,
-            policeCount: r.stats.police,
-            hospitalCount: r.stats.medical,
-            activityCount: r.stats.activity,
-            crimeCount: r.stats.crimes
-        }));
-
-        // Draw all routes on map
         drawAllRoutes();
-
-        // Build route option cards
         buildRouteCards();
-
-        // Auto-select safest route
         selectRoute(0);
 
-        // Fit bounds
         const allCoords = allRoutes.flatMap(r => r.coords);
         if (allCoords.length) routeMap.fitBounds(L.latLngBounds(allCoords), { padding:[40,40] });
 
       } catch(err) {
         console.error('Route error:', err);
-        alert('Backend Analysis Error: Please ensure the server is online.');
+        alert('Error: ' + (err.message || 'Please try again.'));
       } finally {
         btn.disabled = false; btn.textContent = '🗺️ Find Safest Route';
       }
+    }
+
+    // ===== FRONTEND SAFETY ENGINE (calls Overpass directly) =====
+    async function fetchRouteSafetyFromOverpass(coords, womenSafetyMode) {
+      const lats = coords.map(c => c[0]), lngs = coords.map(c => c[1]);
+      const buf = 0.008;
+      const bbox = `${Math.min(...lats)-buf},${Math.min(...lngs)-buf},${Math.max(...lats)+buf},${Math.max(...lngs)+buf}`;
+
+      let policeCount=0, hospitalCount=0, activityCount=0, litCount=0, womenPoints=0;
+      let policeNames=[], hospitalNames=[], safeSpots=[];
+
+      try {
+        const q = `[out:json][timeout:20];(node["amenity"="police"](${bbox});node["amenity"~"hospital|clinic|pharmacy"](${bbox});node["amenity"~"cafe|restaurant|shop|convenience|bank|fuel"](${bbox});node["lit"="yes"](${bbox});way["lit"="yes"](${bbox});node["amenity"="social_facility"](${bbox});node["emergency"="phone"](${bbox}););out center tags 500;`;
+        const res = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+        if (res.ok) {
+          const data = await res.json();
+          (data.elements||[]).forEach(el => {
+            const t = el.tags||{};
+            if (t.amenity==='police') { policeCount++; policeNames.push(t.name||'Police Station'); }
+            else if (t.amenity==='hospital'||t.amenity==='clinic') { hospitalCount++; hospitalNames.push(t.name||(t.amenity==='hospital'?'Hospital':'Clinic')); }
+            else if (t.amenity==='pharmacy') { hospitalCount++; hospitalNames.push(t.name||'Pharmacy'); }
+            else if (['cafe','restaurant','shop','convenience','bank','fuel'].includes(t.amenity)) { activityCount++; if(t.name) safeSpots.push(t.name); }
+            if (t.lit==='yes') litCount++;
+            if (t.amenity==='social_facility'||t.emergency==='phone') womenPoints++;
+          });
+        }
+      } catch(e) { console.warn('Overpass primary failed:', e.message); }
+
+      // Fallback
+      if (policeCount===0 && hospitalCount===0 && activityCount===0) {
+        try {
+          const mLat=(Math.min(...lats)+Math.max(...lats))/2, mLng=(Math.min(...lngs)+Math.max(...lngs))/2;
+          const fbQ = `[out:json][timeout:15];(node["amenity"~"police|hospital|cafe|shop"](around:5000,${mLat},${mLng}););out tags 200;`;
+          const fbRes = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(fbQ), headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+          if (fbRes.ok) {
+            const fbData = await fbRes.json();
+            (fbData.elements||[]).forEach(el => {
+              const t = el.tags||{};
+              if (t.amenity==='police') { policeCount++; policeNames.push(t.name||'Police Station'); }
+              else if (t.amenity==='hospital') { hospitalCount++; hospitalNames.push(t.name||'Hospital'); }
+              else { activityCount++; if(t.name) safeSpots.push(t.name); }
+            });
+          }
+        } catch(e2) {}
+      }
+
+      // Scoring
+      let score = 35;
+      score += Math.min(policeCount*6, 30);
+      score += Math.min(hospitalCount*3, 15);
+      score += Math.min(activityCount*0.5, 10);
+      score += Math.min(litCount*2, 10);
+      const hour = new Date().getHours();
+      if (hour>=22||hour<6) score -= 10;
+      else if (hour>=18) score -= 5;
+      if (womenSafetyMode) { score += womenPoints*5; if(policeCount>=3) score+=5; }
+      score = Math.max(0, Math.min(100, Math.round(score)));
+
+      let safetyLabel, safetyColor;
+      if (score>=65) { safetyLabel='Safe'; safetyColor='#00e676'; }
+      else if (score>=35) { safetyLabel='Moderate'; safetyColor='#ffab40'; }
+      else { safetyLabel='Risky'; safetyColor='#ff5252'; }
+
+      return { safetyScore:score, safetyLabel, safetyColor, policeCount, hospitalCount, activityCount, litCount, womenPoints, crimeCount:0, lighting:litCount, policeNames:[...new Set(policeNames)], hospitalNames:[...new Set(hospitalNames)], safeSpots:[...new Set(safeSpots)].slice(0,10) };
     }
 
     // ===== SAFETY SCORE CALCULATION =====
@@ -589,75 +634,154 @@
         const crimesList = document.getElementById('historicalCrimesList');
         
         panel.style.display = 'block';
+        const isWomenMode = document.getElementById('womenSafetyToggle').checked;
+        const hour = new Date().getHours();
+        const isNight = hour >= 20 || hour < 6;
+        const timeLabel = isNight ? '🌙 Night Mode Active' : (hour >= 17 ? '🌆 Evening' : '☀️ Daytime');
         
+        // Stats Cards
         statsDisplay.innerHTML = `
-            <div style="background:rgba(255,82,82,0.05); padding:15px; border-radius:10px; border:1px solid rgba(255,82,82,0.1);">
-                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Historical Crimes</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#ff5252;">${route.crimeCount}</div>
-                <div style="font-size:0.7rem; color:#ff8a80;">Reported in this corridor</div>
-            </div>
             <div style="background:rgba(0,230,118,0.05); padding:15px; border-radius:10px; border:1px solid rgba(0,230,118,0.1);">
                 <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Police Stations</div>
                 <div style="font-size:1.5rem; font-weight:800; color:#00e676;">${route.policeCount}</div>
-                <div style="font-size:0.7rem; color:#b9f6ca;">Active stations nearby</div>
+                <div style="font-size:0.7rem; color:#b9f6ca;">Along this route</div>
             </div>
-            <div style="background:rgba(255,0,122,0.05); padding:15px; border-radius:10px; border:1px solid rgba(255,0,122,0.1);">
-                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Women Safety Points</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#ff007a;">${route.womenPoints || 0}</div>
-                <div style="font-size:0.7rem; color:#f48fb1;">Pink Booths & Help Desks</div>
+            <div style="background:rgba(33,150,243,0.05); padding:15px; border-radius:10px; border:1px solid rgba(33,150,243,0.1);">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Hospitals & Clinics</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#2196f3;">${route.hospitalCount}</div>
+                <div style="font-size:0.7rem; color:#90caf9;">Medical facilities nearby</div>
+            </div>
+            <div style="background:rgba(0,229,255,0.05); padding:15px; border-radius:10px; border:1px solid rgba(0,229,255,0.1);">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Public Activity</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#00e5ff;">${route.activityCount}</div>
+                <div style="font-size:0.7rem; color:#b2ebf2;">Shops, Cafes, Banks</div>
             </div>
             <div style="background:rgba(255,235,59,0.05); padding:15px; border-radius:10px; border:1px solid rgba(255,235,59,0.1);">
-                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Lighting Audit</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#ffeb3b;">${route.lighting || 0}</div>
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase;">Street Lighting</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#ffeb3b;">${route.litCount || 0}</div>
                 <div style="font-size:0.7rem; color:#fff59d;">Verified lit zones</div>
             </div>
         `;
 
-        const isWomenSafetyMode = document.getElementById('womenSafetyToggle').checked;
-        
-        let auditHtml = '';
-        if (isWomenSafetyMode) {
-            auditHtml = `
-                <div style="margin-top:20px; padding:15px; background:linear-gradient(135deg, rgba(255,0,122,0.1), rgba(124,77,255,0.1)); border:1px solid rgba(255,0,122,0.2); border-radius:12px;">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                        <span class="material-symbols-outlined" style="color:#ff007a; font-size:1.2rem;">shield_with_heart</span>
-                        <strong style="color:white; font-size:0.9rem;">Women Safety Audit: ${route.safetyLabel} Route</strong>
+        // Build detailed panel
+        let html = '';
+
+        // === NEARBY POLICE STATIONS (real names) ===
+        if (route.policeNames && route.policeNames.length > 0) {
+            html += `<div style="margin-top:15px; padding:12px; background:rgba(0,230,118,0.05); border:1px solid rgba(0,230,118,0.1); border-radius:10px;">
+                <div style="font-weight:600; font-size:0.85rem; color:#00e676; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+                    <span class="material-symbols-outlined" style="font-size:18px;">local_police</span> Nearby Police Stations
+                </div>
+                <ul style="list-style:none; padding:0; margin:0;">
+                    ${route.policeNames.slice(0,5).map(n => `<li style="padding:6px 10px; font-size:0.78rem; color:#c8e6c9; border-bottom:1px solid rgba(255,255,255,0.04);">🚔 ${n}</li>`).join('')}
+                </ul>
+            </div>`;
+        }
+
+        // === NEARBY HOSPITALS (real names) ===
+        if (route.hospitalNames && route.hospitalNames.length > 0) {
+            html += `<div style="margin-top:10px; padding:12px; background:rgba(33,150,243,0.05); border:1px solid rgba(33,150,243,0.1); border-radius:10px;">
+                <div style="font-weight:600; font-size:0.85rem; color:#2196f3; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+                    <span class="material-symbols-outlined" style="font-size:18px;">local_hospital</span> Medical Facilities
+                </div>
+                <ul style="list-style:none; padding:0; margin:0;">
+                    ${route.hospitalNames.slice(0,5).map(n => `<li style="padding:6px 10px; font-size:0.78rem; color:#bbdefb; border-bottom:1px solid rgba(255,255,255,0.04);">🏥 ${n}</li>`).join('')}
+                </ul>
+            </div>`;
+        }
+
+        // === WOMEN SAFETY AUDIT (only when enabled) ===
+        if (isWomenMode) {
+            // Safety assessment
+            let safetyAdvice = '';
+            if (route.safetyScore >= 65) {
+                safetyAdvice = `<span style="color:#00e676;">✅ This route is rated <strong>SAFE</strong> for women travelers.</span> It has good police coverage (${route.policeCount} stations) and ${route.activityCount > 5 ? 'high' : 'moderate'} public activity.`;
+            } else if (route.safetyScore >= 35) {
+                safetyAdvice = `<span style="color:#ffab40;">⚠️ This route has <strong>MODERATE</strong> safety.</span> Exercise caution, especially ${isNight ? 'at night' : 'during late hours'}. Consider sharing your live location with a trusted contact.`;
+            } else {
+                safetyAdvice = `<span style="color:#ff5252;">🚨 This route is rated <strong>RISKY</strong> for solo travel.</span> Low police coverage and limited public activity detected. We strongly recommend choosing an alternate route or traveling with a companion.`;
+            }
+
+            html += `
+                <div style="margin-top:15px; padding:18px; background:linear-gradient(135deg, rgba(255,0,122,0.08), rgba(124,77,255,0.08)); border:1px solid rgba(255,0,122,0.2); border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                        <span class="material-symbols-outlined" style="color:#ff007a; font-size:1.3rem;">shield_with_heart</span>
+                        <strong style="color:white; font-size:1rem;">Women Safety Audit</strong>
+                        <span style="margin-left:auto; font-size:0.72rem; padding:4px 10px; border-radius:20px; background:rgba(255,0,122,0.15); color:#ff007a; font-weight:600;">${timeLabel}</span>
                     </div>
-                    <div style="font-size:0.8rem; color:#fce4ec; line-height:1.6;">
-                        • <strong>Emergency Support:</strong> ${route.womenPoints > 0 ? `We found ${route.womenPoints} women-specific help desks or pink booths along this path.` : 'No specific women help desks found, but police coverage is available.'}<br>
-                        • <strong>Night Safety:</strong> ${route.lighting > 5 ? 'High street-lighting density detected. Recommended for night travel.' : 'Moderate lighting. We recommend staying on main roads.'}<br>
-                        • <strong>Public Activity:</strong> This route passes through ${route.activityCount > 10 ? 'highly active' : 'moderately active'} areas with verified shops and cafes, providing better natural surveillance.
+
+                    <div style="font-size:0.82rem; color:#fce4ec; line-height:1.8; margin-bottom:12px;">
+                        ${safetyAdvice}
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                        <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; text-align:center;">
+                            <div style="font-size:0.7rem; color:var(--text-secondary);">Police Coverage</div>
+                            <div style="font-size:1.1rem; font-weight:700; color:${route.policeCount >= 3 ? '#00e676' : '#ffab40'};">${route.policeCount >= 3 ? 'HIGH' : route.policeCount >= 1 ? 'MODERATE' : 'LOW'}</div>
+                        </div>
+                        <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; text-align:center;">
+                            <div style="font-size:0.7rem; color:var(--text-secondary);">Night Safety</div>
+                            <div style="font-size:1.1rem; font-weight:700; color:${route.litCount >= 5 ? '#00e676' : route.litCount >= 1 ? '#ffab40' : '#ff5252'};">${route.litCount >= 5 ? 'GOOD' : route.litCount >= 1 ? 'MODERATE' : 'LOW'}</div>
+                        </div>
+                        <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; text-align:center;">
+                            <div style="font-size:0.7rem; color:var(--text-secondary);">Crowd Level</div>
+                            <div style="font-size:1.1rem; font-weight:700; color:${route.activityCount >= 10 ? '#00e676' : '#ffab40'};">${route.activityCount >= 10 ? 'HIGH' : route.activityCount >= 3 ? 'MODERATE' : 'LOW'}</div>
+                        </div>
+                        <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; text-align:center;">
+                            <div style="font-size:0.7rem; color:var(--text-secondary);">Medical Access</div>
+                            <div style="font-size:1.1rem; font-weight:700; color:${route.hospitalCount >= 2 ? '#00e676' : '#ffab40'};">${route.hospitalCount >= 2 ? 'GOOD' : route.hospitalCount >= 1 ? 'AVAILABLE' : 'LIMITED'}</div>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid rgba(255,0,122,0.15); padding-top:12px;">
+                        <div style="font-weight:600; font-size:0.82rem; color:#f48fb1; margin-bottom:8px;">💡 Safety Tips for ${isNight ? 'Night' : 'Solo'} Travel:</div>
+                        <ul style="list-style:none; padding:0; margin:0; font-size:0.78rem; color:#e1bee7; line-height:1.8;">
+                            <li>📱 Share your live location with a trusted family member or friend</li>
+                            <li>📞 Save emergency numbers: <strong style="color:white;">Women Helpline: 1091 | Police: 100 | Ambulance: 108</strong></li>
+                            ${isNight ? '<li>🔦 Stick to well-lit main roads and avoid shortcuts through isolated areas</li>' : ''}
+                            ${isNight ? '<li>🚕 Prefer verified ride services (Ola/Uber) over unknown autos for night travel</li>' : ''}
+                            <li>📍 Keep your phone charged and location services ON during the journey</li>
+                            <li>🚨 Install the <strong style="color:white;">112 India</strong> app for one-tap SOS alerts to nearby police</li>
+                            ${route.policeCount >= 1 ? `<li>🚔 Nearest police station on this route: <strong style="color:#00e676;">${route.policeNames[0]}</strong></li>` : '<li>⚠️ No police station detected along this route — exercise extra caution</li>'}
+                            ${route.hospitalCount >= 1 ? `<li>🏥 Nearest medical facility: <strong style="color:#2196f3;">${route.hospitalNames[0]}</strong></li>` : ''}
+                        </ul>
                     </div>
                 </div>
             `;
         }
 
-        if (route.crimeCount > 0) {
-            crimesList.innerHTML = `
-                ${auditHtml}
-                <div style="color:#ff5252; font-weight:600; font-size:0.85rem; margin-top:15px; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
-                    <span class="material-symbols-outlined" style="font-size:18px;">warning</span> 
-                    Live Alerts & Danger Zones
+        // === SAFE SPOTS ALONG ROUTE ===
+        if (route.safeSpots && route.safeSpots.length > 0) {
+            html += `<div style="margin-top:10px; padding:12px; background:rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.1); border-radius:10px;">
+                <div style="font-weight:600; font-size:0.85rem; color:#00e5ff; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+                    <span class="material-symbols-outlined" style="font-size:18px;">storefront</span> Safe Public Spots (Open & Active)
                 </div>
-                <ul style="list-style:none; padding:0; margin:0;">
-                    <li style="padding:10px; background:rgba(255,82,82,0.1); border-radius:8px; font-size:0.8rem; color:#ffcdd2; margin-bottom:5px;">
-                        • <strong>Incident Alert:</strong> ${route.crimeCount} recent safety reports in this area. Exercise high caution.
-                    </li>
-                    <li style="padding:10px; background:rgba(255,171,64,0.1); border-radius:8px; font-size:0.8rem; color:#ffe0b2;">
-                        • <strong>Infrastructure Alert:</strong> Gaps in lighting or low activity reported at certain segments.
-                    </li>
-                </ul>
-            `;
-        } else {
-            crimesList.innerHTML = `
-                ${auditHtml}
-                <div style="color:#00e676; font-weight:600; font-size:0.85rem; margin-top:15px; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
-                    <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span> 
-                    Safe Corridor Confirmation
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                    ${route.safeSpots.map(n => `<span style="padding:4px 10px; background:rgba(0,229,255,0.1); border-radius:20px; font-size:0.72rem; color:#b2ebf2;">${n}</span>`).join('')}
                 </div>
-                <p style="color:var(--text-secondary); font-size:0.8rem;">Our real-time audit shows no active incidents or critical historical crimes for this route. It is currently categorized as a "Women-Safe Corridor".</p>
-            `;
+            </div>`;
         }
+
+        // === OVERALL CORRIDOR STATUS ===
+        if (route.safetyScore >= 65) {
+            html += `<div style="margin-top:12px; padding:12px; background:rgba(0,230,118,0.08); border:1px solid rgba(0,230,118,0.15); border-radius:10px; display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="color:#00e676; font-size:20px;">verified_user</span>
+                <div>
+                    <div style="font-weight:600; font-size:0.82rem; color:#00e676;">Safe Corridor Verified</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">This route has verified safety infrastructure and is suitable for travel.</div>
+                </div>
+            </div>`;
+        } else if (route.safetyScore < 35) {
+            html += `<div style="margin-top:12px; padding:12px; background:rgba(255,82,82,0.08); border:1px solid rgba(255,82,82,0.15); border-radius:10px; display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="color:#ff5252; font-size:20px;">gpp_bad</span>
+                <div>
+                    <div style="font-weight:600; font-size:0.82rem; color:#ff5252;">Caution: Limited Safety Coverage</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">This route has limited police/medical coverage. Consider an alternate route.</div>
+                </div>
+            </div>`;
+        }
+
+        crimesList.innerHTML = html;
     }
 
     // ===== USE CURRENT LOCATION FOR PICKUP =====

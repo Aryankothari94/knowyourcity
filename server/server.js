@@ -37,18 +37,11 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            // For production, you might want to be stricter, but allowing for testing
-            callback(null, true);
-        }
-    },
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token'],
     credentials: true,
-    maxAge: 86400 // Cache preflight for 24 hours
+    maxAge: 86400
 }));
 
 // The modern wildcard fix for Express v5
