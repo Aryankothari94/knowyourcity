@@ -11,6 +11,49 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 const PRODUCTION_DOMAIN = 'www.knowyourcitys.in';
 
 document.addEventListener('DOMContentLoaded', () => {
+  // ===== GOOGLE AUTH INITIALIZATION =====
+  window.handleGoogleSignIn = async (response) => {
+    try {
+      console.log("Google Login callback triggered");
+      const res = await fetch(`${API_BASE}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: response.credential })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        performLogin(data.user.email, data.user.firstName);
+        if (authModal) authModal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+      } else {
+        alert(data.message || "Google Sign-In failed.");
+      }
+    } catch (err) {
+      console.error("Google Auth Error:", err);
+    }
+  };
+
+  const initGoogleAuth = () => {
+    if (window.google && window.google.accounts) {
+      google.accounts.id.initialize({
+        client_id: "1078761578330689-placeholder.apps.googleusercontent.com", // REPLACE WITH REAL CLIENT ID
+        callback: window.handleGoogleSignIn
+      });
+      const googleBtn = document.getElementById('googleBtn');
+      if (googleBtn) {
+        google.accounts.id.renderButton(googleBtn, { 
+          theme: "outline", 
+          size: "large", 
+          text: "continue_with",
+          shape: "pill",
+          width: 300 
+        });
+      }
+    } else {
+      setTimeout(initGoogleAuth, 500); // Retry if script not loaded
+    }
+  };
+  initGoogleAuth();
 
   // ===== AUTHENTICATION SYSTEM =====
   const authModal = document.getElementById('authModal');
@@ -522,37 +565,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAuthUI();
 
   // Login Form Submission — tries backend API, falls back to localStorage
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearErrors();
-
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const captchaInput = parseInt(document.getElementById('loginCaptcha').value);
-    const termsCheckbox = document.getElementById('loginTerms');
-    const termsError = document.getElementById('termsError');
-
-    // Terms & Conditions validation
-    if (termsCheckbox && !termsCheckbox.checked) {
-      if (termsError) {
-        termsError.textContent = 'Please accept the Terms & Conditions to continue.';
-        termsError.classList.add('active');
-      }
-      return;
-    }
-    if (termsError) termsError.classList.remove('active');
-
-    const privacyCheckbox = document.getElementById('loginPrivacy');
-    const privacyError = document.getElementById('privacyError');
-    if (privacyCheckbox && !privacyCheckbox.checked) {
-      if (privacyError) {
-        privacyError.textContent = 'Please accept the Privacy Policy to continue.';
-        privacyError.classList.add('active');
-      }
-      return;
-    }
-    if (privacyError) privacyError.classList.remove('active');
-
     if (captchaInput !== currentCaptchaAnswer) {
       showError(loginError, 'Incorrect Captcha. Please try again.');
       generateCaptcha();
@@ -587,7 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Signup Form Submission — tries backend API, falls back to localStorage
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearErrors();
@@ -600,13 +611,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('signupPassword').value;
     const signupError = document.getElementById('signupError');
 
-    if (!email.toLowerCase().endsWith('@gmail.com')) {
+    // Validation Regex
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+
+    if (!emailRegex.test(email)) {
       showError(signupError, 'Only genuine Google accounts (@gmail.com) are accepted.');
+      return;
+    }
+
+    if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
+      showError(signupError, 'Please enter a valid phone number.');
       return;
     }
 
     if (password.length < 6) {
       showError(signupError, 'Password must be at least 6 characters.');
+      return;
+    }
+
+    const termsCheckbox = document.getElementById('signupTerms');
+    const privacyCheckbox = document.getElementById('signupPrivacy');
+    if (!termsCheckbox.checked || !privacyCheckbox.checked) {
+      showError(signupError, 'You must accept the Terms and Privacy Policy.');
       return;
     }
 

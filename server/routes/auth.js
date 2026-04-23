@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const User = require('../models/User');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client("1078761578330689-placeholder.apps.googleusercontent.com");
 
 // Setup the Transporter with high-speed optimization
 const transporter = nodemailer.createTransport({
@@ -35,10 +37,20 @@ router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, phone, email, dob, password } = req.body;
 
-        // Domain Validation: Only @gmail.com allowed
-        if (!email || !email.toLowerCase().endsWith('@gmail.com')) {
-            console.log(`[SIGNUP BLOCKED] Non-Gmail address: ${email}`);
+        // Validation Regex
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+
+        // Email Validation: Only @gmail.com allowed
+        if (!email || !emailRegex.test(email)) {
+            console.log(`[SIGNUP BLOCKED] Invalid/Non-Gmail address: ${email}`);
             return res.status(400).json({ message: 'Only genuine Google accounts (@gmail.com) are accepted.' });
+        }
+
+        // Phone Validation
+        if (!phone || !phoneRegex.test(phone.replace(/\s+/g, ''))) {
+            console.log(`[SIGNUP BLOCKED] Invalid phone number: ${phone}`);
+            return res.status(400).json({ message: 'Please enter a valid phone number.' });
         }
 
         // Check if user exists
@@ -124,6 +136,47 @@ router.post('/login', async (req, res) => {
             return res.status(503).json({ message: 'Database is currently unavailable. Please try again later.' });
         }
         res.status(500).json({ message: 'Server error', error: err.message });
+    }
+});
+
+// Google Sign-In
+router.post('/google', async (req, res) => {
+    try {
+        const { token } = req.body;
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: "1078761578330689-placeholder.apps.googleusercontent.com",
+        });
+        const payload = ticket.getPayload();
+        const { email, given_name, family_name, picture, sub } = payload;
+
+        // Check if user exists
+        let user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
+
+        if (!user) {
+            // Create new user if doesn't exist
+            // For Google users, we might not have DOB or Phone initially
+            // We can set placeholders or ask them later. For now, let's create with placeholders.
+            user = new User({
+                firstName: given_name,
+                lastName: family_name || '',
+                email: email,
+                phone: 'GOOGLE_USER', // Placeholder
+                dob: new Date('1900-01-01'), // Placeholder
+                password: await bcrypt.hash(sub, 10), // Use Google Sub as temporary password
+                isGoogleUser: true
+            });
+            await user.save();
+            console.log(`[GOOGLE SIGNUP] New user created: ${email}`);
+        }
+
+        res.status(200).json({
+            message: 'Google Login successful',
+            user: { firstName: user.firstName, email: user.email }
+        });
+    } catch (err) {
+        console.error('Google Auth Error:', err.message);
+        res.status(400).json({ message: 'Google authentication failed', error: err.message });
     }
 });
 

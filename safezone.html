@@ -8,8 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=15">
-  <link rel="icon" href="logo.png" type="image/png" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+  <!-- Google Auth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
   
@@ -952,18 +953,6 @@
           <input type="number" id="loginCaptcha" placeholder="Enter answer" required />
         </div>
         
-        <div class="form-group checkbox-group" style="margin-top: 10px;">
-          <input type="checkbox" id="loginTerms" required />
-          <label for="loginTerms" style="font-size: 0.8rem;">I agree to the <a href="terms.html">Terms & Conditions</a></label>
-        </div>
-        <div id="termsError" class="auth-error-message"></div>
-
-        <div class="form-group checkbox-group">
-          <input type="checkbox" id="loginPrivacy" required />
-          <label for="loginPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy.html">Privacy Policy</a></label>
-        </div>
-        <div id="privacyError" class="auth-error-message"></div>
-
         <button type="submit" class="btn-auth" id="loginBtnPrimary">Login to Your City</button>
         
         <div class="auth-footer">
@@ -1004,7 +993,27 @@
           <label for="signupPassword">Password</label>
           <input type="password" id="signupPassword" placeholder="Min 6 characters" required />
         </div>
+
+        <div class="form-group checkbox-group" style="margin-top: 10px;">
+          <input type="checkbox" id="signupTerms" required />
+          <label for="signupTerms" style="font-size: 0.8rem;">I agree to the <a href="terms">Terms & Conditions</a></label>
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="signupPrivacy" required />
+          <label for="signupPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy">Privacy Policy</a></label>
+        </div>
+
         <button type="submit" class="btn-auth" id="signupBtnPrimary">Create Account</button>
+        
+        <!-- Google Sign-In Button -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px;">
+          <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+            <hr style="flex: 1; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
+            <span style="color: var(--text-secondary); font-size: 0.8rem;">OR</span>
+            <hr style="flex: 1; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
+          </div>
+          <div id="googleBtn"></div>
+        </div>
         <div class="auth-footer">Already have an account? <a href="#" data-switch="login">Login</a></div>
       </form>
 
