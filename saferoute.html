@@ -126,7 +126,7 @@
       <div class="feature-hero-content">
         <div class="feature-icon-large">🗺️</div>
         <h1>Safe <span class="gradient-text">Route Finder</span></h1>
-        <p>Enter pickup & drop to compare routes with real-time safety ratings. Green = safest, Yellow = moderate, Red = risky. Select a route, start your journey, and explore the cities along the way.</p>
+        <p>Find the safest route between two locations with real-time safety intelligence. Powered by AI safety scoring, live infrastructure data, and women-first navigation.</p>
       </div>
     </div>
   </section>
@@ -137,9 +137,45 @@
         <!-- Sidebar -->
         <div class="route-sidebar">
           <div class="glass-card" style="padding:22px;">
-            <h3 style="margin-bottom:16px; font-size:1.05rem;">📍 Plan Your Route</h3>
+            <!-- Travel Mode Selector -->
+            <div style="display:flex; gap:0; margin-bottom:18px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
+              <button id="btnInCity" class="travel-mode-btn active" onclick="setTravelMode('incity')">
+                <span class="material-symbols-outlined" style="font-size:16px;">location_city</span> In-City
+              </button>
+              <button id="btnOutside" class="travel-mode-btn" onclick="setTravelMode('outside')">
+                <span class="material-symbols-outlined" style="font-size:16px;">flight_takeoff</span> Inter-City
+              </button>
+            </div>
+
+            <!-- City Selector (for In-City mode) -->
+            <div id="citySelectorGroup" class="route-input-group">
+              <label for="citySelect">🏙️ Select Your City</label>
+              <select id="citySelect" class="route-input" style="cursor:pointer;" onchange="onCitySelected()">
+                <option value="">— Choose a city —</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Kolkata">Kolkata</option>
+                <option value="Pune">Pune</option>
+                <option value="Ahmedabad">Ahmedabad</option>
+                <option value="Jaipur">Jaipur</option>
+                <option value="Lucknow">Lucknow</option>
+                <option value="Chandigarh">Chandigarh</option>
+                <option value="Indore">Indore</option>
+                <option value="Bhopal">Bhopal</option>
+                <option value="Nagpur">Nagpur</option>
+                <option value="Surat">Surat</option>
+                <option value="Kochi">Kochi</option>
+                <option value="Patna">Patna</option>
+                <option value="Guwahati">Guwahati</option>
+              </select>
+            </div>
+
+            <h3 style="margin-bottom:16px; font-size:1.05rem;" id="routePlanTitle">📍 Plan Your Route</h3>
             <div class="route-input-group">
-              <label for="pickupInput">🟢 Pickup Location</label>
+              <label for="pickupInput" id="pickupLabel">🟢 Pickup Location</label>
               <div class="route-input-wrap">
                 <input type="text" id="pickupInput" class="route-input" placeholder="e.g. Connaught Place, Delhi" autocomplete="off" />
                 <div class="autocomplete-list" id="pickupAC"></div>
@@ -147,7 +183,7 @@
               <button onclick="useCurrentLocationForPickup()" style="background:none; border:none; color:var(--accent-cyan); font-size:0.75rem; cursor:pointer; padding:4px 0; margin-top:2px;">📍 Use Current Location</button>
             </div>
             <div class="route-input-group">
-              <label for="dropInput">🔴 Drop Location</label>
+              <label for="dropInput" id="dropLabel">🔴 Drop Location</label>
               <div class="route-input-wrap">
                 <input type="text" id="dropInput" class="route-input" placeholder="e.g. India Gate, Delhi" autocomplete="off" />
                 <div class="autocomplete-list" id="dropAC"></div>
@@ -170,9 +206,14 @@
             <button class="route-btn" id="findRouteBtn" onclick="findRoutes()">🗺️ Find Safest Route</button>
 
             <style>
+              .travel-mode-btn { flex:1; padding:10px; border:none; background:rgba(255,255,255,0.03); color:var(--text-secondary); font-size:0.82rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.3s; display:flex; align-items:center; justify-content:center; gap:6px; }
+              .travel-mode-btn.active { background:linear-gradient(135deg, var(--accent-cyan), #0097a7); color:#fff; }
+              .travel-mode-btn:hover:not(.active) { background:rgba(255,255,255,0.06); color:var(--text-primary); }
               #womenSafetyToggle:checked + .slider { background: linear-gradient(135deg, #ff007a, #7c4dff); }
               #womenSafetyToggle:checked + .slider:before { transform: translateX(20px); }
               .slider:before { position:absolute; content:""; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.4s; border-radius:50%; }
+              #citySelect { appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%2300e5ff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+              #citySelect option { background:#0d1129; color:var(--text-primary); }
             </style>
           </div>
 
@@ -235,12 +276,14 @@
   <script>
     // ===== STATE =====
     let routeMap, safetyLayer, routeLayerGroup;
-    let allRoutes = [];        // { coords, distance, time, safetyScore, safetyLabel, polyline, policeCount, hospitalCount }
+    let allRoutes = [];
     let selectedRouteIdx = -1;
     let journeyInterval = null;
     let journeyMarker = null;
     let pickupData = null, dropData = null;
     let exactCurrentLocationForPickup = null;
+    let travelMode = 'incity';
+    let selectedCity = '';
     const defaultLat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
     const defaultLng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
 
@@ -263,6 +306,44 @@
     document.getElementById('pickupInput').addEventListener('keypress', e => { if (e.key==='Enter') { hideAC('pickupAC'); document.getElementById('dropInput').focus(); } });
     document.getElementById('dropInput').addEventListener('keypress', e => { if (e.key==='Enter') { hideAC('dropAC'); findRoutes(); } });
 
+    // ===== TRAVEL MODE SWITCHING =====
+    function setTravelMode(mode) {
+      travelMode = mode;
+      document.getElementById('btnInCity').classList.toggle('active', mode === 'incity');
+      document.getElementById('btnOutside').classList.toggle('active', mode === 'outside');
+      const cityGroup = document.getElementById('citySelectorGroup');
+      const pickupInput = document.getElementById('pickupInput');
+      const dropInput = document.getElementById('dropInput');
+      if (mode === 'incity') {
+        cityGroup.style.display = 'block';
+        document.getElementById('routePlanTitle').textContent = '📍 Choose Locations in ' + (selectedCity || 'City');
+        document.getElementById('pickupLabel').textContent = '🟢 Start Point';
+        document.getElementById('dropLabel').textContent = '🔴 Destination';
+        pickupInput.placeholder = selectedCity ? `e.g. Station area, ${selectedCity}` : 'Select a city first';
+        dropInput.placeholder = selectedCity ? `e.g. Mall road, ${selectedCity}` : 'Select a city first';
+      } else {
+        cityGroup.style.display = 'none';
+        selectedCity = '';
+        document.getElementById('routePlanTitle').textContent = '📍 Plan Inter-City Route';
+        document.getElementById('pickupLabel').textContent = '🟢 From City';
+        document.getElementById('dropLabel').textContent = '🔴 To City';
+        pickupInput.placeholder = 'e.g. Delhi';
+        dropInput.placeholder = 'e.g. Jaipur';
+        pickupInput.value = ''; dropInput.value = '';
+      }
+    }
+
+    function onCitySelected() {
+      selectedCity = document.getElementById('citySelect').value;
+      if (!selectedCity) return;
+      document.getElementById('routePlanTitle').textContent = '📍 Choose Locations in ' + selectedCity;
+      document.getElementById('pickupInput').placeholder = `e.g. Railway Station, ${selectedCity}`;
+      document.getElementById('dropInput').placeholder = `e.g. Main Market, ${selectedCity}`;
+      document.getElementById('pickupInput').value = '';
+      document.getElementById('dropInput').value = '';
+      geocode(selectedCity + ', India').then(loc => { if (loc) routeMap.setView([loc.lat, loc.lng], 12); });
+    }
+
     // ===== AUTOCOMPLETE FOR INPUTS =====
     let acTimeout = null;
     function setupAutoComplete(inputId, listId) {
@@ -275,7 +356,8 @@
         if (q.length < 3) { list.innerHTML=''; list.classList.remove('show'); return; }
         acTimeout = setTimeout(async () => {
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1&countrycodes=in`, { headers:{'Accept-Language':'en'} });
+            let searchQ = (travelMode === 'incity' && selectedCity) ? `${q}, ${selectedCity}, India` : `${q}, India`;
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQ)}&limit=5&addressdetails=1&countrycodes=in`, { headers:{'Accept-Language':'en'} });
             const data = await res.json();
             if (!data.length) { list.innerHTML='<div class="autocomplete-item" style="cursor:default;color:var(--text-secondary)">No results found</div>'; list.classList.add('show'); return; }
             list.innerHTML = data.map(d => {
@@ -314,11 +396,17 @@
 
     // ===== FIND ROUTES (with alternatives) — FRONTEND ONLY =====
     async function findRoutes() {
-      const pickupText = document.getElementById('pickupInput').value.trim();
-      const dropText = document.getElementById('dropInput').value.trim();
+      let pickupText = document.getElementById('pickupInput').value.trim();
+      let dropText = document.getElementById('dropInput').value.trim();
       const womenSafetyMode = document.getElementById('womenSafetyToggle').checked;
 
-      if (!pickupText||!dropText) { alert('Please enter both pickup and drop locations.'); return; }
+      if (!pickupText||!dropText) { alert('Please enter both locations.'); return; }
+
+      // Append city for in-city mode to improve geocoding
+      if (travelMode === 'incity' && selectedCity) {
+        if (!pickupText.toLowerCase().includes(selectedCity.toLowerCase())) pickupText += ', ' + selectedCity;
+        if (!dropText.toLowerCase().includes(selectedCity.toLowerCase())) dropText += ', ' + selectedCity;
+      }
 
       const btn = document.getElementById('findRouteBtn');
       btn.disabled = true; btn.textContent = '🔄 Analyzing Safety...';
@@ -383,30 +471,59 @@
     // ===== FRONTEND SAFETY ENGINE (calls Overpass directly) =====
     async function fetchRouteSafetyFromOverpass(coords, womenSafetyMode) {
       const lats = coords.map(c => c[0]), lngs = coords.map(c => c[1]);
-      const buf = 0.008;
-      const bbox = `${Math.min(...lats)-buf},${Math.min(...lngs)-buf},${Math.max(...lats)+buf},${Math.max(...lngs)+buf}`;
+      const latSpan = Math.max(...lats) - Math.min(...lats);
+      const lngSpan = Math.max(...lngs) - Math.min(...lngs);
+      const isLongRoute = (latSpan > 0.3 || lngSpan > 0.3);
+
+      let allElements = [];
+
+      if (isLongRoute) {
+        // INTER-CITY: Sample 5 points along the route and query each
+        const sampleCount = 5;
+        const step = Math.floor(coords.length / sampleCount);
+        const samplePromises = [];
+        for (let i = 0; i < sampleCount; i++) {
+          const idx = Math.min(i * step, coords.length - 1);
+          const sLat = coords[idx][0], sLng = coords[idx][1];
+          const q = `[out:json][timeout:15];(node["amenity"~"police|hospital|clinic|pharmacy|cafe|restaurant|shop|convenience"](around:3000,${sLat},${sLng});node["lit"="yes"](around:2000,${sLat},${sLng});node["amenity"="social_facility"](around:3000,${sLat},${sLng}););out tags 200;`;
+          samplePromises.push(
+            fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'} })
+              .then(r => r.ok ? r.json() : { elements: [] })
+              .then(d => d.elements || [])
+              .catch(() => [])
+          );
+        }
+        const results = await Promise.all(samplePromises);
+        const seenIds = new Set();
+        results.flat().forEach(el => { if (!seenIds.has(el.id)) { seenIds.add(el.id); allElements.push(el); } });
+      } else {
+        // IN-CITY: Use wider bbox corridor
+        const buf = 0.012;
+        const bbox = `${Math.min(...lats)-buf},${Math.min(...lngs)-buf},${Math.max(...lats)+buf},${Math.max(...lngs)+buf}`;
+        try {
+          const q = `[out:json][timeout:20];(node["amenity"~"police|hospital|clinic|pharmacy"](${bbox});node["amenity"~"cafe|restaurant|shop|convenience|bank|fuel"](${bbox});node["lit"="yes"](${bbox});way["lit"="yes"](${bbox});node["amenity"="social_facility"](${bbox});node["emergency"="phone"](${bbox}););out center tags 500;`;
+          const res = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+          if (res.ok) {
+            const data = await res.json();
+            allElements = data.elements || [];
+          }
+        } catch(e) { console.warn('Overpass bbox failed:', e.message); }
+      }
 
       let policeCount=0, hospitalCount=0, activityCount=0, litCount=0, womenPoints=0;
       let policeNames=[], hospitalNames=[], safeSpots=[];
 
-      try {
-        const q = `[out:json][timeout:20];(node["amenity"="police"](${bbox});node["amenity"~"hospital|clinic|pharmacy"](${bbox});node["amenity"~"cafe|restaurant|shop|convenience|bank|fuel"](${bbox});node["lit"="yes"](${bbox});way["lit"="yes"](${bbox});node["amenity"="social_facility"](${bbox});node["emergency"="phone"](${bbox}););out center tags 500;`;
-        const res = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'} });
-        if (res.ok) {
-          const data = await res.json();
-          (data.elements||[]).forEach(el => {
-            const t = el.tags||{};
-            if (t.amenity==='police') { policeCount++; policeNames.push(t.name||'Police Station'); }
-            else if (t.amenity==='hospital'||t.amenity==='clinic') { hospitalCount++; hospitalNames.push(t.name||(t.amenity==='hospital'?'Hospital':'Clinic')); }
-            else if (t.amenity==='pharmacy') { hospitalCount++; hospitalNames.push(t.name||'Pharmacy'); }
-            else if (['cafe','restaurant','shop','convenience','bank','fuel'].includes(t.amenity)) { activityCount++; if(t.name) safeSpots.push(t.name); }
-            if (t.lit==='yes') litCount++;
-            if (t.amenity==='social_facility'||t.emergency==='phone') womenPoints++;
-          });
-        }
-      } catch(e) { console.warn('Overpass primary failed:', e.message); }
+      allElements.forEach(el => {
+        const t = el.tags||{};
+        if (t.amenity==='police') { policeCount++; policeNames.push(t.name||'Police Station'); }
+        else if (t.amenity==='hospital'||t.amenity==='clinic') { hospitalCount++; hospitalNames.push(t.name||(t.amenity==='hospital'?'Hospital':'Clinic')); }
+        else if (t.amenity==='pharmacy') { hospitalCount++; hospitalNames.push(t.name||'Pharmacy'); }
+        else if (['cafe','restaurant','shop','convenience','bank','fuel'].includes(t.amenity)) { activityCount++; if(t.name) safeSpots.push(t.name); }
+        if (t.lit==='yes') litCount++;
+        if (t.amenity==='social_facility'||t.emergency==='phone') womenPoints++;
+      });
 
-      // Fallback
+      // Fallback if both approaches returned nothing
       if (policeCount===0 && hospitalCount===0 && activityCount===0) {
         try {
           const mLat=(Math.min(...lats)+Math.max(...lats))/2, mLng=(Math.min(...lngs)+Math.max(...lngs))/2;
