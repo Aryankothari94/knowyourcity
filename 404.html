@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Page Not Found | Know Your City</title>
+  <meta name="description" content="The page you are looking for might have been moved or doesn't exist. Let's get you back on track to exploring safe neighborhoods." />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Material Symbols -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+  
+  <link rel="icon" href="logo.png" type="image/png" />
+  
+  <style>
+    :root {
+      --bg-primary: #0a0b1a;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8899aa;
+      --accent-cyan: #00e5ff;
+      --accent-green: #00e676;
+      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-blur: blur(20px);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Background orbs */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.2;
+      animation: float 20s infinite ease-in-out;
+    }
+    .orb-1 { width: 500px; height: 500px; background: var(--accent-cyan); top: -10%; left: -10%; }
+    .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -5%; right: -5%; animation-delay: -5s; }
+    .orb-3 { width: 300px; height: 300px; background: var(--accent-green); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* Main Card */
+    .error-container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 40px;
+      max-width: 600px;
+      width: 90%;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .error-code {
+      font-family: var(--font-heading);
+      font-size: 8rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -5px;
+      filter: drop-shadow(0 10px 20px rgba(0, 229, 255, 0.2));
+    }
+
+    .error-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+
+    .error-message {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-family: var(--font-heading);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+      color: #0a0b1a;
+      box-shadow: 0 10px 20px rgba(0, 229, 255, 0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(0, 229, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    /* Decorative element */
+    .icon-box {
+      width: 80px;
+      height: 80px;
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 30px;
+      color: var(--accent-cyan);
+    }
+    .icon-box span { font-size: 2.5rem; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .error-code { font-size: 6rem; }
+      .error-title { font-size: 1.5rem; }
+      .error-container { padding: 40px 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="error-container">
+    <div class="icon-box">
+      <span class="material-symbols-outlined">map</span>
+    </div>
+    <h1 class="error-code">404</h1>
+    <h2 class="error-title">Lost in the City?</h2>
+    <p class="error-message">
+      Even the best explorers take a wrong turn sometimes. The neighborhood you're looking for doesn't seem to be on our map yet.
+    </p>
+    
+    <div class="cta-group">
+      <a href="/" class="btn btn-primary">
+        <span class="material-symbols-outlined">home</span>
+        Back to Home
+      </a>
+      <a href="/contact" class="btn btn-secondary">
+        <span class="material-symbols-outlined">support_agent</span>
+        Report Issue
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Subtle mouse move effect for the orbs
+    document.addEventListener('mousemove', (e) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      
+      const orbs = document.querySelectorAll('.orb');
+      orbs.forEach((orb, index) => {
+        const speed = (index + 1) * 20;
+        orb.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+      });
+    });
+  </script>
+</body>
+
+</html>
