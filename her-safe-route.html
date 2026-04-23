@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerSafeRoute — Women-First Navigation | KnowYourCity</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=101">
+    <link rel="icon" href="logo.png" type="image/png" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --pink-accent: #ff007a;
+            --purple-accent: #7c4dff;
+            --glass-card: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background: #0a0e27;
+            overflow-x: hidden;
+        }
+
+        .hersafe-layout {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 24px;
+            margin-top: 30px;
+            height: calc(100vh - 180px);
+            min-height: 650px;
+        }
+
+        .hersafe-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .hersafe-sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .hersafe-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #hersafeMap {
+            height: 100%;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: var(--pink-accent);
+            background: rgba(255, 255, 255, 0.07);
+            outline: none;
+            box-shadow: 0 0 15px rgba(255, 0, 122, 0.1);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(255, 0, 122, 0.05);
+            border: 1px dashed rgba(255, 0, 122, 0.3);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-text h4 {
+            font-size: 0.9rem;
+            margin: 0;
+            color: var(--pink-accent);
+        }
+
+        .toggle-text p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin: 2px 0 0;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px; width: 16px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background: linear-gradient(135deg, var(--pink-accent), var(--purple-accent)); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--pink-accent), var(--purple-accent));
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(255, 0, 122, 0.2);
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(255, 0, 122, 0.3);
+        }
+
+        .calculate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .route-card {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .route-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .route-card.active {
+            border-color: var(--pink-accent);
+            background: rgba(255, 0, 122, 0.04);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .route-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .route-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: white;
+        }
+
+        .route-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-safe { background: rgba(0, 230, 118, 0.15); color: #00e676; }
+        .badge-moderate { background: rgba(255, 171, 64, 0.15); color: #ffab40; }
+        .badge-unsafe { background: rgba(255, 82, 82, 0.15); color: #ff5252; }
+
+        .route-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-val {
+            display: block;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .safety-meter {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .safety-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .safety-score-text {
+            font-size: 0.75rem;
+            text-align: right;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 14, 39, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid var(--pink-accent);
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state span {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 1024px) {
+            .hersafe-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            #hersafeMap {
+                height: 450px;
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="feature-navbar">
+        <div class="container">
+            <a href="/" class="nav-brand">
+                <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
+                <div class="nav-brand-text">Know<span>Your</span>City</div>
+            </a>
+            <div class="feature-nav-right">
+                <a href="/" class="btn-back">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="feature-hero" style="padding: 40px 0 20px;">
+            <div class="feature-hero-content" style="text-align: center; max-width: 800px; margin: 0 auto;">
+                <div class="feature-icon-large" style="background: linear-gradient(135deg, var(--pink-accent), var(--purple-accent)); color: white;">
+                    <span class="material-symbols-outlined" style="font-size: 32px;">diversity_4</span>
+                </div>
+                <h1 style="margin-top: 15px;">HerSafe<span class="gradient-text">Route</span></h1>
+                <p>Prioritizing women's safety over travel time. Our smart algorithm analyzes multiple routes based on police proximity, lighting, activity, and historical safety data.</p>
+            </div>
+        </section>
+
+        <div class="hersafe-layout">
+            <!-- Sidebar Controls -->
+            <div class="hersafe-sidebar">
+                <div class="glass-card" style="padding: 24px;">
+                    <div class="input-group">
+                        <label>Start Location</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="originInput" class="input-field" placeholder="Enter starting point (e.g. Bandra, Mumbai)">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Destination</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="destInput" class="input-field" placeholder="Enter where you're going">
+                        </div>
+                    </div>
+
+                    <div class="toggle-container">
+                        <div class="toggle-text">
+                            <h4>Women Safety Mode</h4>
+                            <p>Prioritize safe zones over distance</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="safetyModeToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <button id="calculateBtn" class="calculate-btn">
+                        <span class="material-symbols-outlined">directions</span>
+                        Calculate Safest Route
+                    </button>
+                </div>
+
+                <div id="routeResultsList">
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined">map</span>
+                        <p>Enter your trip details to see safety-ranked route options.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Area -->
+            <div style="position: relative;">
+                <div id="hersafeMap"></div>
+                <div id="loaderOverlay" class="loading-overlay">
+                    <span class="loader"></span>
+                    <p style="margin-top: 20px; color: white; font-weight: 600; letter-spacing: 1px;">Analyzing Safety Data...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer" style="margin-top: 60px; padding: 40px 0;">
+        <div class="container" style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+            &copy; 2026 KnowYourCity — Smart Safety Solutions for Indian Cities
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // Configuration
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:10000/api'
+            : 'https://knowyourcity.onrender.com/api';
+
+        let map, routeLayerGroup, originMarker, destMarker;
+        let allRoutes = [];
+
+        // Initialize Map
+        function initMap() {
+            map = L.map('hersafeMap', { zoomControl: false }).setView([19.0760, 72.8777], 12);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(map);
+
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            
+            routeLayerGroup = L.layerGroup().addTo(map);
+        }
+
+        // Geocoding function
+        async function geocode(query) {
+            try {
+                const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=in`);
+                if (res.data && res.data.length > 0) {
+                    return {
+                        lat: parseFloat(res.data[0].lat),
+                        lng: parseFloat(res.data[0].lon),
+                        name: res.data[0].display_name.split(',')[0]
+                    };
+                }
+                return null;
+            } catch (e) { return null; }
+        }
+
+        // Calculate Routes
+        async function calculateRoutes() {
+            const originVal = document.getElementById('originInput').value.trim();
+            const destVal = document.getElementById('destInput').value.trim();
+            const safetyMode = document.getElementById('safetyModeToggle').checked;
+
+            if (!originVal || !destVal) {
+                alert("Please enter both origin and destination.");
+                return;
+            }
+
+            document.getElementById('loaderOverlay').style.display = 'flex';
+            document.getElementById('calculateBtn').disabled = true;
+
+            try {
+                const [origin, dest] = await Promise.all([geocode(originVal), geocode(destVal)]);
+                
+                if (!origin || !dest) {
+                    alert("Could not find one of the locations. Please be more specific.");
+                    return;
+                }
+
+                // Call MERN Backend API
+                const res = await axios.post(`${API_BASE}/saferoute/directions`, {
+                    origin,
+                    destination: dest,
+                    womenSafetyMode: safetyMode
+                });
+
+                allRoutes = res.data;
+                displayRoutes(allRoutes, origin, dest);
+
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred while calculating routes. Ensure the server is running.");
+            } finally {
+                document.getElementById('loaderOverlay').style.display = 'none';
+                document.getElementById('calculateBtn').disabled = false;
+            }
+        }
+
+        function displayRoutes(routes, origin, dest) {
+            routeLayerGroup.clearLayers();
+            const list = document.getElementById('routeResultsList');
+            list.innerHTML = '';
+
+            if (originMarker) map.removeLayer(originMarker);
+            if (destMarker) map.removeLayer(destMarker);
+
+            originMarker = L.circleMarker([origin.lat, origin.lng], {
+                radius: 8, fillColor: '#00e676', fillOpacity: 1, color: 'white', weight: 3
+            }).addTo(map).bindPopup('Origin: ' + origin.name);
+
+            destMarker = L.circleMarker([dest.lat, dest.lng], {
+                radius: 8, fillColor: '#ff5252', fillOpacity: 1, color: 'white', weight: 3
+            }).addTo(map).bindPopup('Destination: ' + dest.name);
+
+            const bounds = L.latLngBounds();
+
+            routes.forEach((route, idx) => {
+                const isBest = idx === 0;
+                const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                
+                // Draw polyline
+                const poly = L.polyline(coords, {
+                    color: route.safetyColor,
+                    weight: isBest ? 6 : 3,
+                    opacity: isBest ? 1 : 0.4,
+                    lineJoin: 'round'
+                }).addTo(routeLayerGroup);
+
+                coords.forEach(c => bounds.extend(c));
+
+                // Create Card
+                const card = document.createElement('div');
+                card.className = `route-card ${isBest ? 'active' : ''}`;
+                card.onclick = () => highlightRoute(idx);
+                card.innerHTML = `
+                    <div class="route-card-header">
+                        <span class="route-title">Route ${idx + 1} ${isBest ? '(Recommended)' : ''}</span>
+                        <span class="route-badge ${getBadgeClass(route.safetyStatus)}">${route.safetyStatus}</span>
+                    </div>
+                    <div class="route-stats">
+                        <div class="stat-item"><span class="stat-val">${route.duration}m</span><span class="stat-label">Time</span></div>
+                        <div class="stat-item"><span class="stat-val">${route.distance}km</span><span class="stat-label">Dist</span></div>
+                        <div class="stat-item"><span class="stat-val">🚔 ${route.stats.police}</span><span class="stat-label">Police</span></div>
+                    </div>
+                    <div class="safety-meter">
+                        <div class="safety-fill" style="width: ${route.safetyScore}%; background: ${route.safetyColor}"></div>
+                    </div>
+                    <div class="safety-score-text">Safety Score: ${route.safetyScore}/100</div>
+                `;
+                list.appendChild(card);
+            });
+
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function highlightRoute(idx) {
+            const cards = document.querySelectorAll('.route-card');
+            cards.forEach((c, i) => c.classList.toggle('active', i === idx));
+
+            routeLayerGroup.eachLayer((layer, i) => {
+                if (layer instanceof L.Polyline) {
+                    const isSelected = i === idx;
+                    layer.setStyle({
+                        weight: isSelected ? 8 : 3,
+                        opacity: isSelected ? 1 : 0.3
+                    });
+                    if (isSelected) layer.bringToFront();
+                }
+            });
+        }
+
+        function getBadgeClass(status) {
+            if (status === 'safe') return 'badge-safe';
+            if (status === 'moderate') return 'badge-moderate';
+            return 'badge-unsafe';
+        }
+
+        document.getElementById('calculateBtn').onclick = calculateRoutes;
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
