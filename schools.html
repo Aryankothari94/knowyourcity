@@ -18,12 +18,12 @@
   <!-- ===== NAVBAR ===== -->
   <nav class="feature-navbar">
     <div class="container">
-      <a href="index.html" class="nav-brand">
+      <a href="/" class="nav-brand">
         <img src="logo.png" alt="KnowYourCity Logo" class="nav-brand-icon" />
         <div class="nav-brand-text">Know<span>Your</span>City</div>
       </a>
       <div class="feature-nav-right">
-        <a href="index.html" class="btn-back">
+        <a href="/" class="btn-back">
           <span style="vertical-align: middle; font-size: 18px; margin-right: 4px;">&larr;</span>
           Back to Home
         </a>
@@ -76,7 +76,7 @@
         <p>Try a different location from the home page.</p>
         <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
           <button onclick="location.reload()" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">Refresh & Find Again</button>
-          <a href="index.html" class="btn-primary">Go Home</a>
+          <a href="/" class="btn-primary">Go Home</a>
         </div>
       </div>
     </div>
@@ -406,8 +406,8 @@
       <h4 style="margin-bottom:6px;">What are you looking for?</h4>
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:18px;">Choose one to see nearby results</p>
       <div class="confirm-actions" style="gap:12px;">
-        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem;" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('schools.html')"><span class="material-symbols-outlined mi">school</span> Schools</button>
-        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem; background:linear-gradient(135deg,#00e676,#00bfa5);" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('parks.html')"><span class="material-symbols-outlined mi">park</span> Parks</button>
+        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem;" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('schools')"><span class="material-symbols-outlined mi">school</span> Schools</button>
+        <button class="btn-primary" style="flex:1; padding:14px 0; font-size:1rem; background:linear-gradient(135deg,#00e676,#00bfa5);" onclick="document.getElementById('choiceModal').classList.remove('active'); openFeaturePage('parks')"><span class="material-symbols-outlined mi">park</span> Parks</button>
       </div>
     </div>
   </div>
@@ -451,13 +451,13 @@
         
         <div class="form-group checkbox-group" style="margin-top: 10px;">
           <input type="checkbox" id="loginTerms" required />
-          <label for="loginTerms" style="font-size: 0.8rem;">I agree to the <a href="terms.html">Terms & Conditions</a></label>
+          <label for="loginTerms" style="font-size: 0.8rem;">I agree to the <a href="terms">Terms & Conditions</a></label>
         </div>
         <div id="termsError" class="auth-error-message"></div>
 
         <div class="form-group checkbox-group">
           <input type="checkbox" id="loginPrivacy" required />
-          <label for="loginPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy.html">Privacy Policy</a></label>
+          <label for="loginPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy">Privacy Policy</a></label>
         </div>
         <div id="privacyError" class="auth-error-message"></div>
 
@@ -465,7 +465,7 @@
         
         <div class="auth-footer">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <a href="forgot-password.html" class="forgot-link-btn" style="color:var(--accent-cyan); cursor:pointer; font-size:0.85rem; text-decoration:none;">Forgot Password?</a>
+            <a href="forgot-password" class="forgot-link-btn" style="color:var(--accent-cyan); cursor:pointer; font-size:0.85rem; text-decoration:none;">Forgot Password?</a>
             <a href="#" onclick="switchTab('adminLogin')" style="color:var(--accent-cyan); font-size:0.75rem; font-weight:600; text-decoration:none;">Admin Access</a>
           </div>
           <p style="margin-top:10px;">Don't have an account? <a href="#" data-switch="signup">Sign Up</a></p>

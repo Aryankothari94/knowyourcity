@@ -279,7 +279,7 @@
         <li><a href="#features" class="active" id="navFeatures">Features</a></li>
         <li><a href="#safety">Safety</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
-        <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+        <li><a href="contact" class="nav-cta">Contact Us</a></li>
 
         <!-- Mobile Sidebar Widgets (Nesting in <li> for semantic correctness) -->
         <li class="mobile-nav-li">
@@ -315,7 +315,7 @@
                  <p style="color:var(--text-primary); margin-bottom:5px; font-weight:600;">Account Synced</p>
                  <p>Your session is active. You can explore all city safety features. To switch accounts, use the logout icon.</p>
                  <div id="adminMobileLink" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.1);">
-                    <a href="admin.html" style="display:flex; align-items:center; gap:10px; color:var(--accent-cyan); text-decoration:none; font-weight:600;">
+                    <a href="admin" style="display:flex; align-items:center; gap:10px; color:var(--accent-cyan); text-decoration:none; font-weight:600;">
                       <span class="material-symbols-outlined" style="font-size:1.2rem;">shield_person</span>
                       Admin Dashboard
                     </a>
@@ -461,19 +461,19 @@
           <div class="city-ring city-ring-3"></div>
           <div class="city-center-icon"><img src="logo.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Logo"></div>
 
-          <a href="#" class="floating-card fc-1" data-feature="safezone" onclick="openFeaturePage('safezone.html')">
+          <a href="#" class="floating-card fc-1" data-feature="safezone" onclick="openFeaturePage('safezone')">
             <div class="icon-circle"><span class="material-symbols-outlined">shield</span></div>
             <span>Safe Zone</span>
           </a>
-          <a href="#" class="floating-card fc-2" data-feature="schools" onclick="openFeaturePage('schools.html')">
+          <a href="#" class="floating-card fc-2" data-feature="schools" onclick="openFeaturePage('schools')">
             <div class="icon-circle"><span class="material-symbols-outlined">school</span></div>
             <span>Top Schools</span>
           </a>
-          <a href="#" class="floating-card fc-3" data-feature="parks" onclick="openFeaturePage('parks.html')">
+          <a href="#" class="floating-card fc-3" data-feature="parks" onclick="openFeaturePage('parks')">
             <div class="icon-circle"><span class="material-symbols-outlined">park</span></div>
             <span>Parks Nearby</span>
           </a>
-          <a href="#" class="floating-card fc-4" data-feature="metro" onclick="openFeaturePage('metro.html')">
+          <a href="#" class="floating-card fc-4" data-feature="metro" onclick="openFeaturePage('metro')">
             <div class="icon-circle"><span class="material-symbols-outlined">subway</span></div>
             <span>Metro Access</span>
           </a>
@@ -3205,13 +3205,13 @@
         
         <div class="form-group checkbox-group" style="margin-top: 10px;">
           <input type="checkbox" id="loginTerms" required />
-          <label for="loginTerms" style="font-size: 0.8rem;">I agree to the <a href="terms.html">Terms & Conditions</a></label>
+          <label for="loginTerms" style="font-size: 0.8rem;">I agree to the <a href="terms">Terms & Conditions</a></label>
         </div>
         <div id="termsError" class="auth-error-message"></div>
 
         <div class="form-group checkbox-group">
           <input type="checkbox" id="loginPrivacy" required />
-          <label for="loginPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy.html">Privacy Policy</a></label>
+          <label for="loginPrivacy" style="font-size: 0.8rem;">I agree to the <a href="privacy">Privacy Policy</a></label>
         </div>
         <div id="privacyError" class="auth-error-message"></div>
 
@@ -3220,7 +3220,7 @@
         
         <div class="auth-footer">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <a href="forgot-password.html" class="forgot-link-btn" style="color:var(--accent-cyan); cursor:pointer; font-size:0.85rem; text-decoration:none;">Forgot Password?</a>
+            <a href="forgot-password" class="forgot-link-btn" style="color:var(--accent-cyan); cursor:pointer; font-size:0.85rem; text-decoration:none;">Forgot Password?</a>
             <a href="#" onclick="switchTab('adminLogin')" style="color:var(--accent-cyan); font-size:0.75rem; font-weight:600; text-decoration:none;">Admin Access</a>
           </div>
           <p style="margin-top:10px;">Don't have an account? <a href="#" data-switch="signup">Sign Up</a></p>
