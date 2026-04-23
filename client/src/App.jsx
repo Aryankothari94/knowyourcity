@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import SafetyMap from './components/SafetyMap';
 import Features from './components/Features';
 import SafetyExplorer from './components/SafetyExplorer';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
 import AuthModals from './components/AuthModals';
+import HerSafeRoute from './components/HerSafeRoute';
 import './index.css';
 
 function App() {
@@ -215,6 +217,11 @@ function App() {
 
   return (
     <div className="App">
+      <Routes>
+        <Route path="/her-safe-route" element={<HerSafeRoute />} />
+        <Route path="/" element={
+          <>
+            {/* Existing Hero & Sections */}
       {/* ===== LOGIN TOAST ====== */}
       <div id="loginToast" className={`login-toast glass-card ${showToast ? 'show' : ''}`}>
         <div className="toast-icon">✨</div>
@@ -395,7 +402,9 @@ function App() {
       <Features />
       <SafetyExplorer safetyInfra={safetyInfra} infraLoading={infraLoading} />
       <Testimonials />
-      <Footer />
+          </>
+        } />
+      </Routes>
 
       {/* ===== AUTH MODALS ===== */}
       <AuthModals

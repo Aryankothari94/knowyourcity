@@ -65,6 +65,8 @@ const adminRoutes = require('./routes/admin');
 const mapRoutes = require('./routes/map');
 const contactRoutes = require('./routes/contact');
 const chatbotRoutes = require('./routes/chatbot');
+const saferouteRoutes = require('./routes/saferoute');
+
 
 // Move API routes BEFORE the root route for better matching
 app.use('/api/auth', authRoutes);
@@ -72,6 +74,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/safety', mapRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/chat', chatbotRoutes);
+app.use('/api/saferoute', saferouteRoutes);
+
 
 
 app.get('/api/health', (req, res) => {
