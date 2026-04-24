@@ -204,7 +204,7 @@
                   <p style="margin:2px 0 0; font-size:0.7rem; color:var(--text-secondary);">Prioritize well-lit & safe zones</p>
                 </div>
                 <label class="switch" style="position:relative; display:inline-block; width:40px; height:20px; flex-shrink:0;">
-                  <input type="checkbox" id="womenSafetyToggle" checked style="opacity:0; width:0; height:0;">
+                  <input type="checkbox" id="womenSafetyToggle" checked onchange="onToggleWomenSafety()" style="opacity:0; width:0; height:0;">
                   <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#333; transition:.4s; border-radius:20px;"></span>
                 </label>
               </div>
@@ -539,6 +539,7 @@
 
         // STEP 1: Fetch routes from OSRM (no backend needed)
         btn.textContent = '🔄 Fetching routes...';
+        // Max alternatives for public OSRM is typically 3
         const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickupData.lng},${pickupData.lat};${dropData.lng},${dropData.lat}?overview=full&geometries=geojson&alternatives=3`;
         const routeRes = await fetch(osrmUrl);
         const routeData = await routeRes.json();
@@ -734,35 +735,55 @@
     // ===== DRAW ALL ROUTES (Google Maps style) =====
     function drawAllRoutes() {
       routeLayerGroup.clearLayers();
+      const isWomen = document.getElementById('womenSafetyToggle').checked;
+      
       // Draw non-selected routes first (behind)
       allRoutes.forEach((r, idx) => {
         if (idx === selectedRouteIdx) return;
+        
+        const standardColor = '#94a3b8'; // Neutral gray-blue for normal mode
+        const routeColor = isWomen ? r.safetyColor : standardColor;
+        
         // Shadow line for depth
-        L.polyline(r.coords, { color:'#000', weight:8, opacity:0.25 }).addTo(routeLayerGroup);
+        L.polyline(r.coords, { color:'#000', weight:8, opacity:0.1 }).addTo(routeLayerGroup);
         r.polyline = L.polyline(r.coords, {
-          color: r.safetyColor,
+          color: routeColor,
           weight: 5,
-          opacity: 0.55,
+          opacity: 0.5,
           lineCap: 'round', lineJoin: 'round'
         }).addTo(routeLayerGroup);
         r.polyline.on('click', () => selectRoute(idx));
-        r.polyline.bindTooltip(`<b>Route ${idx+1}</b><br>${r.safetyLabel} • ${r.distance} km • ${r.time} min<br>🚔 ${r.policeCount} Police  🏥 ${r.hospitalCount} Hospitals`, { sticky:true, direction:'top', className:'route-tooltip' });
+        
+        const tooltipContent = isWomen 
+          ? `<b>Route ${idx+1}</b><br>${r.safetyLabel} • ${r.distance} km • ${r.time} min<br>🚔 ${r.policeCount} Police  🏥 ${r.hospitalCount} Hospitals`
+          : `<b>Route ${idx+1}</b><br>${r.distance} km • ${r.time} min`;
+          
+        r.polyline.bindTooltip(tooltipContent, { sticky:true, direction:'top', className:'route-tooltip' });
       });
+
       // Draw selected route last (on top)
       if (selectedRouteIdx >= 0 && allRoutes[selectedRouteIdx]) {
         const r = allRoutes[selectedRouteIdx];
+        const standardSelectedColor = '#2196f3'; // Bright blue for normal selected
+        const routeColor = isWomen ? r.safetyColor : standardSelectedColor;
+        
         // Glow effect
-        L.polyline(r.coords, { color:r.safetyColor, weight:14, opacity:0.15 }).addTo(routeLayerGroup);
+        L.polyline(r.coords, { color:routeColor, weight:14, opacity:0.15 }).addTo(routeLayerGroup);
         // Shadow
         L.polyline(r.coords, { color:'#000', weight:10, opacity:0.3 }).addTo(routeLayerGroup);
         r.polyline = L.polyline(r.coords, {
-          color: r.safetyColor,
+          color: routeColor,
           weight: 7,
           opacity: 1,
           lineCap: 'round', lineJoin: 'round'
         }).addTo(routeLayerGroup);
         r.polyline.on('click', () => selectRoute(selectedRouteIdx));
-        r.polyline.bindTooltip(`<b>Route ${selectedRouteIdx+1} ✨ Selected</b><br>${r.safetyLabel} • ${r.distance} km • ${r.time} min<br>🚔 ${r.policeCount} Police  🏥 ${r.hospitalCount} Hospitals<br>🛡️ Safety Score: ${r.safetyScore}%`, { sticky:true, direction:'top', className:'route-tooltip' });
+        
+        const tooltipContent = isWomen
+          ? `<b>Route ${selectedRouteIdx+1} ✨ Selected</b><br>${r.safetyLabel} • ${r.distance} km • ${r.time} min<br>🚔 ${r.policeCount} Police  🏥 ${r.hospitalCount} Hospitals<br>🛡️ Safety Score: ${r.safetyScore}%`
+          : `<b>Route ${selectedRouteIdx+1} ✨ Selected</b><br>${r.distance} km • ${r.time} min`;
+          
+        r.polyline.bindTooltip(tooltipContent, { sticky:true, direction:'top', className:'route-tooltip' });
       }
     }
 
@@ -771,12 +792,15 @@
       const container = document.getElementById('routeOptions');
       container.innerHTML = '';
       document.getElementById('routeOptionsPanel').style.display = 'block';
+      const isWomen = document.getElementById('womenSafetyToggle').checked;
 
       // Quick comparison strip at top
       let stripHtml = '<div class="route-comparison-strip">';
       allRoutes.forEach((r, idx) => {
-        stripHtml += `<div class="route-mini-badge ${idx===0?'active':''}" style="background:${r.safetyColor}22; color:${r.safetyColor};" onclick="selectRoute(${idx})" id="miniBadge${idx}">
-          R${idx+1} • ${r.safetyScore}% • ${r.distance}km
+        const badgeColor = isWomen ? r.safetyColor : '#2196f3';
+        const label = isWomen ? `R${idx+1} • ${r.safetyScore}%` : `Route ${idx+1}`;
+        stripHtml += `<div class="route-mini-badge ${idx===0?'active':''}" style="background:${badgeColor}22; color:${badgeColor};" onclick="selectRoute(${idx})" id="miniBadge${idx}">
+          ${label} • ${r.distance}km
         </div>`;
       });
       stripHtml += '</div>';
@@ -784,47 +808,51 @@
 
       allRoutes.forEach((r, idx) => {
         const badgeClass = r.safetyLabel==='Safe' ? 'badge-safe' : r.safetyLabel==='Moderate' ? 'badge-moderate' : 'badge-unsafe';
-        const isWomen = document.getElementById('womenSafetyToggle').checked;
         const card = document.createElement('div');
         card.className = 'route-option-card' + (idx===selectedRouteIdx ? ' selected' : '');
         card.id = 'routeCard'+idx;
+        
+        const routeIndicatorColor = isWomen ? r.safetyColor : '#2196f3';
+
         card.innerHTML = `
           <div class="route-option-header">
             <div class="route-option-name">
-              <span style="width:12px;height:12px;border-radius:50%;background:${r.safetyColor};display:inline-block;box-shadow:0 0 8px ${r.safetyColor};"></span>
-              Route ${idx+1} ${idx===0 ? '<span style="font-size:0.7rem;color:#ffd740;">⭐ Safest</span>' : ''}
+              <span style="width:12px;height:12px;border-radius:50%;background:${routeIndicatorColor};display:inline-block;box-shadow:0 0 8px ${routeIndicatorColor};"></span>
+              Route ${idx+1} ${isWomen && idx===0 ? '<span style="font-size:0.7rem;color:#ffd740;">⭐ Safest</span>' : ''}
             </div>
-            <span class="safety-badge ${badgeClass}">${r.safetyLabel} ${r.safetyScore}%</span>
+            ${isWomen ? `<span class="safety-badge ${badgeClass}">${r.safetyLabel} ${r.safetyScore}%</span>` : ''}
           </div>
           <div class="route-option-stats">
             <span>📏 ${r.distance} km</span>
             <span>⏱ ${r.time} min</span>
-            <span>🚔 ${r.policeCount}</span>
-            <span>🏥 ${r.hospitalCount}</span>
+            ${isWomen ? `<span>🚔 ${r.policeCount}</span>` : ''}
+            ${isWomen ? `<span>🏥 ${r.hospitalCount}</span>` : ''}
             ${isWomen ? `<span>💡 ${r.litCount||0}</span>` : ''}
           </div>
+          ${isWomen ? `
           <div class="route-option-safety" style="margin-top:8px;">
             <div class="safety-bar-bg">
               <div class="safety-bar-fill" style="width:${r.safetyScore}%;background:linear-gradient(90deg, ${r.safetyColor}, ${r.safetyColor}88);"></div>
             </div>
           </div>
-          ${isWomen && r.policeCount >= 2 ? '<div style="margin-top:6px; font-size:0.68rem; color:#00e676;">✅ Police coverage verified</div>' : ''}
-          ${isWomen && r.policeCount < 1 ? '<div style="margin-top:6px; font-size:0.68rem; color:#ff5252;">⚠️ Low police coverage — not recommended for solo travel</div>' : ''}
+          ${r.policeCount >= 2 ? '<div style="margin-top:6px; font-size:0.68rem; color:#00e676;">✅ Police coverage verified</div>' : ''}
+          ${r.policeCount < 1 ? '<div style="margin-top:6px; font-size:0.68rem; color:#ff5252;">⚠️ Low police coverage — not recommended for solo travel</div>' : ''}
+          ` : ''}
         `;
         card.addEventListener('click', () => selectRoute(idx));
         container.appendChild(card);
       });
 
       // Women SOS bar (only when women safety mode ON)
-      if (document.getElementById('womenSafetyToggle').checked) {
-        let sosBar = document.getElementById('womenSOSBar');
+      let sosBar = document.getElementById('womenSOSBar');
+      if (isWomen) {
         if (!sosBar) {
           sosBar = document.createElement('div');
           sosBar.id = 'womenSOSBar';
           sosBar.className = 'women-sos-bar active';
           container.parentNode.appendChild(sosBar);
         }
-        sosBar.className = 'women-sos-bar active';
+        sosBar.style.display = 'block';
         sosBar.innerHTML = `
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
             <span class="material-symbols-outlined" style="color:#ff007a;">emergency_share</span>
@@ -837,11 +865,14 @@
             <a href="tel:108" style="padding:6px 14px; background:rgba(33,150,243,0.15); border:1px solid rgba(33,150,243,0.3); border-radius:20px; color:#2196f3; font-size:0.75rem; font-weight:600; text-decoration:none;">🚑 108 Ambulance</a>
           </div>
         `;
+      } else if (sosBar) {
+        sosBar.style.display = 'none';
       }
     }
 
     // ===== SELECT ROUTE =====
     function selectRoute(idx) {
+      if (idx < 0 || idx >= allRoutes.length) return;
       selectedRouteIdx = idx;
       document.querySelectorAll('.route-option-card').forEach((c,i) => c.classList.toggle('selected', i===idx));
       document.querySelectorAll('.route-mini-badge').forEach((b,i) => b.classList.toggle('active', i===idx));
@@ -850,6 +881,16 @@
       updateSafetyIntelligence(allRoutes[idx]);
       document.getElementById('btnStartJourney').disabled = false;
       document.getElementById('btnRouteSummary').disabled = false;
+    }
+
+    function onToggleWomenSafety() {
+      if (allRoutes.length > 0) {
+        drawAllRoutes();
+        buildRouteCards();
+        if (selectedRouteIdx >= 0) {
+          updateSafetyIntelligence(allRoutes[selectedRouteIdx]);
+        }
+      }
     }
 
     // ===== DISPLAY SAFETY MARKERS =====
@@ -899,11 +940,17 @@
     // ===== UPDATE SAFETY INTELLIGENCE PANEL =====
     function updateSafetyIntelligence(route) {
         const panel = document.getElementById('safetyIntelligencePanel');
+        const isWomenMode = document.getElementById('womenSafetyToggle').checked;
+        
+        if (!isWomenMode) {
+            panel.style.display = 'none';
+            return;
+        }
+
+        panel.style.display = 'block';
         const statsDisplay = document.getElementById('crimeStatsDisplay');
         const crimesList = document.getElementById('historicalCrimesList');
         
-        panel.style.display = 'block';
-        const isWomenMode = document.getElementById('womenSafetyToggle').checked;
         const hour = new Date().getHours();
         const isNight = hour >= 20 || hour < 6;
         const timeLabel = isNight ? '🌙 Night Mode Active' : (hour >= 17 ? '🌆 Evening' : '☀️ Daytime');
