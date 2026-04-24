@@ -3,7 +3,6 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import SafetyMap from './components/SafetyMap';
 import Features from './components/Features';
 import SafetyExplorer from './components/SafetyExplorer';
-import SmartItinerary from './components/SmartItinerary';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
 import AuthModals from './components/AuthModals';
@@ -401,7 +400,6 @@ function App() {
       {/* ===== REMAINING SECTIONS ===== */}
       <Features />
       <SafetyExplorer safetyInfra={safetyInfra} infraLoading={infraLoading} />
-      <SmartItinerary />
       <Testimonials />
           </>
         } />

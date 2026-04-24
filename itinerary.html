@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Itinerary Builder — Know Your City</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+
+    <link rel="stylesheet" href="style.css?v=102">
+    <style>
+        :root {
+            --accent-cyan: #00e5ff;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        .itinerary-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 100px 20px;
+        }
+
+        .builder-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .builder-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-form {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input, select, textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.1);
+        }
+
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .interest-chip {
+            padding: 8px 12px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .interest-chip.active {
+            background: var(--accent-cyan);
+            color: #000;
+            border-color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .btn-generate {
+            width: 100%;
+            margin-top: 40px;
+            padding: 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #00e5ff, #00b0ff);
+            color: #000;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 229, 255, 0.3);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Result Styles */
+        .result-section {
+            margin-top: 80px;
+            display: none;
+            animation: slideUp 0.8s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .itinerary-card {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 32px;
+            padding: 50px;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .day-block {
+            margin-bottom: 50px;
+        }
+
+        .day-block h2 {
+            font-family: 'Outfit', sans-serif;
+            color: var(--accent-cyan);
+            font-size: 2rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .activity-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent-cyan);
+            transition: transform 0.3s;
+        }
+
+        .activity-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(10px);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .activity-time {
+            font-weight: 700;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .activity-safety {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--accent-cyan);
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .activity-place {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .activity-desc {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .itinerary-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .btn-email {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-email:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(0, 229, 255, 0.2);
+            border-top: 5px solid var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: auto; }
+            .builder-header h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="itinerary-container">
+        <div class="builder-header">
+            <div class="section-label">Tailored for You</div>
+            <h1>Smart Itinerary <span class="gradient-text">Builder</span></h1>
+            <p>Our AI analyzes safety, budget, and local vibes to craft your perfect city guide.</p>
+        </div>
+
+        <div class="glass-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><span class="material-symbols-outlined">location_on</span> City / Current Location</label>
+                    <div style="position: relative;">
+                        <input type="text" id="cityInput" placeholder="Where are you heading?" style="width: 100%;">
+                        <button onclick="detectLocation()" title="Auto-detect" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--accent-cyan); cursor: pointer;">
+                            <span class="material-symbols-outlined">my_location</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><span class="material-symbols-outlined">schedule</span> Duration</label>
+                    <select id="durationSelect">
+                        <option value="1">1 Day</option>
+                        <option value="2">2 Days</option>
+                        <option value="3" selected>3 Days</option>
+                        <option value="5">5 Days</option>
+                        <option value="7">7 Days</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><span class="material-symbols-outlined">payments</span> Budget</label>
+                    <select id="budgetSelect">
+                        <option value="Low">Economic (Budget-friendly)</option>
+                        <option value="Medium" selected>Balanced (Mid-range)</option>
+                        <option value="High">Luxury (High-end)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><span class="material-symbols-outlined">commute</span> Travel Mode</label>
+                    <select id="travelModeSelect">
+                        <option value="Walking">Walking</option>
+                        <option value="Public Transport" selected>Public Transport (Metro/Bus)</option>
+                        <option value="Cab/Auto">Cab / Auto-Rickshaw</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><span class="material-symbols-outlined">verified_user</span> Safety Preference</label>
+                    <select id="safetySelect">
+                        <option value="Strict" selected>Strict (Highly safe areas only)</option>
+                        <option value="Normal">Balanced (Standard local safety)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><span class="material-symbols-outlined">bolt</span> Pace</label>
+                    <select id="paceSelect">
+                        <option value="Relaxed">Relaxed (Slow & easy)</option>
+                        <option value="Balanced" selected>Balanced (Standard)</option>
+                        <option value="Packed">Packed (See it all!)</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label><span class="material-symbols-outlined">star</span> Your Interests</label>
+                    <div class="interests-grid" id="interestsContainer">
+                        <div class="interest-chip" data-val="Food">🍴 Food & Cafe</div>
+                        <div class="interest-chip" data-val="Heritage">🏛️ Heritage</div>
+                        <div class="interest-chip active" data-val="Nature">🌳 Nature</div>
+                        <div class="interest-chip" data-val="Work">💻 Coworking</div>
+                        <div class="interest-chip" data-val="Nightlife">💃 Nightlife</div>
+                        <div class="interest-chip" data-val="Shopping">🛍️ Shopping</div>
+                        <div class="interest-chip" data-val="Art">🎨 Art & Culture</div>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label><span class="material-symbols-outlined">timer</span> Availability</label>
+                    <select id="availabilitySelect">
+                        <option value="Full Day" selected>Full Day (Sunrise to Sunset)</option>
+                        <option value="Morning">Morning only</option>
+                        <option value="Evening">Evening only</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-generate" onclick="generateItinerary()">
+                <span class="material-symbols-outlined">magic_button</span> Generate Intelligent Itinerary
+            </button>
+        </div>
+
+        <div id="resultSection" class="result-section">
+            <div class="itinerary-card" id="itineraryContent">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="itinerary-actions">
+                <button class="btn-email" onclick="openEmailModal()">
+                    <span class="material-symbols-outlined">mail</span> Send to Email (HTML + PDF)
+                </button>
+                <button class="btn-email" onclick="window.print()" style="background: rgba(0, 229, 255, 0.1); border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                    <span class="material-symbols-outlined">print</span> Print Guide
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Modal -->
+    <div id="emailModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">Receive Itinerary</h3>
+                <button onclick="closeEmailModal()" style="background: none; border: none; color: #fff; cursor: pointer;"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">We'll send a formatted copy to your inbox instantly.</p>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Email Address</label>
+                <input type="email" id="targetEmail" placeholder="yourname@example.com">
+            </div>
+            
+            <button class="btn-generate" id="sendBtn" onclick="sendToEmail()">
+                Send Now 🚀
+            </button>
+            <div id="emailStatus" style="margin-top: 15px; font-size: 0.85rem; text-align: center;"></div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loader"></div>
+        <h3 style="margin-top: 20px; font-family: 'Outfit';">AI is crafting your plan...</h3>
+        <p style="color: #94a3b8;">Analyzing city spots, safety data, and local routes.</p>
+    </div>
+
+    <script>
+        const API_BASE = 'https://knowyourcity-api.onrender.com/api'; // Update to your production API
+        let generatedItinerary = null;
+
+        // Interest selection logic
+        document.querySelectorAll('.interest-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+
+        function detectLocation() {
+            const btn = event.currentTarget;
+            btn.style.opacity = '0.5';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+                        const data = await res.json();
+                        const city = data.address.city || data.address.town || data.address.suburb;
+                        document.getElementById('cityInput').value = city;
+                    } catch (e) {
+                        alert("Could not detect city name automatically.");
+                    }
+                    btn.style.opacity = '1';
+                }, () => {
+                    alert("Location access denied.");
+                    btn.style.opacity = '1';
+                });
+            }
+        }
+
+        async function generateItinerary() {
+            const city = document.getElementById('cityInput').value.trim();
+            if (!city) return alert("Please enter a city.");
+
+            const duration = document.getElementById('durationSelect').value;
+            const budget = document.getElementById('budgetSelect').value;
+            const travelMode = document.getElementById('travelModeSelect').value;
+            const safetyPreference = document.getElementById('safetySelect').value;
+            const pace = document.getElementById('paceSelect').value;
+            const availability = document.getElementById('availabilitySelect').value;
+            
+            const interests = [];
+            document.querySelectorAll('.interest-chip.active').forEach(c => interests.push(c.getAttribute('data-val')));
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            try {
+                const res = await fetch(`${API_BASE}/itinerary/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        city, duration, budget, interests, 
+                        travelMode, timeAvailability: availability, 
+                        safetyPreference, pace
+                    })
+                });
+
+                const result = await res.json();
+                if (result.status === 'success') {
+                    generatedItinerary = result.data;
+                    renderResult();
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        function renderResult() {
+            const container = document.getElementById('itineraryContent');
+            const data = generatedItinerary;
+
+            let html = `
+                <div style="text-align:center; margin-bottom: 40px;">
+                    <div style="font-size:0.9rem; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:2px; font-weight:700;">Complete Plan</div>
+                    <h1 style="font-family:'Outfit'; font-size:3rem; margin:10px 0;">${data.city}</h1>
+                    <p style="color:#94a3b8; font-size:1.1rem; max-width:700px; margin:0 auto;">${data.summary}</p>
+                </div>
+            `;
+
+            data.days.forEach(day => {
+                html += `<div class="day-block">
+                    <h2><span class="material-symbols-outlined">event</span> Day ${day.dayNumber}</h2>`;
+                
+                day.activities.forEach(act => {
+                    html += `
+                        <div class="activity-card">
+                            <div class="activity-header">
+                                <div class="activity-time">${act.time}</div>
+                                <div class="activity-safety">🛡️ Safety: ${act.safetyScore}%</div>
+                            </div>
+                            <div class="activity-place">${act.place}</div>
+                            <div class="activity-desc">${act.description}</div>
+                            <div style="margin-top:10px; font-size:0.8rem; color:var(--accent-cyan);">
+                                💰 Estimated Cost: ${act.costEstimate}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function openEmailModal() {
+            document.getElementById('emailModal').style.display = 'flex';
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModal').style.display = 'none';
+        }
+
+        async function sendToEmail() {
+            const email = document.getElementById('targetEmail').value;
+            if (!email) return alert("Enter email.");
+
+            const btn = document.getElementById('sendBtn');
+            const status = document.getElementById('emailStatus');
+            
+            btn.disabled = true;
+            btn.innerText = 'Sending...';
+            status.innerText = '';
+
+            try {
+                const res = await fetch(`${API_BASE}/itinerary/send-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        itineraryData: generatedItinerary
+                    })
+                });
+
+                const result = await res.json();
+                if (result.status === 'success') {
+                    status.innerHTML = '<span style="color:#00e676">✅ Sent! Check your inbox.</span>';
+                    setTimeout(closeEmailModal, 2000);
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (e) {
+                status.innerHTML = `<span style="color:#ff5252">❌ Error: ${e.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Send Now 🚀';
+            }
+        }
+    </script>
+</body>
+</html>

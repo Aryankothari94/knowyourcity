@@ -96,56 +96,6 @@
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: none !important; /* Prevent the modal itself from blurring */
     }
-    /* Compact Form Styling */
-    /* Smart Itinerary Styling */
-    .itinerary-section { padding: 80px 0; background: rgba(10,14,39,0.3); border-top: 1px solid rgba(255,255,255,0.05); }
-    .itinerary-generator { max-width: 800px; margin: 40px auto; padding: 30px; }
-    .generator-inputs { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 20px; align-items: flex-end; }
-    
-    .itinerary-input-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-secondary); }
-    .itinerary-input-group input, .itinerary-input-group select, .itinerary-input-group textarea {
-      width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px; color: white; outline: none; font-family: inherit; box-sizing: border-box;
-    }
-    
-    .itinerary-result-area { margin-top: 50px; animation: fadeInUp 0.6s ease; display: none; }
-    .itinerary-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
-    .btn-email-trigger { 
-      background: rgba(0,229,255,0.1); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);
-      padding: 10px 20px; border-radius: 30px; font-weight: 600; cursor: pointer; transition: all 0.3s;
-      display: flex; align-items: center; gap: 10px; font-family: inherit;
-    }
-    .btn-email-trigger:hover { background: var(--accent-cyan); color: black; }
-    
-    .itinerary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-    .itinerary-day-card { padding: 25px; }
-    .itinerary-day-card h4 { margin-bottom: 20px; color: var(--accent-cyan); font-size: 1.2rem; }
-    
-    .itinerary-activity-list { display: flex; flex-direction: column; gap: 15px; }
-    .activity-item { display: flex; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .activity-time { font-size: 0.8rem; font-weight: 700; color: #888; white-space: nowrap; padding-top: 3px; }
-    .activity-place { font-weight: 500; font-size: 0.95rem; margin-bottom: 4px; color: white; }
-    .activity-safety { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #aaa; }
-    .safety-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-    /* Modal */
-    .itinerary-modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
-      z-index: 100000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px);
-    }
-    .itinerary-modal-overlay.active { display: flex; }
-    .itinerary-modal { width: 95%; max-width: 450px; padding: 35px; position: relative; }
-    .itinerary-modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
-    .itinerary-modal h3 { margin-bottom: 10px; font-size: 1.5rem; color: var(--accent-cyan); }
-    .itinerary-modal p { margin-bottom: 25px; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
-    .itinerary-status-msg { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; display: none; }
-    .itinerary-status-msg.success { background: rgba(0,230,118,0.1); color: #00e676; border: 1px solid rgba(0,230,118,0.2); display: block; }
-    .itinerary-status-msg.error { background: rgba(255,82,82,0.1); color: #ff5252; border: 1px solid rgba(255,82,82,0.2); display: block; }
-
-    @media (max-width: 768px) {
-      .generator-inputs { grid-template-columns: 1fr; }
-    }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     .auth-modal { padding: 24px !important; max-width: 450px !important; }
     .auth-tabs { margin-bottom: 20px !important; }
@@ -330,7 +280,6 @@
       <ul class="nav-links" id="navLinks">
         <li><a href="#features" class="active" id="navFeatures">Features</a></li>
         <li><a href="#safety">Safety</a></li>
-        <li><a href="#itinerary">Itinerary</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
         <li><a href="contact" class="nav-cta">Contact Us</a></li>
 
@@ -1266,7 +1215,7 @@
           </div>
         </div>
         <!-- Feature 11 -->
-        <div class="feature-card glass-card reveal" onclick="scrollToItinerary()" style="cursor:pointer">
+        <div class="feature-card glass-card reveal" onclick="window.location.href='itinerary.html'" style="cursor:pointer">
           <div class="feature-icon pink" style="background:rgba(255,0,122,0.1); color:#ff007a;"><span class="material-symbols-outlined">calendar_month</span></div>
           <div class="feature-text">
             <h3>Smart Itinerary</h3>
@@ -1510,223 +1459,11 @@
     </div>
   </section>
 
-  <!-- ===== SMART ITINERARY SECTION ===== -->
-  <section class="itinerary-section" id="itinerary">
-    <div class="container">
-      <div class="section-header reveal">
-        <div class="section-label">AI Powered</div>
-        <h2 class="section-title">Smart <span class="gradient-text">Itinerary Builder</span></h2>
-        <p class="section-subtitle">Plan your trip with safety-first recommendations tailored to your destination.</p>
-      </div>
-
-      <div class="itinerary-generator glass-card reveal">
-        <div class="generator-inputs">
-          <div class="itinerary-input-group">
-            <label>Destination City</label>
-            <input type="text" id="itineraryCityInput" placeholder="e.g. Pune, Mumbai, Delhi">
-          </div>
-          <div class="itinerary-input-group">
-            <label>Duration (Days)</label>
-            <select id="itineraryDaysSelect">
-              <option value="1">1 Day</option>
-              <option value="2">2 Days</option>
-              <option value="3" selected>3 Days</option>
-              <option value="4">4 Days</option>
-              <option value="5">5 Days</option>
-              <option value="6">6 Days</option>
-              <option value="7">7 Days</option>
-            </select>
-          </div>
-          <button class="btn-primary" id="generateItineraryBtn" onclick="generateSmartItinerary()">
-            Build Safe Itinerary <span>→</span>
-          </button>
-        </div>
-      </div>
-
-      <div id="itineraryResultArea" class="itinerary-result-area">
-        <div class="itinerary-meta">
-          <h3 id="itineraryTitle">Plan for City</h3>
-          <button class="btn-email-trigger" onclick="toggleItineraryEmailModal(true)">
-            <span>📧</span> Send to Email
-          </button>
-        </div>
-
-        <div class="itinerary-grid" id="itineraryGrid">
-          <!-- Days injected here -->
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Email Modal -->
-  <div id="itineraryEmailModal" class="itinerary-modal-overlay">
-    <div class="itinerary-modal glass-card">
-      <button class="itinerary-modal-close" onclick="toggleItineraryEmailModal(false)">✕</button>
-      <h3>Send Itinerary to Email</h3>
-      <p>We'll send a formatted HTML email and a PDF copy of your plan.</p>
-      
-      <form id="itineraryEmailForm" onsubmit="sendItineraryEmail(event)">
-        <div class="itinerary-input-group" style="margin-bottom: 15px;">
-          <label>Email Address</label>
-          <input type="email" id="itineraryTargetEmail" placeholder="yourname@gmail.com" required>
-        </div>
-        <div class="itinerary-input-group" style="margin-bottom: 15px;">
-          <label>Optional Message</label>
-          <textarea id="itineraryEmailMessage" placeholder="Any special notes..." rows="3"></textarea>
-        </div>
-
-        <div id="itineraryEmailStatus" class="itinerary-status-msg"></div>
-
-        <button class="btn-primary" type="submit" id="itinerarySendBtn" style="width: 100%;">
-          Send Itinerary <span>🚀</span>
-        </button>
-      </form>
-    </div>
-  </div>
 
   <script>
     let _areaSearchTimeout;
     let _areaActiveIndex = -1;
 
-    // --- SMART ITINERARY LOGIC ---
-    let _currentItineraryData = null;
-
-    function scrollToItinerary() {
-      const el = document.getElementById('itinerary');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    async function generateSmartItinerary() {
-      const cityInput = document.getElementById('itineraryCityInput');
-      const daysSelect = document.getElementById('itineraryDaysSelect');
-      const city = cityInput.value.trim();
-      const days = parseInt(daysSelect.value);
-
-      if (!city) {
-        alert("Please enter a destination city.");
-        return;
-      }
-
-      const btn = document.getElementById('generateItineraryBtn');
-      btn.disabled = true;
-      btn.innerHTML = '✨ Generating...';
-
-      // Simulate API call / Generation logic
-      setTimeout(() => {
-        const activities = [
-          { time: '09:00 AM', place: 'Local Museum & Heritage Site', safety: 95 },
-          { time: '12:30 PM', place: 'Verified Safe Dining Area', safety: 88 },
-          { time: '03:00 PM', place: 'Public Park & Garden', safety: 92 },
-          { time: '07:00 PM', place: 'Well-lit Shopping District', safety: 85 }
-        ];
-
-        _currentItineraryData = {
-          city: city,
-          days: Array.from({ length: days }, (_, i) => ({
-            day: i + 1,
-            activities: [...activities].sort(() => Math.random() - 0.5)
-          })),
-          totalActivities: days * 4
-        };
-
-        renderItinerary();
-        btn.disabled = false;
-        btn.innerHTML = 'Build Safe Itinerary <span>→</span>';
-        
-        const resultArea = document.getElementById('itineraryResultArea');
-        resultArea.style.display = 'block';
-        resultArea.scrollIntoView({ behavior: 'smooth' });
-      }, 1500);
-    }
-
-    function renderItinerary() {
-      const grid = document.getElementById('itineraryGrid');
-      const title = document.getElementById('itineraryTitle');
-      
-      title.innerText = `Plan for ${_currentItineraryData.city}`;
-      grid.innerHTML = '';
-
-      _currentItineraryData.days.forEach(day => {
-        const dayCard = document.createElement('div');
-        dayCard.className = 'itinerary-day-card glass-card';
-        
-        let activitiesHtml = '';
-        day.activities.forEach(act => {
-          activitiesHtml += `
-            <div class="activity-item">
-              <div class="activity-time">${act.time}</div>
-              <div class="activity-info">
-                <div class="activity-place">${act.place}</div>
-                <div class="activity-safety">
-                  <div class="safety-dot" style="background: ${act.safety > 90 ? '#00e676' : '#ffab40'}"></div>
-                  Safety: ${act.safety}%
-                </div>
-              </div>
-            </div>
-          `;
-        });
-
-        dayCard.innerHTML = `
-          <h4>Day ${day.day}</h4>
-          <div class="itinerary-activity-list">${activitiesHtml}</div>
-        `;
-        grid.appendChild(dayCard);
-      });
-    }
-
-    function toggleItineraryEmailModal(show) {
-      const modal = document.getElementById('itineraryEmailModal');
-      if (show) modal.classList.add('active');
-      else modal.classList.remove('active');
-      
-      // Reset status
-      const status = document.getElementById('itineraryEmailStatus');
-      status.className = 'itinerary-status-msg';
-      status.innerText = '';
-    }
-
-    async function sendItineraryEmail(event) {
-      event.preventDefault();
-      const email = document.getElementById('itineraryTargetEmail').value;
-      const message = document.getElementById('itineraryEmailMessage').value;
-      const status = document.getElementById('itineraryEmailStatus');
-      const btn = document.getElementById('itinerarySendBtn');
-
-      if (!_currentItineraryData) return;
-
-      btn.disabled = true;
-      btn.innerHTML = '🚀 Sending...';
-      status.className = 'itinerary-status-msg';
-      status.innerText = '';
-
-      try {
-        const response = await fetch('https://knowyourcity-api.onrender.com/api/itinerary/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            itineraryData: _currentItineraryData,
-            message
-          })
-        });
-
-        const data = await response.json();
-        if (data.status === 'success') {
-          status.innerText = '✅ Email sent! Check your Gmail.';
-          status.classList.add('success');
-          setTimeout(() => toggleItineraryEmailModal(false), 3000);
-        } else {
-          throw new Error(data.message || 'Failed to send');
-        }
-      } catch (err) {
-        console.error(err);
-        status.innerText = '❌ ' + err.message;
-        status.classList.add('error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Send Itinerary <span>🚀</span>';
-      }
-    }
 
     // Initialize Safety Explorer in NULL state until city selection
     document.addEventListener('DOMContentLoaded', () => {

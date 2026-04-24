@@ -3,10 +3,77 @@ const router = express.Router();
 const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
 const { body, validationResult } = require('express-validator');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Rate limiting placeholder - in production use express-rate-limit
-const rateLimit = new Map();
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
+// Route: POST /api/itinerary/generate
+router.post('/generate', async (req, res) => {
+    const { 
+        city, duration, budget, interests, 
+        travelMode, timeAvailability, safetyPreference, pace 
+    } = req.body;
+
+    if (!city) return res.status(400).json({ status: 'error', message: 'City is required' });
+
+    try {
+        const prompt = `
+        Generate a highly detailed and accurate city itinerary for **${city}**.
+        
+        USER INPUTS:
+        - Duration: ${duration}
+        - Budget: ${budget}
+        - Interests: ${interests.join(', ')}
+        - Travel Mode: ${travelMode}
+        - Time Availability: ${timeAvailability}
+        - Safety Preference: ${safetyPreference}
+        - Pace: ${pace}
+
+        RESPONSE RULES:
+        1. Provide a professional, engaging itinerary.
+        2. Format as a valid JSON object.
+        3. Include "city", "summary", "totalDays", and a "days" array.
+        4. Each day should have a "dayNumber" and "activities" array.
+        5. Each activity must have "time", "place", "description", "costEstimate", and "safetyScore" (out of 100).
+        6. Ensure places are real and relevant to ${city}.
+        7. The tone should be helpful and safety-conscious.
+        
+        OUTPUT FORMAT (Respond ONLY with JSON):
+        {
+          "city": "${city}",
+          "summary": "...",
+          "totalDays": ${duration},
+          "days": [
+            {
+              "dayNumber": 1,
+              "activities": [
+                { "time": "09:00 AM", "place": "...", "description": "...", "costEstimate": "...", "safetyScore": 95 }
+              ]
+            }
+          ]
+        }
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let text = response.text().trim();
+        
+        // Clean up markdown
+        if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '');
+        if (text.startsWith('```')) text = text.replace(/^```/, '').replace(/```$/, '');
+
+        const itinerary = JSON.parse(text);
+        res.json({ status: 'success', data: itinerary });
+
+    } catch (err) {
+        console.error('Gemini Generation Error:', err);
+        res.status(500).json({ status: 'error', message: 'Failed to generate itinerary. Please try again.' });
+    }
+});
+
+// Route: POST /api/itinerary/send-email
 router.post('/send-email', [
     body('email').isEmail().normalizeEmail(),
     body('itineraryData').notEmpty(),
@@ -18,17 +85,9 @@ router.post('/send-email', [
 
     const { email, itineraryData, message } = req.body;
 
-    // Simple Rate Limiting
-    const now = Date.now();
-    const lastSend = rateLimit.get(email) || 0;
-    if (now - lastSend < 60000) { // 1 minute limit
-        return res.status(429).json({ status: 'error', message: 'Please wait a minute before sending another email.' });
-    }
-    rateLimit.set(email, now);
-
     try {
         // 1. GENERATE PDF
-        const doc = new PDFDocument();
+        const doc = new PDFDocument({ margin: 50 });
         let buffers = [];
         doc.on('data', buffers.push.bind(buffers));
         
@@ -36,7 +95,6 @@ router.post('/send-email', [
             doc.on('end', async () => {
                 const pdfBuffer = Buffer.concat(buffers);
 
-                // 2. SETUP NODEMAILER
                 const transporter = nodemailer.createTransport({
                     service: 'gmail',
                     auth: {
@@ -45,50 +103,46 @@ router.post('/send-email', [
                     }
                 });
 
-                // 3. BUILD EMAIL CONTENT
-                const itineraryHtml = `
-                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
-                        <div style="background: linear-gradient(135deg, #00e5ff, #0097a7); padding: 20px; text-align: center; color: white;">
-                            <h1 style="margin: 0;">🏙️ Your Smart Itinerary</h1>
-                            <p style="margin: 5px 0 0; opacity: 0.9;">From KnowYourCitys.in</p>
+                const emailHtml = `
+                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 700px; margin: 0 auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+                        <div style="background: #0f172a; padding: 30px; text-align: center; color: white;">
+                            <h1 style="margin: 0; color: #00e5ff;">🗺️ Your Smart Itinerary</h1>
+                            <p style="margin: 10px 0 0; opacity: 0.8; font-size: 1.1rem;">Exploration Guide for <strong>${itineraryData.city}</strong></p>
                         </div>
-                        <div style="padding: 20px;">
-                            <p>Hello,</p>
-                            <p>Here is your personalized itinerary for <strong>${itineraryData.city}</strong>.</p>
-                            ${message ? `<div style="padding: 10px; background: #f9f9f9; border-left: 4px solid #00e5ff; font-style: italic;">"${message}"</div>` : ''}
+                        <div style="padding: 30px; line-height: 1.6;">
+                            <p>Hi there,</p>
+                            <p>We've crafted a special travel plan just for you. Here's a summary of your upcoming adventure.</p>
                             
-                            <h3 style="color: #0097a7; border-bottom: 2px solid #00e5ff; padding-bottom: 5px; margin-top: 25px;">Itinerary Details</h3>
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="background: #f4f4f4;">
-                                        <th style="padding: 10px; text-align: left; font-size: 0.9rem;">Day</th>
-                                        <th style="padding: 10px; text-align: left; font-size: 0.9rem;">Activity</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${itineraryData.days.map(day => `
-                                        <tr>
-                                            <td style="padding: 10px; border-bottom: 1px solid #eee; vertical-align: top; font-weight: bold;">Day ${day.day}</td>
-                                            <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                                                ${day.activities.map(act => `
-                                                    <div style="margin-bottom: 8px;">
-                                                        <span style="color: #00e5ff;">•</span> <strong>${act.time}</strong>: ${act.place}
-                                                        <br/><span style="font-size: 0.8rem; color: #777;">Safety Score: ${act.safety}%</span>
-                                                    </div>
-                                                `).join('')}
-                                            </td>
-                                        </tr>
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #00e5ff;">
+                                <h3 style="margin-top: 0; color: #0f172a;">Plan Overview</h3>
+                                <p style="margin: 0;">${itineraryData.summary}</p>
+                            </div>
+
+                            ${message ? `<div style="padding: 15px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-style: italic; margin-bottom: 25px;">"${message}"</div>` : ''}
+
+                            ${itineraryData.days.map(day => `
+                                <div style="margin-bottom: 30px;">
+                                    <h2 style="color: #00e5ff; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Day ${day.dayNumber}</h2>
+                                    ${day.activities.map(act => `
+                                        <div style="margin-bottom: 15px; padding-left: 15px; border-left: 2px solid #cbd5e1;">
+                                            <div style="font-weight: bold; font-size: 1rem;">
+                                                <span style="color: #64748b;">${act.time}</span> &mdash; ${act.place}
+                                            </div>
+                                            <div style="color: #475569; font-size: 0.9rem; margin: 4px 0;">${act.description}</div>
+                                            <div style="font-size: 0.8rem; color: #94a3b8;">
+                                                💰 Cost: ${act.costEstimate} | 🛡️ Safety Score: ${act.safetyScore}%
+                                            </div>
+                                        </div>
                                     `).join('')}
-                                </tbody>
-                            </table>
-                            
-                            <div style="margin-top: 30px; padding: 15px; background: #e0f7fa; border-radius: 8px; text-align: center;">
-                                <p style="margin: 0; font-weight: bold; color: #006064;">Total Activities: ${itineraryData.totalActivities}</p>
+                                </div>
+                            `).join('')}
+
+                            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                                <a href="https://knowyourcitys.in" style="display: inline-block; padding: 12px 25px; background: #00e5ff; color: #000; text-decoration: none; border-radius: 30px; font-weight: bold;">Explore More on Know Your City</a>
                             </div>
                         </div>
-                        <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 0.8rem; color: #888;">
-                            <p style="margin: 0;">Generated by <a href="https://knowyourcitys.in" style="color: #0097a7; text-decoration: none; font-weight: bold;">KnowYourCitys.in</a> 🚀</p>
-                            <p style="margin: 5px 0 0;">Your safety is our priority.</p>
+                        <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b;">
+                            <p style="margin: 0;">&copy; 2026 KnowYourCitys.in | Built for Smart Travelers 🚀</p>
                         </div>
                     </div>
                 `;
@@ -96,17 +150,11 @@ router.post('/send-email', [
                 const mailOptions = {
                     from: '"Know Your City" <' + process.env.EMAIL_USER + '>',
                     to: email,
-                    subject: `Your Smart Itinerary for ${itineraryData.city} 🏙️`,
-                    html: itineraryHtml,
-                    attachments: [
-                        {
-                            filename: 'itinerary.pdf',
-                            content: pdfBuffer
-                        }
-                    ]
+                    subject: `Your Personalized ${itineraryData.city} Itinerary 🏙️`,
+                    html: emailHtml,
+                    attachments: [{ filename: 'itinerary.pdf', content: pdfBuffer }]
                 };
 
-                // 4. SEND EMAIL
                 try {
                     await transporter.sendMail(mailOptions);
                     res.json({ status: 'success', message: 'Email sent successfully' });
@@ -118,28 +166,33 @@ router.post('/send-email', [
                 }
             });
 
-            // WRITE TO PDF
-            doc.fontSize(25).fillColor('#0097a7').text(`Your Smart Itinerary: ${itineraryData.city}`, { align: 'center' });
-            doc.moveDown();
-            doc.fontSize(12).fillColor('#333').text('Generated by KnowYourCitys.in', { align: 'center' });
+            // PDF DESIGN
+            doc.rect(0, 0, doc.page.width, 100).fill('#0f172a');
+            doc.fillColor('#00e5ff').fontSize(24).text('Smart Itinerary Guide', 50, 40);
+            doc.fillColor('#ffffff').fontSize(12).text(`Destination: ${itineraryData.city}`, 50, 70);
+            doc.moveDown(4);
+
+            doc.fillColor('#333333').fontSize(12).text(itineraryData.summary, { align: 'justify' });
             doc.moveDown(2);
 
             itineraryData.days.forEach(day => {
-                doc.fontSize(16).fillColor('#00e5ff').text(`Day ${day.day}`, { underline: true });
+                doc.fillColor('#00e5ff').fontSize(18).text(`Day ${day.dayNumber}`, { underline: true });
                 doc.moveDown(0.5);
+                
                 day.activities.forEach(act => {
-                    doc.fontSize(12).fillColor('#333').text(`${act.time}: ${act.place}`, { indent: 20 });
-                    doc.fontSize(10).fillColor('#888').text(`Safety Score: ${act.safety}%`, { indent: 40 });
-                    doc.moveDown(0.3);
+                    doc.fillColor('#0f172a').fontSize(12).font('Helvetica-Bold').text(`${act.time} - ${act.place}`);
+                    doc.fillColor('#444444').font('Helvetica').fontSize(10).text(act.description, { indent: 15 });
+                    doc.fillColor('#888888').fontSize(9).text(`Estimated Cost: ${act.costEstimate} | Safety Score: ${act.safetyScore}%`, { indent: 15 });
+                    doc.moveDown(0.8);
                 });
-                doc.moveDown();
+                doc.moveDown(1);
             });
 
             doc.end();
         });
 
     } catch (err) {
-        console.error('Itinerary error:', err);
+        console.error('Email Route Error:', err);
         res.status(500).json({ status: 'error', message: 'Internal server error' });
     }
 });
