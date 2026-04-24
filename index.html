@@ -789,6 +789,7 @@
       const areaKm2 = Math.PI * 15 * 15; // ~707 km² for 15km radius
       const den = (tot / areaKm2).toFixed(2);
       const lv = tot > 30 ? 'High' : tot > 10 ? 'Moderate' : 'Low';
+      const lvColor = lv === 'High' ? '#00e676' : lv === 'Moderate' ? '#ffab40' : '#ff5252';
       document.getElementById('safetySummary').innerHTML = `
         <div class="summary-item"><strong>Infrastructure Density:</strong> ${den} per km²</div>
         <div class="summary-item"><strong>Coverage Level:</strong> <span style="color:${lvColor}">${lv}</span></div>
@@ -1801,6 +1802,7 @@
             updateInfraSummaryUI(pC, hC, fC, cC);
             syncSecondaryCityData(city, fallbackLat, fallbackLng, { policeCount: pC, hospitalCount: hC, fireCount: fC, cctvCount: cC });
         });
+    }
     }
 
     function updateInfraSummaryUI(pC, hC, fC, cC) {
