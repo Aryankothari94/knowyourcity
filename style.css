@@ -6153,9 +6153,19 @@ a.floating-card:hover {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   text-align: center;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
-  min-height: 100px;
+  min-height: 120px;
+}
+
+.kyc-ad-container ins.adsbygoogle {
+  display: block !important;
+  min-height: 90px;
+  width: 100%;
+}
+
+.kyc-ad-container ins.adsbygoogle[data-ad-status="unfilled"] {
+  display: none !important;
 }
 
 .kyc-ad-container::before {
@@ -6167,6 +6177,7 @@ a.floating-card:hover {
   color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
+  z-index: 1;
 }
 
 /* Hide legacy ad container entirely */
@@ -6348,9 +6359,19 @@ a.floating-card:hover {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   text-align: center;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
-  min-height: 100px;
+  min-height: 120px;
+}
+
+.kyc-ad-container ins.adsbygoogle {
+  display: block !important;
+  min-height: 90px;
+  width: 100%;
+}
+
+.kyc-ad-container ins.adsbygoogle[data-ad-status="unfilled"] {
+  display: none !important;
 }
 
 .kyc-ad-container::before {
@@ -6362,6 +6383,7 @@ a.floating-card:hover {
   color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
+  z-index: 1;
 }
 
 /* Hide legacy ad container entirely */
