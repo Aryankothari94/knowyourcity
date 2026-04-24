@@ -62,14 +62,30 @@ router.post('/generate', async (req, res) => {
         
         // Clean up markdown
         if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '');
-        if (text.startsWith('```')) text = text.replace(/^```/, '').replace(/```$/, '');
+        else if (text.startsWith('```')) text = text.replace(/^```/, '').replace(/```$/, '');
 
-        const itinerary = JSON.parse(text);
-        res.json({ status: 'success', data: itinerary });
+        try {
+            const itinerary = JSON.parse(text);
+            res.json({ status: 'success', data: itinerary });
+        } catch (parseErr) {
+            console.error('JSON Parse Error. Raw text:', text);
+            // Fallback: If JSON fails, it might be due to trailing commas or markdown.
+            // We'll try to find the first '{' and last '}'
+            const startIdx = text.indexOf('{');
+            const endIdx = text.lastIndexOf('}');
+            if (startIdx !== -1 && endIdx !== -1) {
+                try {
+                    const cleaned = text.substring(startIdx, endIdx + 1);
+                    const itinerary = JSON.parse(cleaned);
+                    return res.json({ status: 'success', data: itinerary });
+                } catch (e) {}
+            }
+            throw new Error('AI returned an invalid format. Please try again.');
+        }
 
     } catch (err) {
         console.error('Gemini Generation Error:', err);
-        res.status(500).json({ status: 'error', message: 'Failed to generate itinerary. Please try again.' });
+        res.status(500).json({ status: 'error', message: err.message || 'Failed to generate itinerary.' });
     }
 });
 

@@ -310,6 +310,9 @@
 <body>
 
     <div class="itinerary-container">
+        <a href="index.html" style="color: var(--accent-cyan); text-decoration: none; display: flex; align-items: center; gap: 8px; margin-bottom: 30px; font-weight: 600;">
+            <span class="material-symbols-outlined">arrow_back</span> Back to Home
+        </a>
         <div class="builder-header">
             <div class="section-label">Tailored for You</div>
             <h1>Smart Itinerary <span class="gradient-text">Builder</span></h1>
@@ -447,7 +450,10 @@
     </div>
 
     <script>
-        const API_BASE = 'https://knowyourcity-api.onrender.com/api'; // Update to your production API
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:10000/api' 
+            : 'https://knowyourcity-api.onrender.com/api';
+            
         let generatedItinerary = null;
 
         // Interest selection logic
