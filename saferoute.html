@@ -405,7 +405,8 @@
         </div>`).join('');
       list.classList.add('show');
       list.querySelectorAll('.autocomplete-item[data-name]').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
           input.value = item.dataset.display.split(',').slice(0,2).join(',').trim();
           list.innerHTML = ''; list.classList.remove('show');
         });
@@ -466,7 +467,8 @@
             }).join('');
             list.classList.add('show');
             list.querySelectorAll('.autocomplete-item[data-name]').forEach(item => {
-              item.addEventListener('click', () => {
+              item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
                 input.value = item.dataset.display.split(',').slice(0,2).join(',').trim();
                 list.innerHTML=''; list.classList.remove('show');
               });
@@ -475,7 +477,7 @@
         }, 300);
       });
       // Hide on blur after short delay (allow click)
-      input.addEventListener('blur', () => setTimeout(() => { list.classList.remove('show'); }, 200));
+      input.addEventListener('blur', () => setTimeout(() => { list.classList.remove('show'); }, 400));
       input.addEventListener('focus', () => {
         if (input.value.length < 3 && travelMode === 'incity' && selectedCity) {
           showCityAreaSuggestions(inputId, listId);
