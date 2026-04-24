@@ -359,24 +359,36 @@
         const searches = [
           fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('railway station ' + city)}&limit=3&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
           fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('bus stand ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('market ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('metro station ' + city)}&limit=3&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('market ' + city)}&limit=3&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
           fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('mall ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
           fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('hospital ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
           fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('airport ' + city)}&limit=1&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('park ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('temple ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('university ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('stadium ' + city)}&limit=1&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('chowk ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
         ];
         const results = await Promise.all(searches);
         const allData = await Promise.all(results.map(r => r.json()));
+        const categoryIcons = ['🚉','🚌','🚇','🛒','🏬','🏥','✈️','🌳','🛕','🎓','🏟️','🔵'];
         const seen = new Set();
-        cachedCityAreas = allData.flat().filter(d => {
-          const name = d.display_name.split(',')[0];
-          if (seen.has(name)) return false;
-          seen.add(name);
-          return true;
-        }).slice(0, 12).map(d => ({
-          name: d.display_name.split(',')[0],
-          sub: d.display_name.split(',').slice(1,3).join(',').trim(),
-          full: d.display_name
-        }));
+        let items = [];
+        allData.forEach((arr, catIdx) => {
+          arr.forEach(d => {
+            const name = d.display_name.split(',')[0];
+            if (seen.has(name)) return;
+            seen.add(name);
+            items.push({
+              name,
+              sub: d.display_name.split(',').slice(1,3).join(',').trim(),
+              full: d.display_name,
+              icon: categoryIcons[catIdx] || '📍'
+            });
+          });
+        });
+        cachedCityAreas = items.slice(0, 20);
       } catch(e) { console.warn('Failed to fetch city areas:', e.message); }
     }
 
@@ -384,10 +396,11 @@
       if (travelMode !== 'incity' || !selectedCity || cachedCityAreas.length === 0) return;
       const input = document.getElementById(inputId);
       const list = document.getElementById(listId);
-      if (input.value.length >= 3) return;
-      list.innerHTML = '<div style="padding:8px 14px; font-size:0.72rem; color:#00e5ff; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.06);">📍 Popular areas in ' + selectedCity + '</div>' +
+      if (input.value.length >= 2) return;
+      list.style.maxHeight = '320px';
+      list.innerHTML = '<div style="padding:8px 14px; font-size:0.72rem; color:#00e5ff; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.06); position:sticky; top:0; background:rgba(13,17,41,0.98); z-index:1;">📍 Popular areas in ' + selectedCity + ' — tap to select</div>' +
         cachedCityAreas.map(a => `<div class="autocomplete-item" data-name="${a.name}" data-display="${a.full}">
-          <span class="ac-icon">🏙️</span>
+          <span class="ac-icon">${a.icon || '🏙️'}</span>
           <div><div class="ac-main">${a.name}</div><div class="ac-sub">${a.sub}</div></div>
         </div>`).join('');
       list.classList.add('show');
@@ -399,8 +412,27 @@
       });
     }
 
-    // ===== AUTOCOMPLETE FOR INPUTS =====
+    // ===== AUTOCOMPLETE FOR INPUTS (Google Maps style) =====
     let acTimeout = null;
+    function getPlaceIcon(type) {
+      if (!type) return '📍';
+      const t = type.toLowerCase();
+      if (t.includes('station') || t.includes('railway')) return '🚉';
+      if (t.includes('airport') || t.includes('aerodrome')) return '✈️';
+      if (t.includes('hospital') || t.includes('clinic')) return '🏥';
+      if (t.includes('school') || t.includes('university') || t.includes('college')) return '🎓';
+      if (t.includes('temple') || t.includes('mosque') || t.includes('church')) return '🛕';
+      if (t.includes('park') || t.includes('garden')) return '🌳';
+      if (t.includes('market') || t.includes('mall') || t.includes('shop')) return '🛒';
+      if (t.includes('restaurant') || t.includes('cafe') || t.includes('hotel')) return '🍽️';
+      if (t.includes('bus')) return '🚌';
+      if (t.includes('metro') || t.includes('subway')) return '🚇';
+      if (t.includes('road') || t.includes('highway') || t.includes('street')) return '🛣️';
+      if (t.includes('village') || t.includes('hamlet')) return '🏘️';
+      if (t.includes('city') || t.includes('town')) return '🏙️';
+      if (t.includes('water') || t.includes('river') || t.includes('lake')) return '💧';
+      return '📍';
+    }
     function setupAutoComplete(inputId, listId) {
       const input = document.getElementById(inputId);
       const list = document.getElementById(listId);
@@ -408,18 +440,27 @@
         if (inputId === 'pickupInput') exactCurrentLocationForPickup = null;
         clearTimeout(acTimeout);
         const q = input.value.trim();
-        if (q.length < 3) { list.innerHTML=''; list.classList.remove('show'); return; }
+        if (q.length < 2) {
+          if (travelMode === 'incity' && selectedCity && cachedCityAreas.length > 0) {
+            showCityAreaSuggestions(inputId, listId);
+          } else {
+            list.innerHTML=''; list.classList.remove('show');
+          }
+          return;
+        }
         acTimeout = setTimeout(async () => {
           try {
             let searchQ = (travelMode === 'incity' && selectedCity) ? `${q}, ${selectedCity}, India` : `${q}, India`;
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQ)}&limit=5&addressdetails=1&countrycodes=in`, { headers:{'Accept-Language':'en'} });
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQ)}&limit=8&addressdetails=1&countrycodes=in`, { headers:{'Accept-Language':'en'} });
             const data = await res.json();
-            if (!data.length) { list.innerHTML='<div class="autocomplete-item" style="cursor:default;color:var(--text-secondary)">No results found</div>'; list.classList.add('show'); return; }
+            if (!data.length) { list.innerHTML='<div class="autocomplete-item" style="cursor:default;color:var(--text-secondary)">No results found — try a different spelling</div>'; list.classList.add('show'); return; }
+            list.style.maxHeight = '320px';
             list.innerHTML = data.map(d => {
               const name = d.display_name.split(',')[0];
               const sub = d.display_name.split(',').slice(1,3).join(',').trim();
+              const icon = getPlaceIcon(d.type + ' ' + d.class + ' ' + name);
               return `<div class="autocomplete-item" data-name="${name}" data-display="${d.display_name}">
-                <span class="ac-icon">📍</span>
+                <span class="ac-icon">${icon}</span>
                 <div><div class="ac-main">${name}</div><div class="ac-sub">${sub}</div></div>
               </div>`;
             }).join('');
@@ -431,7 +472,7 @@
               });
             });
           } catch { list.innerHTML=''; list.classList.remove('show'); }
-        }, 350);
+        }, 300);
       });
       // Hide on blur after short delay (allow click)
       input.addEventListener('blur', () => setTimeout(() => { list.classList.remove('show'); }, 200));
