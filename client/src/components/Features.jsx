@@ -55,6 +55,11 @@ export default function Features() {
                             <h3>Local Tips</h3>
                             <p>Insider knowledge from locals — best markets, healthcare facilities, community centers, and hidden gems.</p>
                         </div>
+                        <div className="feature-card glass-card reveal">
+                            <div className="feature-icon pink">📅</div>
+                            <h3>Smart Itinerary</h3>
+                            <p>Generate safety-first travel plans with one click, and receive them directly in your email with a PDF guide.</p>
+                        </div>
                     </div>
                 </div>
             </section>

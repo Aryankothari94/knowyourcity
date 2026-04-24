@@ -249,6 +249,7 @@ function App() {
             <li><a href="#safety">Safety</a></li>
             <li><a href="#how-it-works">How It Works</a></li>
             <li><a href="#testimonials">Stories</a></li>
+            <li><a href="#itinerary">Itinerary</a></li>
 
             {isLoggedIn ? (
               <li className="account-nav-item" style={{ display: 'flex' }}>
