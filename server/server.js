@@ -59,6 +59,7 @@ const mapRoutes = require('./routes/map');
 const contactRoutes = require('./routes/contact');
 const chatbotRoutes = require('./routes/chatbot');
 const saferouteRoutes = require('./routes/saferoute');
+const itineraryRoutes = require('./routes/itinerary');
 
 
 // Move API routes BEFORE the root route for better matching
@@ -68,6 +69,7 @@ app.use('/api/safety', mapRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/chat', chatbotRoutes);
 app.use('/api/saferoute', saferouteRoutes);
+app.use('/api/itinerary', itineraryRoutes);
 
 
 
