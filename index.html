@@ -981,11 +981,27 @@
       const badge = document.getElementById('safetyStatusBadge');
 
       if (summary) summary.innerHTML = `<div style="display:flex; align-items:center; gap:10px; padding: 10px 0;"><div class="spinner-small"></div><span style="color:var(--accent-cyan); font-size:0.85rem;">Initiating real-time safety sync for ${city}...</span></div>`;
-      if (cname) cname.innerHTML = `📍 ${city} (Analyzing Live Data...)`;
+      if (cname) cname.innerHTML = `📍 ${city} <span style="font-size:0.7rem; opacity:0.6; font-weight:400; margin-left:8px;">(Syncing...)</span>`;
+      
+      // Persistent Loading Overlay for the whole card
+      const card = document.getElementById('safety-map')?.closest('.glass-card');
+      if (card) {
+        let overlay = document.getElementById('safetySyncOverlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'safetySyncOverlay';
+          overlay.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(10,11,26,0.4); backdrop-filter:blur(2px); z-index:1000; display:flex; align-items:center; justify-content:center; border-radius:inherit; transition:opacity 0.3s; pointer-events:none;';
+          overlay.innerHTML = '<div style="background:rgba(0,229,255,0.1); padding:15px 25px; border-radius:30px; border:1px solid rgba(0,229,255,0.3); display:flex; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5);"><div class="spinner-small"></div><span style="color:#fff; font-size:0.9rem; font-weight:600; letter-spacing:0.5px;">Syncing City Data...</span></div>';
+          card.style.position = 'relative';
+          card.appendChild(overlay);
+        }
+        overlay.style.opacity = '1';
+      }
+
       if (badge) {
         badge.style.display = 'flex';
-        badge.className = 'safety-status-badge';
-        badge.querySelector('.status-text').textContent = 'Analyzing Area...';
+        badge.className = 'safety-status-badge status-mid'; 
+        badge.querySelector('.status-text').textContent = 'Syncing Real-Time Data...';
       }
       
       let dataFound = false;
@@ -1068,6 +1084,10 @@
               <p style="color:var(--safe-green); font-size:0.82rem;">✓ Data verification complete via ${mergedSource}.</p>`;
         }
         
+        // Remove loading overlay
+        const overlay = document.getElementById('safetySyncOverlay');
+        if (overlay) overlay.style.opacity = '0';
+
         renderSafetyOnMap(map, police, hosp, fire, cctv, city, mergedSource, safetyStats);
         updateAreaCards(globalLat, globalLng, city);
         if(typeof syncSecondaryCityData === 'function') syncSecondaryCityData(city, globalLat, globalLng, safetyStats);
@@ -1093,6 +1113,8 @@
         if (summary) {
           summary.innerHTML = `<p style="color:#ffab40; font-size:0.82rem;">⚠️ Network congestion detected. Displaying verified historical baseline for ${city}.</p>`;
         }
+        const overlay = document.getElementById('safetySyncOverlay');
+        if (overlay) overlay.style.opacity = '0';
         renderSafetyOnMap(map, [], [], [], [], city, 'Historical Baseline', fallbackStats);
       }
     }
@@ -1667,10 +1689,25 @@
     }
 
     async function syncAllCityData(lat, lng, cityName) {
+       console.log(`🚀 [Global Sync] Updating all modules for ${cityName}...`);
+       
        // 1. Update Persistent State
        localStorage.setItem('kyc_userLat', lat);
        localStorage.setItem('kyc_userLng', lng);
        localStorage.setItem('kyc_userCity', cityName);
+
+       // 2. Clear current UI to provide immediate "refresh" feedback
+       const badge = document.getElementById('safetyStatusBadge');
+       if (badge) {
+         badge.style.display = 'flex';
+         badge.className = 'safety-status-badge status-mid';
+         badge.querySelector('.status-text').textContent = 'Refreshing...';
+       }
+
+       // Reset metric cards to spinning state
+       ['policeCount','hospitalCount','fireCount','cctvCount', 'searchPoliceCount', 'searchHospitalCount', 'searchFireCount', 'searchCctvCount'].forEach(id => {
+         const el = document.getElementById(id); if(el) el.innerHTML = '<div class="spinner-small"></div>';
+       });
 
        if(!_safetyMap) {
           initSafetyMap();
@@ -1684,10 +1721,14 @@
         
         // 4. Force Pro-Tips reset for immediate feedback
         const ul = document.getElementById('topMapProTipsList');
-        if(ul) ul.innerHTML = '<li style="color:#aaa;">Initiating city analysis...</li>';
+        if(ul) ul.innerHTML = '<li style="color:#aaa; display:flex; align-items:center; gap:8px;"><div class="spinner-small"></div> Analyzing city infrastructure...</li>';
         
         const recentBox = document.getElementById('recentActivityContainer');
-       if(recentBox) recentBox.style.display = 'block';
+        if(recentBox) {
+          recentBox.style.display = 'block';
+          const rList = document.getElementById('recentActivityList');
+          if(rList) rList.innerHTML = '<div style="padding:20px; text-align:center;"><div class="spinner-small" style="display:inline-block;"></div></div>';
+        }
        
        // 5. Sync Discovery Cards
        updateAreaCards(lat, lng, cityName);
@@ -1763,15 +1804,17 @@
       `;
     }
 
+    let _lastCitySync = '';
     function syncSecondaryCityData(globalCity, globalLat, globalLng, safetyStats = null) {
+        _lastCitySync = globalCity;
         const touristCard = document.getElementById('dynamicTouristCard');
         if(touristCard) {
             touristCard.style.display = 'block';
             document.getElementById('touristCardTitle').innerHTML = `${globalCity}`;
             const specContent = document.getElementById('specialtiesContent');
             const tList = document.getElementById('touristPlacesList');
-            specContent.innerHTML = 'Analyzing city specialty...';
-            tList.innerHTML = '<div style="padding:10px; color:#aaa; font-size:0.8rem;">Searching landmarks...</div>';
+            specContent.innerHTML = '<div style="display:flex; align-items:center; gap:8px; opacity:0.6;"><div class="spinner-small"></div>Analyzing city specialty...</div>';
+            tList.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa; font-size:0.8rem;"><div class="spinner-small" style="display:inline-block; margin-bottom:8px;"></div><br>Searching landmarks...</div>';
             
             const cleanCity = globalCity.split(',')[0].trim();
             const wikiSearchUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=5&titles=${encodeURIComponent(cleanCity)}&explaintext=1&formatversion=2&format=json&origin=*`;
@@ -1779,6 +1822,7 @@
             fetch(wikiSearchUrl)
                 .then(r => r.json())
                 .then(res => {
+                    if (globalCity !== _lastCitySync) return; // Ignore stale request
                     const page = res.query?.pages[0];
                     let extract = page?.extract;
                     
@@ -1786,6 +1830,7 @@
                         return fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanCity)}&format=json&origin=*`)
                         .then(r => r.json())
                         .then(sRes => {
+                            if (globalCity !== _lastCitySync) return null;
                             const topResult = sRes.query?.search[0]?.title;
                             if(topResult) {
                                 return fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=5&titles=${encodeURIComponent(topResult)}&explaintext=1&formatversion=2&format=json&origin=*`)
@@ -1797,25 +1842,25 @@
                     return extract;
                 })
                 .then(extract => {
-                    if(extract) {
-                        const sentences = extract.split('.');
-                        const kywds = ['famous', 'known for', 'hub', 'industry', 'temple', 'shrine', 'heritage', 'palace', 'lake', 'royal', 'royality', 'textile', 'chadar', 'sholapur', 'siddheshwar', 'jyotiling', 'monument', 'fort', 'ghat', 'pilgrimage', 'architecture', 'culture', 'silk', 'handloom', 'market'];
-                        let topS = sentences[0], topScore = -1;
-                        sentences.forEach(s => {
-                            let score = kywds.filter(k => s.toLowerCase().includes(k)).length;
-                            if(score > topScore) { topScore = score; topS = s; }
-                        });
-                        const specialtyText = topS.trim();
-                        const nextSentence = sentences[sentences.indexOf(topS)+1] ? sentences[sentences.indexOf(topS)+1].trim() + '.' : '';
-                        specContent.innerHTML = `<div style="margin-bottom:8px; line-height:1.6;"><strong>${specialtyText}${specialtyText.endsWith('.') ? '' : '.'}</strong></div><div style="opacity:0.8; font-size:0.8rem;">${nextSentence}</div>`;
-                    } else { 
-                        specContent.innerHTML = `<strong>${cleanCity}</strong> is a major city in its region, famous for its unique textiles, heritage sites, and local delicacies.`; 
-                    }
-                }).catch(() => { specContent.innerHTML = `<strong>${cleanCity}</strong> is one of the most prominent cities in the region, known for its vibrant culture and history.`; });
+                    if (globalCity !== _lastCitySync || !extract) return;
+                    const sentences = extract.split('.');
+                    const kywds = ['famous', 'known for', 'hub', 'industry', 'temple', 'shrine', 'heritage', 'palace', 'lake', 'royal', 'royality', 'textile', 'chadar', 'sholapur', 'siddheshwar', 'jyotiling', 'monument', 'fort', 'ghat', 'pilgrimage', 'architecture', 'culture', 'silk', 'handloom', 'market'];
+                    let topS = sentences[0], topScore = -1;
+                    sentences.forEach(s => {
+                        let score = kywds.filter(k => s.toLowerCase().includes(k)).length;
+                        if(score > topScore) { topScore = score; topS = s; }
+                    });
+                    const specialtyText = topS.trim();
+                    const nextSentence = sentences[sentences.indexOf(topS)+1] ? sentences[sentences.indexOf(topS)+1].trim() + '.' : '';
+                    specContent.innerHTML = `<div style="margin-bottom:8px; line-height:1.6;"><strong>${specialtyText}${specialtyText.endsWith('.') ? '' : '.'}</strong></div><div style="opacity:0.8; font-size:0.8rem;">${nextSentence}</div>`;
+                }).catch(() => { 
+                    if (globalCity === _lastCitySync) specContent.innerHTML = `<strong>${cleanCity}</strong> is a major city in its region, famous for its unique textiles, heritage sites, and local delicacies.`; 
+                });
 
             fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=5&format=json&origin=*`)
                 .then(r => r.json())
                 .then(geoData => {
+                    if (globalCity !== _lastCitySync) return;
                     tList.innerHTML = '';
                     const places = geoData.query?.geosearch || [];
                     if(places.length > 0) {
@@ -2786,9 +2831,25 @@
       localStorage.setItem('kyc_userLat', globalLat);
       localStorage.setItem('kyc_userLng', globalLng);
       localStorage.setItem('kyc_userCity', city);
-      // Do NOT show fact popup on city change — only on login
-      showToast(`📍 Location set to ${city}. Reloading...`);
-      setTimeout(() => window.location.reload(), 800);
+      
+      // 1. Update UI Badges immediately
+      const cityEl = document.getElementById('userCityName');
+      if (cityEl) cityEl.textContent = city;
+      const currentDisplay = document.getElementById('currentCityDisplay');
+      if (currentDisplay) currentDisplay.textContent = city;
+      
+      // 2. Close the dropdown
+      document.getElementById('locationDropdown')?.classList.remove('active');
+      
+      // 3. Trigger dynamic refresh if on homepage, otherwise reload
+      const isHomePage = !window.location.pathname.includes('.html') || window.location.pathname.includes('index.html');
+      if (isHomePage && typeof syncAllCityData === 'function') {
+        showToast(`📍 Syncing safety data for ${city}...`);
+        syncAllCityData(globalLat, globalLng, city);
+      } else {
+        showToast(`📍 Location set to ${city}. Refreshing...`);
+        setTimeout(() => window.location.reload(), 800);
+      }
     }
 
     function extractCityName(address) {
