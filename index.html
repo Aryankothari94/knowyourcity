@@ -46,7 +46,9 @@
       flex: 0 0 auto !important;
       display: flex !important;
       flex-direction: column !important;
-      height: auto !important;
+      height: 460px !important;
+      min-height: 460px !important;
+      max-height: 460px !important;
       margin: 0 !important;
       background: rgba(30,32,47,0.75) !important;
       border: 1px solid rgba(255,255,255,0.15) !important;
@@ -69,6 +71,26 @@
       display: flex !important;
       flex-direction: column !important;
       gap: 15px !important;
+      overflow-y: auto !important;
+      flex: 1 !important;
+      min-height: 0 !important; /* Critical for flex scroll */
+      padding-right: 10px !important;
+    }
+    
+    /* Premium Scrollbar for Cards */
+    .area-card-content::-webkit-scrollbar {
+      width: 4px;
+    }
+    .area-card-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+    .area-card-content::-webkit-scrollbar-thumb {
+      background: rgba(0, 229, 255, 0.3);
+      border-radius: 10px;
+    }
+    .area-card-content::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-cyan);
     }
     #safety .area-card:hover, .safety-card:hover {
       transform: translateY(-5px) !important;
