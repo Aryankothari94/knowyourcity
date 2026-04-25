@@ -22,6 +22,30 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (res.ok) {
+        if (data.newAccount) {
+          // Switch to signup tab and pre-fill
+          switchTab('signup');
+          
+          const signupEmail = document.getElementById('signupEmail');
+          const signupFirstName = document.getElementById('signupFirstName');
+          const signupLastName = document.getElementById('signupLastName');
+          const signupPassword = document.getElementById('signupPassword');
+          const signupPhone = document.getElementById('signupPhone');
+
+          if (signupEmail) signupEmail.value = data.email || '';
+          if (signupFirstName) signupFirstName.value = data.firstName || '';
+          if (signupLastName) signupLastName.value = data.lastName || '';
+          if (signupPassword) signupPassword.value = data.googleId || ''; // Use Google sub as password
+
+          // Visual feedback
+          showError(document.getElementById('signupError'), 'Google account recognized! Please complete your profile to continue.');
+          document.getElementById('signupError').style.color = '#00e5ff'; // Make it look like a tip/info
+          document.getElementById('signupError').classList.add('active');
+
+          if (signupPhone) signupPhone.focus();
+          return;
+        }
+
         if (data.mfaRequired) {
           pendingLoginEmail = data.email;
           if (authModal) authModal.classList.add('active');
@@ -151,7 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const clearErrors = () => {
     if (loginError) loginError.classList.remove('active');
-    if (signupError) signupError.classList.remove('active');
+    if (signupError) {
+      signupError.classList.remove('active');
+      signupError.style.color = ''; // Reset color
+    }
     if (adminLoginError) adminLoginError.classList.remove('active');
     if (forgotPasswordError) forgotPasswordError.classList.remove('active');
     if (resetPasswordError) resetPasswordError.classList.remove('active');

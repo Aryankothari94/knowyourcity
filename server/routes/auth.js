@@ -247,18 +247,14 @@ router.post('/google', async (req, res) => {
         let user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
 
         if (!user) {
-            // Create new user if doesn't exist
-            user = new User({
+            // Instead of auto-creating, return info for the frontend to pre-fill the form
+            return res.status(200).json({
+                newAccount: true,
+                email,
                 firstName: given_name,
                 lastName: family_name || '',
-                email: email,
-                phone: 'GOOGLE_USER',
-                dob: new Date('1900-01-01'),
-                password: await bcrypt.hash(sub, 10),
-                isGoogleUser: true,
-                isVerified: true // Google users are pre-verified by Google
+                googleId: sub // This will be used as a password
             });
-            await user.save();
         }
 
         res.status(200).json({
