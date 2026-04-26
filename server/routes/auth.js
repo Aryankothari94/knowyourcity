@@ -38,13 +38,13 @@ router.post('/register', async (req, res) => {
         const { firstName, lastName, phone, email, dob, password } = req.body;
 
         // Validation Regex
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
         // Email Validation: Only @gmail.com allowed
         if (!email || !emailRegex.test(email)) {
-            console.log(`[SIGNUP BLOCKED] Invalid/Non-Gmail address: ${email}`);
-            return res.status(400).json({ message: 'Only genuine Google accounts (@gmail.com) are accepted.' });
+            console.log(`[SIGNUP BLOCKED] Invalid email address: ${email}`);
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
         }
 
         // Phone Validation
@@ -120,9 +120,9 @@ router.post('/login', async (req, res) => {
         const { email, password } = req.body;
 
         // Validation Regex
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!email || !emailRegex.test(email)) {
-            return res.status(400).json({ message: 'Only genuine Google accounts (@gmail.com) are accepted.' });
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
         }
 
         // Use a case-insensitive regex for email lookup

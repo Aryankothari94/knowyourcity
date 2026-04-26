@@ -600,8 +600,8 @@
             </div>
             <div id="topMapProTips" style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);">
               <strong style="color: #00e676; font-size: 0.9rem; letter-spacing: 0.5px;"><span class="material-symbols-outlined mi">star</span> PRO TIPS</strong>
-              <ul id="topMapProTipsList" style="margin: 8px 0 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
-                <li style="color:#aaa;">Analyzing regional facts...</li>
+              <ul id="topMapProTipsList" class="kyc-pro-tips-list" style="margin: 8px 0 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+                <li style="color:#aaa; text-align:center; padding:10px;"><div class="spinner-small" style="display:inline-block; margin-bottom:4px;"></div><br>Synchronizing...</li>
               </ul>
             </div>
           </div>
@@ -1521,8 +1521,8 @@
           
           <div class="area-card-content">
             <div style="font-size: 0.8rem; font-weight: 600; color: #ff9800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">🛡️ Safe Settling Advice</div>
-            <ul id="topMapProTipsList" style="list-style: none; padding: 0; margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.6;">
-              <li style="margin-bottom:8px;">Analyzing regional facts...</li>
+            <ul id="explorerSettlingAdviceList" class="kyc-pro-tips-list safety-explorer-dynamic-list" style="list-style: none; padding: 0; margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.6;">
+              <li style="color:#aaa; text-align:center; padding:20px;"><div class="spinner-small" style="display:inline-block; margin-bottom:8px;"></div><br>Synchronizing real-time city data...</li>
             </ul>
           </div>
         </div>
@@ -1742,8 +1742,9 @@
         generateSafetyCard(cityName, lat, lng);
         
         // 4. Force Pro-Tips reset for immediate feedback
-        const ul = document.getElementById('topMapProTipsList');
-        if(ul) ul.innerHTML = '<li style="color:#aaa; display:flex; align-items:center; gap:8px;"><div class="spinner-small"></div> Analyzing city infrastructure...</li>';
+        document.querySelectorAll('.kyc-pro-tips-list').forEach(ul => {
+            ul.innerHTML = '<li style="color:#aaa; text-align:center; padding:20px;"><div class="spinner-small" style="display:inline-block; margin-bottom:8px;"></div><br>Synchronizing real-time city data...</li>';
+        });
         
         const recentBox = document.getElementById('recentActivityContainer');
         if(recentBox) {
@@ -1827,8 +1828,11 @@
     }
 
     let _lastCitySync = '';
+    let _lastAttractionSync = '';
     function syncSecondaryCityData(globalCity, globalLat, globalLng, safetyStats = null) {
-        _lastCitySync = globalCity;
+        const syncToken = Date.now().toString();
+        _lastCitySync = syncToken;
+        _lastAttractionSync = syncToken;
         const touristCard = document.getElementById('dynamicTouristCard');
         if(touristCard) {
             touristCard.style.display = 'block';
@@ -1844,7 +1848,7 @@
             fetch(wikiSearchUrl)
                 .then(r => r.json())
                 .then(res => {
-                    if (globalCity !== _lastCitySync) return; // Ignore stale request
+                    if (syncToken !== _lastCitySync) return; // Ignore stale request
                     const page = res.query?.pages[0];
                     let extract = page?.extract;
                     
@@ -1852,7 +1856,7 @@
                         return fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanCity)}&format=json&origin=*`)
                         .then(r => r.json())
                         .then(sRes => {
-                            if (globalCity !== _lastCitySync) return null;
+                            if (syncToken !== _lastCitySync) return null;
                             const topResult = sRes.query?.search[0]?.title;
                             if(topResult) {
                                 return fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=5&titles=${encodeURIComponent(topResult)}&explaintext=1&formatversion=2&format=json&origin=*`)
@@ -1864,7 +1868,7 @@
                     return extract;
                 })
                 .then(extract => {
-                    if (globalCity !== _lastCitySync || !extract) return;
+                    if (syncToken !== _lastCitySync || !extract) return;
                     const sentences = extract.split('.');
                     const kywds = ['famous', 'known for', 'hub', 'industry', 'temple', 'shrine', 'heritage', 'palace', 'lake', 'royal', 'royality', 'textile', 'chadar', 'sholapur', 'siddheshwar', 'jyotiling', 'monument', 'fort', 'ghat', 'pilgrimage', 'architecture', 'culture', 'silk', 'handloom', 'market'];
                     let topS = sentences[0], topScore = -1;
@@ -1882,7 +1886,7 @@
             fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=5&format=json&origin=*`)
                 .then(r => r.json())
                 .then(geoData => {
-                    if (globalCity !== _lastCitySync) return;
+                    if (syncToken !== _lastAttractionSync) return;
                     tList.innerHTML = '';
                     const places = geoData.query?.geosearch || [];
                     if(places.length > 0) {
@@ -2863,15 +2867,10 @@
       // 2. Close the dropdown
       document.getElementById('locationDropdown')?.classList.remove('active');
       
-      // 3. Trigger dynamic refresh if on homepage, otherwise reload
-      const isHomePage = !window.location.pathname.includes('.html') || window.location.pathname.includes('index.html');
-      if (isHomePage && typeof syncAllCityData === 'function') {
-        showToast(`📍 Syncing safety data for ${city}...`);
-        syncAllCityData(globalLat, globalLng, city);
-      } else {
-        showToast(`📍 Location set to ${city}. Refreshing...`);
-        setTimeout(() => window.location.reload(), 800);
-      }
+      // 3. Set a flag for a post-reload toast and trigger reload
+      sessionStorage.setItem('kyc_showLocationToast', city);
+      showToast(`📍 Location set to ${city}. Refreshing...`);
+      setTimeout(() => window.location.reload(), 800);
     }
 
     function extractCityName(address) {
@@ -2932,7 +2931,7 @@
       );
     }
 
-    function showToast(msg) {
+    window.showToast = function(msg) {
       let t = document.getElementById('kycToast');
       if (!t) { t = document.createElement('div'); t.id = 'kycToast'; t.className = 'kyc-toast'; document.body.appendChild(t); }
       t.textContent = msg; t.classList.add('show');
@@ -3009,7 +3008,6 @@
 
   <script>
     let currentFactPhrase = "";
-    
     const newcomerTips = [
         "Dial 112 for integrated Police, Fire, and Ambulance emergency services across India.",
         "Always verify your PG or rental agreement with the nearest local police station.",
@@ -3031,62 +3029,101 @@
     
     function closeFactPopup() {
       document.getElementById('factPopup').style.display = 'none';
-      const ul = document.getElementById('topMapProTipsList');
-      if(ul && !ul.innerHTML.includes(currentFactPhrase)) {
-          if(ul.innerHTML.includes('Analyzing regional facts...')) ul.innerHTML = '';
-          const li = document.createElement('li');
-          li.style.marginBottom = '6px';
-          li.innerText = currentFactPhrase;
-          ul.appendChild(li);
-      }
+      document.querySelectorAll('.kyc-pro-tips-list').forEach(ul => {
+          if(ul && !ul.innerHTML.includes(currentFactPhrase)) {
+              if(ul.innerHTML.includes('Synchronizing') || ul.innerHTML.includes('Analyzing')) ul.innerHTML = '';
+              const li = document.createElement('li');
+              li.style.cssText = 'background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 8px; border-left: 3px solid var(--accent-cyan); margin-bottom: 10px; font-size: 0.8rem;';
+              li.innerText = currentFactPhrase;
+              ul.prepend(li);
+          }
+      });
     }
     
     async function generateCityProTips(city, infrastructureData = null) {
-        const ul = document.getElementById('topMapProTipsList');
-        if(!ul) return;
+        const uls = document.querySelectorAll('.kyc-pro-tips-list');
+        if(uls.length === 0) return;
         
-        ul.innerHTML = '<li style="color:#aaa;">Compiling local insights...</li>';
+        uls.forEach(ul => {
+            ul.innerHTML = '<li style="color:#aaa; text-align:center; padding:20px;"><div class="spinner-small" style="display:inline-block; margin-bottom:8px;"></div><br>Synchronizing real-time city data...</li>';
+        });
+        
         const cleanCity = city.split(',')[0].trim();
         
         let smartTips = [];
-        // 1. DATA-DRIVEN INSIGHTS (Genuine Analysis)
-        if (infrastructureData) {
-            const { policeCount, hospitalCount, fireCount, cctvCount } = infrastructureData;
-            
-            // Logic based on real city benchmarks
-            if (policeCount > 10) smartTips.push(`🛡️ <strong>Safety Hub:</strong> Exceptional police station density detected in ${cleanCity}. High patrol frequency expected.`);
-            else if (policeCount > 0) smartTips.push(`👮 <strong>Regulated Zone:</strong> Strategic police infrastructure verified in primary sectors.`);
-            
-            if (cctvCount > 20) smartTips.push(`👁️ <strong>Digital Shield:</strong> High-fidelity surveillance network active in central and transit zones.`);
-            
-            if (hospitalCount > 5) smartTips.push(`🏥 <strong>Medical Readiness:</strong> Dense medical infrastructure detected. Emergency response time is likely superior.`);
-            
-            if (fireCount > 2) smartTips.push(`🔥 <strong>Fire Safety:</strong> Multiple fire safety nodes verified within the area boundary.`);
+        const weatherCode = localStorage.getItem('kyc_currentWeatherCode');
+        const weatherTemp = localStorage.getItem('kyc_currentWeatherTemp');
 
-            // Density Analysis
-            const tot = policeCount + hospitalCount + fireCount + cctvCount;
-            if (tot > 50) smartTips.push(`✨ <strong>High Fidelity:</strong> This city exceeds the regional baseline for safety infrastructure by 15%.`);
+        // 1. Weather-Based Contextual Advice (Dynamic)
+        if (weatherTemp && weatherCode) {
+            const temp = parseFloat(weatherTemp);
+            const code = parseInt(weatherCode);
+            if (temp > 35) smartTips.push(`☀️ <strong>Climate Warning:</strong> Severe heat detected (${temp}°C) in ${cleanCity}. Newcomers should schedule heavy outdoor tasks before 11 AM.`);
+            else if (temp < 10) smartTips.push(`❄️ <strong>Weather Alert:</strong> Cold wave in effect. Ensure your new accommodation has adequate heating setup.`);
+            
+            if (code >= 51 && code <= 67) smartTips.push(`🌧️ <strong>Monsoon Insight:</strong> Moderate rain detected. Verify drainage quality in your neighborhood before settling.`);
+            else if (code >= 95) smartTips.push(`⛈️ <strong>Storm Advisory:</strong> Active thunderstorms in ${cleanCity}. Use closed transit options (Metro/Cabs) for maximum safety.`);
+            else if (temp > 20 && temp < 30) smartTips.push(`⛅ <strong>Settling Weather:</strong> Current climate in ${cleanCity} is ideal for moving and exploring neighborhoods.`);
         }
 
-        // 2. Wikipedia Context Parsing (Dynamic & Genuine)
-        try {
-            const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=2&titles=${encodeURIComponent(cleanCity)}&explaintext=1&formatversion=2&format=json&origin=*`);
-            const data = await res.json();
-            const extract = data.query?.pages[0]?.extract;
-            if (extract && !extract.includes('may refer to')) {
-                const sentences = extract.split('.').filter(s => s.trim().length > 20);
-                if (sentences[0]) smartTips.push(`🏙️ <strong>City Context:</strong> ${sentences[0].trim()}.`);
-            }
-        } catch(e) {}
+        // 2. Real-Time Infrastructure Insights
+        if (infrastructureData) {
+            const { policeCount, hospitalCount, fireCount, cctvCount } = infrastructureData;
+            const total = (policeCount || 0) + (hospitalCount || 0) + (fireCount || 0) + (cctvCount || 0);
 
-        ul.innerHTML = '';
-        // Mix in general newcomer tips but prioritize dynamic ones
-        const combined = [...smartTips, ...newcomerTips.map(t => `🛡️ ${t}`)].slice(0, 5);
+            if (policeCount >= 8) smartTips.push(`🛡️ <strong>Safety Hub:</strong> Robust law enforcement presence (${policeCount} stations) detected. High patrol density expected in this sector.`);
+            else if (policeCount > 0 && policeCount < 3) smartTips.push(`👮 <strong>Newcomer Tip:</strong> Limited police nodes found. Prioritize apartments with 24/7 private security guards.`);
+
+            if (hospitalCount >= 12) smartTips.push(`🏥 <strong>Health Corridor:</strong> High concentration of medical facilities. Emergency response times are likely better than average.`);
+            
+            if (cctvCount > 40) smartTips.push(`👁️ <strong>Smart Shield:</strong> Extensive digital surveillance detected. This area is under proactive security monitoring.`);
+            
+            if (total > 80) smartTips.push(`📈 <strong>High Infrastructure:</strong> ${cleanCity} infrastructure exceeds the regional baseline. Recommended for families and newcomers.`);
+        }
+
+        // 3. Wikipedia Semantic Intelligence (Genuine & City-Unique)
+        try {
+            const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=10&titles=${encodeURIComponent(cleanCity)}&explaintext=1&formatversion=2&format=json&origin=*`;
+            const res = await fetch(wikiUrl);
+            const data = await res.json();
+            const page = data.query?.pages?.[0];
+            const extract = page?.extract?.toLowerCase();
+            
+            if (extract && !extract.includes('may refer to')) {
+                if (extract.includes('metro') || extract.includes('rapid transit')) 
+                    smartTips.push(`🚇 <strong>Mobility:</strong> Metro network active. Living near a station in ${cleanCity} can save significant commute time.`);
+                
+                if (extract.includes('university') || extract.includes('college') || extract.includes('iit'))
+                    smartTips.push(`🎓 <strong>Student Zone:</strong> Proximity to major educational hubs detected. Student-friendly PGs and cafes are abundant here.`);
+                
+                if (extract.includes('it hub') || extract.includes('software') || extract.includes('technology park'))
+                    smartTips.push(`💼 <strong>Career Context:</strong> Tech hub detected. Major offices often have dedicated safe-shuttle services for employees.`);
+
+                if (extract.includes('port') || extract.includes('coast') || extract.includes('beach'))
+                    smartTips.push(`🌊 <strong>Coastal Advice:</strong> Coastal city context. Check for humidity-resistant housing and monsoon-proof windows.`);
+            }
+        } catch(e) { console.warn("Wikipedia Tip Parse failed", e); }
+
+        // 4. Default Personalized Fallbacks
+        if (smartTips.length < 3) {
+            smartTips.push(`📍 <strong>First 48 Hours:</strong> Map your nearest "Chowki" and a 24-hour medical store before your first night in ${cleanCity}.`);
+        }
+
+        // Final UI Render for all lists
+        const finalSet = [...new Set(smartTips)].slice(0, 5);
         
-        combined.forEach(text => {
-            const li = document.createElement('li');
-            li.style.marginBottom = '10px';
-            li.style.display = 'flex';
+        uls.forEach(ul => {
+            ul.innerHTML = '';
+            finalSet.forEach(text => {
+                const li = document.createElement('li');
+                li.style.cssText = 'padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 10px; transition: all 0.3s ease;';
+                li.onmouseover = () => { li.style.background = 'rgba(255,255,255,0.06)'; li.style.borderColor = 'var(--accent-cyan)'; };
+                li.onmouseout = () => { li.style.background = 'rgba(255,255,255,0.03)'; li.style.borderColor = 'rgba(255,255,255,0.05)'; };
+                li.innerHTML = `<div style="font-size:0.82rem; line-height:1.5; color:#cbd5e1;">${text}</div>`;
+                ul.appendChild(li);
+            });
+        });
+    }splay = 'flex';
             li.style.gap = '10px';
             li.innerHTML = `<span style="font-size:0.85rem; line-height:1.5;">${text}</span>`;
             ul.appendChild(li);
@@ -3364,6 +3401,7 @@
           </div>
         </div>
         <button type="submit" class="btn-auth" style="background:linear-gradient(135deg, #00e5ff, #0a0b1a);">Unlock Admin Dashboard</button>
+        <button type="button" class="btn-back-auth" onclick="closeAuthModal()" style="margin-top: 20px;">← Go Back to Dashboard</button>
         <div class="auth-footer" style="text-align:center; margin-top:15px;">
           <a href="#" onclick="switchTab('login')" style="color:var(--text-secondary); text-decoration:none; font-size:0.9rem;">← Back to User Login</a>
         </div>

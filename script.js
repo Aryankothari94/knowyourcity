@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openAuthModal = openAuthModal; // Expose globally for HTML onclicks
 
   const closeAuthModal = () => {
-    if (!isLoggedIn) return; // Strict auth gate
+    // REMOVED: if (!isLoggedIn) return; // Allow users to go back to dashboard
     if (authModal) {
       authModal.classList.remove('active');
       document.body.style.overflow = '';
@@ -616,10 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('loginPassword').value;
       const captchaInput = parseInt(document.getElementById('loginCaptcha').value);
 
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
       if (!emailRegex.test(email)) {
-        showError(loginError, 'Only genuine Google accounts (@gmail.com) are accepted.');
+        showError(loginError, 'Please enter a valid email address.');
         return;
       }
 
@@ -681,11 +681,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const signupError = document.getElementById('signupError');
 
       // Validation Regex
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
       if (!emailRegex.test(email)) {
-        showError(signupError, 'Only genuine Google accounts (@gmail.com) are accepted.');
+        showError(signupError, 'Please enter a valid email address.');
         return;
       }
 
@@ -947,6 +947,10 @@ document.addEventListener('DOMContentLoaded', () => {
           weatherIcon.textContent = iconMap(wData.current_weather.weathercode, wData.current_weather.is_day);
           if (mobileWeatherIcon) mobileWeatherIcon.textContent = iconMap(wData.current_weather.weathercode, wData.current_weather.is_day);
 
+          // Store weather for other modules (like Pro Tips)
+          localStorage.setItem('kyc_currentWeatherCode', wData.current_weather.weathercode);
+          localStorage.setItem('kyc_currentWeatherTemp', wData.current_weather.temperature);
+
           if (hourlyList && wData.hourly && wData.current_weather) {
             const currentTimeStr = wData.current_weather.time;
             const currentIndex = wData.hourly.time.findIndex(t => t.slice(0, 13) === currentTimeStr.slice(0, 13));
@@ -1107,45 +1111,16 @@ document.addEventListener('DOMContentLoaded', () => {
   window.selectNavbarCity = async (city, lat, lng) => {
     console.log('📍 New City Selected via Navbar:', city, lat, lng);
     
-    // Update local storage
+    // Update local storage for persistence across reload
     localStorage.setItem('kyc_userCity', city);
     localStorage.setItem('kyc_userLat', lat);
     localStorage.setItem('kyc_userLng', lng);
 
-    // Update UI elements
-    const cityEl = document.getElementById('userCityName');
-    const mobileCityEl = document.getElementById('mobileUserCityName');
-    if (cityEl) cityEl.textContent = city;
-    if (mobileCityEl) mobileCityEl.textContent = city;
+    // Set a flag to show a "Welcome to [City]" toast after reload
+    sessionStorage.setItem('kyc_showLocationToast', city);
 
-    // Refresh data across site
-    if (typeof window.kycFetchWeather === 'function') {
-      window.kycFetchWeather(lat, lng);
-    }
-
-    // Trigger map update if on homepage
-    const interactiveMap = document.getElementById('interactive-map');
-    if (interactiveMap && interactiveMap.style.display !== 'none' && typeof initCrimeMap === 'function') {
-       // Re-init map at new location
-       if (crimeMap) {
-         crimeMap.remove();
-         crimeMap = null;
-       }
-       initCrimeMap(lat, lng);
-    }
-
-    // Update dynamic safety explorer card if it exists
-    const dynCityName = document.getElementById('dynamicCityName');
-    if (dynCityName) {
-       dynCityName.textContent = city;
-       // Trigger calculation of new safety score (if defined) or simple update
-       if (typeof updateUserCityCard === 'function') {
-         updateUserCityCard(city, lat, lng);
-       }
-    }
-
-    // Close the dropdown
-    window.toggleLocationDropdown();
+    // Trigger full page reload for total synchronization
+    window.location.reload();
   };
 
 
@@ -1907,6 +1882,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }, true); // Capture phase is critical to intercept all clicks
+  
+  // Check for post-reload location toast
+  const postReloadCity = sessionStorage.getItem('kyc_showLocationToast');
+  if (postReloadCity) {
+    sessionStorage.removeItem('kyc_showLocationToast');
+    if (typeof window.showToast === 'function') {
+      setTimeout(() => window.showToast(`📍 City synchronized to ${postReloadCity}`), 1000);
+    }
+  }
 });
 
 // ===== CITY SCOUT CHATBOT LOGIC =====
