@@ -2092,6 +2092,57 @@ class CityScout {
   }
 }
 
+// ===== LOCATION AUTO-DETECTION (Global Helper) =====
+window.initKYCLocation = function() {
+  if (localStorage.getItem('kyc_isLoggedIn') !== 'true') return;
+  const savedCity = localStorage.getItem('kyc_userCity');
+  const cityEl = document.getElementById('userCityName');
+  const currentDisplay = document.getElementById('currentCityDisplay');
+
+  // Helper inside the scope to match index.html logic
+  const extractName = (address) => {
+    if (!address) return 'Your City';
+    return address.city || address.town || address.suburb || address.neighbourhood || 
+           address.city_district || address.village || address.municipality || 
+           address.county || address.state || 'Your City';
+  };
+
+  if (savedCity) {
+    if (cityEl) cityEl.textContent = savedCity;
+    if (currentDisplay) currentDisplay.textContent = savedCity;
+  } else {
+    if (cityEl) cityEl.textContent = 'Detecting Location...';
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+              headers: { 'Accept-Language': 'en' }
+            });
+            const data = await res.json();
+            const city = extractName(data.address);
+            localStorage.setItem('kyc_userLat', latitude);
+            localStorage.setItem('kyc_userLng', longitude);
+            localStorage.setItem('kyc_userCity', city);
+            if (cityEl) cityEl.textContent = city;
+            if (currentDisplay) currentDisplay.textContent = city;
+            if (typeof window.reloadSafetyMap === 'function') window.reloadSafetyMap();
+            if (typeof window.showToast === 'function') window.showToast(`📍 Location set to ${city}`);
+            if (typeof window.kycFetchWeather === 'function') window.kycFetchWeather(latitude, longitude);
+          } catch (e) {
+            if (cityEl) cityEl.textContent = 'Set Location';
+          }
+        },
+        () => { if (cityEl) cityEl.textContent = 'Set Location'; },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+      );
+    } else {
+      if (cityEl) cityEl.textContent = 'Set Location';
+    }
+  }
+};
+
 // Initialize on DOM Load
 document.addEventListener('DOMContentLoaded', () => {
   window.cityScout = new CityScout();

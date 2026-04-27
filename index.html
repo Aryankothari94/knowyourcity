@@ -2932,6 +2932,7 @@
     }
 
     window.showToast = function(msg) {
+      if (!msg || typeof msg !== 'string') return;
       let t = document.getElementById('kycToast');
       if (!t) { t = document.createElement('div'); t.id = 'kycToast'; t.className = 'kyc-toast'; document.body.appendChild(t); }
       t.textContent = msg; t.classList.add('show');
@@ -2939,51 +2940,10 @@
     }
 
     // ===== AUTO-DETECT LOCATION ON PAGE LOAD =====
-    (function () {
-      if (localStorage.getItem('kyc_isLoggedIn') !== 'true') return;
-      const savedCity = localStorage.getItem('kyc_userCity');
-      const cityEl = document.getElementById('userCityName');
-      const currentDisplay = document.getElementById('currentCityDisplay');
+    if (typeof window.initKYCLocation === 'function') {
+      window.initKYCLocation();
+    }
 
-      if (savedCity) {
-        if (cityEl) cityEl.textContent = savedCity;
-        if (currentDisplay) currentDisplay.textContent = savedCity;
-      } else {
-        if (cityEl) cityEl.textContent = 'Detecting Location...';
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const { latitude, longitude } = position.coords;
-              try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
-                  headers: { 'Accept-Language': 'en' }
-                });
-                const data = await res.json();
-                const city = extractCityName(data.address);
-                localStorage.setItem('kyc_userLat', latitude);
-                localStorage.setItem('kyc_userLng', longitude);
-                localStorage.setItem('kyc_userCity', city);
-                if (cityEl) cityEl.textContent = city;
-                if (currentDisplay) currentDisplay.textContent = city;
-                if (typeof reloadSafetyMap === 'function') reloadSafetyMap();
-                showToast(`📍 Location set to ${city}`);
-                if (typeof window.kycFetchWeather === 'function') {
-                    window.kycFetchWeather(latitude, longitude);
-                }
-              } catch {
-                if (cityEl) cityEl.textContent = 'Set Location';
-              }
-            },
-            () => {
-              if (cityEl) cityEl.textContent = 'Set Location';
-            },
-            { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
-          );
-        } else {
-          if (cityEl) cityEl.textContent = 'Set Location';
-        }
-      }
-    })();
   </script>
   <!-- ===== RANDOM FACT POPUP ===== -->
   <div id="factPopup" class="glass-card" style="display: none; position: fixed; bottom: 30px; right: 30px; max-width: 350px; z-index: 100000; animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid rgba(0, 230, 118, 0.3);">
