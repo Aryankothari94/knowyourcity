@@ -453,34 +453,27 @@
       async function fetchAllAttractions(lat, lng, city, radius = 30000, categoryFilter = null) {
         const cityName = city.split(',')[0].trim();
         const normalizedCity = cityName.toLowerCase();
-        document.getElementById('loadingText').textContent = `Deep scanning ${cityName} for ${categoryFilter ? 'specific categories' : 'every tourist spot'}...`;
+        document.getElementById('loadingText').textContent = `Scanning ${cityName} for every ${catText.textContent.toLowerCase()}...`;
 
         let allPlaces = [];
 
-        if (!categoryFilter && currentArea === 'all' && SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity]) {
-          const curated = SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity].map(p => ({
-            ...p,
-            typeIcon: getTypeIcon(p.type),
-            distance: getDistance(lat, lng, p.lat, p.lng),
-            source: 'curated'
-          }));
-          allPlaces = [...curated];
+        // 1. Wikipedia Category-Specific Scrape (New: targeted search)
+        if (currentCategory !== 'all' || allPlaces.length < 20) {
+            try {
+                const wikiPlaces = await fetchWikipediaByCategory(cityName, currentCategory, lat, lng);
+                allPlaces = [...allPlaces, ...wikiPlaces];
+            } catch(e) { console.warn("Wiki category fetch failed", e); }
         }
 
+        // 2. Primary Overpass Fetch (Expanded to nwr)
         try {
-          allPlaces = await fetchOverpass(lat, lng, radius, radius/1.5, cityName, categoryFilter);
+          const osmPlaces = await fetchOverpass(lat, lng, radius, radius/1.5, cityName, categoryFilter);
+          allPlaces = [...allPlaces, ...osmPlaces];
         } catch (err) {
-          console.log('Fetch failed:', err);
+          console.log('OSM Fetch failed:', err);
         }
 
-        if (!categoryFilter && allPlaces.length < 50) {
-          try {
-            const wikiPlaces = await fetchWikipediaAttractions(cityName, lat, lng);
-            const existingNames = new Set(allPlaces.map(p => p.name.toLowerCase()));
-            wikiPlaces.forEach(p => { if (!existingNames.has(p.name.toLowerCase())) allPlaces.push(p); });
-          } catch {}
-        }
-
+        // Deduplicate and render
         const seen = new Set();
         const unique = allPlaces.filter(p => {
           const key = p.name.toLowerCase().trim();
@@ -493,37 +486,59 @@
         renderResults(unique, city, lat, lng, false, categoryFilter !== null);
       }
 
-      async function fetchOverpass(lat, lng, mainRadius, secondaryRadius, cityName = null, categoryFilter = null) {
-        const areaPart = (cityName && !categoryFilter) ? `area["name"="${cityName}"]->.searchArea;` : '';
-        const filter = (cityName && !categoryFilter) ? `(area.searchArea)` : `(around:${mainRadius},${lat},${lng})`;
-        const filterSmall = (cityName && !categoryFilter) ? `(area.searchArea)` : `(around:${secondaryRadius},${lat},${lng})`;
+      async function fetchWikipediaByCategory(city, catId, lat, lng) {
+        const catTerms = {
+            historical: ['Historical places in', 'Monuments in', 'Forts in'],
+            natural: ['Lakes in', 'Waterfalls in', 'Parks in', 'Nature in'],
+            religious: ['Temples in', 'Churches in', 'Mosques in', 'Religious sites in'],
+            cultural: ['Museums in', 'Theatres in', 'Art galleries in'],
+            entertainment: ['Entertainment in', 'Theme parks in', 'Stadiums in'],
+            adventure: ['Trekking in', 'Adventure sports in'],
+            wildlife: ['Zoos in', 'Wildlife sanctuaries in'],
+            beaches: ['Beaches in', 'Seaside in'],
+            mountains: ['Hill stations in', 'Peaks in'],
+            shopping: ['Shopping in', 'Markets in'],
+            nightlife: ['Nightlife in', 'Bars in'],
+            architecture: ['Architecture of', 'Heritage buildings in'],
+            museums: ['Museums in'],
+            photography: ['Scenic spots in', 'Viewpoints in'],
+            family: ['Family attractions in', 'Parks in'],
+            wellness: ['Spas in', 'Wellness in'],
+            local_gems: ['Hidden gems in', 'Offbeat places in'],
+            urban: ['City life in', 'Cafes in'],
+            all: ['Tourist attractions in', 'Landmarks in']
+        };
 
-        let query = `[out:json][timeout:35];${areaPart}(`;
+        const terms = catTerms[catId] || catTerms['all'];
+        let results = [];
+        for(const t of terms.slice(0, 2)) { // Limit to 2 terms to save time
+            const wikiData = await fetchWikipediaAttractions(`${t} ${city}`, lat, lng);
+            results = [...results, ...wikiData];
+        }
+        return results;
+      }
+
+      async function fetchOverpass(lat, lng, mainRadius, secondaryRadius, cityName = null, categoryFilter = null) {
+        // Boosted radius for city-wide
+        const r = (currentArea === 'all') ? 50000 : mainRadius;
+        const sr = r/1.5;
+        
+        const filter = `(around:${r},${lat},${lng})`;
+        const filterSmall = `(around:${sr},${lat},${lng})`;
+
+        let query = `[out:json][timeout:35];(`;
         
         if (categoryFilter) {
-          query += `node${categoryFilter}${filter};way${categoryFilter}${filter};relation${categoryFilter}${filter};`;
+          query += `nwr${categoryFilter}${filter};`;
         } else {
-          // ULTRA-COMPREHENSIVE Query for "All Categories"
           query += `
-            // Tourism & Heritage
-            node["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort|artwork"]${filter};
-            way["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort|artwork"]${filter};
-            node["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage|city_gate|boundary_stone"]${filter};
-            way["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage|city_gate|boundary_stone"]${filter};
-            
-            // Religious & Cultural
-            node["amenity"~"place_of_worship|arts_centre|theatre|community_centre|library|planetarium|stadium|cinema"]${filterSmall};
-            way["amenity"~"place_of_worship|arts_centre|theatre|community_centre|library|planetarium|stadium|cinema"]${filterSmall};
-            
-            // Nature & Outdoors
-            node["leisure"~"park|garden|nature_reserve|water_park|playground|marina|beach_resort"]${filterSmall};
-            way["leisure"~"park|garden|nature_reserve|water_park|playground|marina|beach_resort"]${filterSmall};
-            node["natural"~"waterfall|beach|peak|cave_entrance|rock|volcano|hot_spring"]${filter};
-            way["natural"~"waterfall|beach|peak|cave_entrance|rock|volcano|hot_spring"]${filter};
-
-            // Entertainment & Urban
-            node["amenity"~"pub|bar|nightclub|events_venue|casino|marketplace"]${filterSmall};
-            way["shop"~"mall|department_store"]${filterSmall};
+            nwr["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort|artwork"]${filter};
+            nwr["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage|city_gate|boundary_stone"]${filter};
+            nwr["amenity"~"place_of_worship|arts_centre|theatre|community_centre|library|planetarium|stadium|cinema"]${filterSmall};
+            nwr["leisure"~"park|garden|nature_reserve|water_park|playground|marina|beach_resort"]${filterSmall};
+            nwr["natural"~"waterfall|beach|peak|cave_entrance|rock|volcano|hot_spring"]${filter};
+            nwr["amenity"~"pub|bar|nightclub|events_venue|casino|marketplace"]${filterSmall};
+            nwr["shop"~"mall|department_store"]${filterSmall};
           `;
         }
         
@@ -551,7 +566,10 @@
               fee: el.tags?.fee || '',
               lat: elLat, lng: elLng,
               distance: getDistance(lat, lng, elLat, elLng),
-              source: 'osm'
+              source: 'osm',
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              image: el.tags?.image || ''
             };
           }).filter(p => p && p.name);
         } catch (err) {
