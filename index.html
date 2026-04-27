@@ -945,15 +945,15 @@
     }
 
     // HIGH-PRECISION CONCURRENT OVERPASS RACE (Police, Hospital, Fire, CCTV)
-    async function fetchSafetyDataDirect(lat, lng, city) {
-      const radius = 25000; // 25km radius for better city-wide coverage
+    async function fetchSafetyDataDirect(lat, lng, city, customRadius = null) {
+      const radius = customRadius || 25000; // Default 25km radius for better city-wide coverage
       
       // CLEAN CITY NAME: "Mumbai, Maharashtra, India" -> "Mumbai"
       let searchName = city ? city.split(',')[0].trim() : null;
       
-      // SMART QUERY: Try searching by area first for "Whole City" context
-      const areaPart = searchName ? `area[name="${searchName}"]->.searchArea;` : '';
-      const filterPart = searchName ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
+      // SMART QUERY: Try searching by area first for "Whole City" context, UNLESS a custom radius is provided (Neighborhood mode)
+      const areaPart = (searchName && !customRadius) ? `area[name="${searchName}"]->.searchArea;` : '';
+      const filterPart = (searchName && !customRadius) ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
       
       const query = `[out:json][timeout:30];
         ${areaPart}
@@ -982,13 +982,13 @@
         ));
         
         // SMART FALLBACK: If area search returned 0 results, retry with radius search
-        if ((!fastestResponse.elements || fastestResponse.elements.length === 0) && searchName) {
+        if ((!fastestResponse.elements || fastestResponse.elements.length === 0) && searchName && !customRadius) {
            console.log(`⚠️ No area data for "${searchName}", falling back to radius search...`);
-           return fetchSafetyDataDirect(lat, lng, null); // Pass null to force radius search
+           return fetchSafetyDataDirect(lat, lng, null, radius); // Pass null to force radius search
         }
 
         return { 
-          source: searchName && fastestResponse.elements?.length > 0 ? `City-Wide Data for ${searchName}` : 'Live Proximity Search (15km)', 
+          source: searchName && fastestResponse.elements?.length > 0 && !customRadius ? `City-Wide Data for ${searchName}` : `Live Proximity Search (${radius/1000}km)`, 
           elements: fastestResponse.elements || [] 
         };
       } catch (e) {
@@ -998,7 +998,7 @@
       }
     }
 
-    async function fetchSafetyData(map, globalLat, globalLng, city) {
+    async function fetchSafetyData(map, globalLat, globalLng, city, customRadius = null) {
       const summary = document.getElementById('safetySummary');
       const cname = document.getElementById('dynamicCityName');
       const badge = document.getElementById('safetyStatusBadge');
@@ -1050,7 +1050,7 @@
         console.log(`🔍 [Safety Data] Initiating concurrent high-precision sync for ${city}...`);
         
         // Start both fetches concurrently
-        const osmPromise = fetchSafetyDataDirect(globalLat, globalLng, city);
+        const osmPromise = fetchSafetyDataDirect(globalLat, globalLng, city, customRadius);
         const backendPromise = fetch(`${API_BASE}/safety/insights?lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`)
             .then(r => r.ok ? r.json() : null)
             .catch(() => null);
@@ -1380,7 +1380,21 @@
             <div class="area-icon-box" style="background: rgba(0,230,118,0.1); color: var(--safe-green);">
               <span class="material-symbols-outlined">shield_with_heart</span>
             </div>
-            <h3 class="area-name" id="dynamicCityName">Safety Analysis</h3>
+            <div style="flex: 1;">
+              <h3 class="area-name" id="dynamicCityName" style="margin-bottom: 2px;">Safety Analysis</h3>
+              <!-- Neighborhood Selector -->
+              <div class="neighborhood-selector" id="neighborhoodSelector" style="font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; transition: color 0.2s; position: relative;" onclick="toggleNeighborhoodMenu(event)" onmouseover="this.style.color='var(--accent-cyan)'" onmouseout="this.style.color='var(--text-secondary)'">
+                <span class="material-symbols-outlined" style="font-size: 14px;">location_on</span>
+                <span id="currentNeighborhoodName">Select Local Area</span>
+                <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
+                
+                <div id="neighborhoodMenu" class="glass-card" style="position: absolute; top: 100%; left: 0; width: 220px; max-height: 300px; overflow-y: auto; display: none; z-index: 20006; padding: 10px; margin-top: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.5); border: 1px solid rgba(0, 229, 255, 0.2);">
+                  <div id="neighborhoodList" style="display: flex; flex-direction: column; gap: 4px;">
+                    <div style="padding: 10px; text-align: center; color: #aaa;">Detecting main areas...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <span class="area-badge badge-safe" id="dynamicCityBadge">Score</span>
           </div>
           
@@ -1756,6 +1770,11 @@
        
        // 5. Sync Discovery Cards
        updateAreaCards(lat, lng, cityName);
+
+       // 6. Discover local neighborhoods for the new city
+       if (typeof window.fetchCityNeighborhoods === 'function') {
+         window.fetchCityNeighborhoods(lat, lng);
+       }
     }
 
     function generateSafetyCard(areaName, forcedLat = null, forcedLng = null) {
@@ -1801,6 +1820,9 @@
           analysisDiv.innerHTML = `<strong style="color: var(--accent-cyan);">Area Analytics:</strong><br/>Dynamic safety analysis complete. Local computed stats reflect a stable environment with verified infrastructure nodes.`;
       });
     }
+    
+    // Expose to window for external script access (Neighborhood selection)
+    window.fetchSafetyData = fetchSafetyData;
 
     function updateInfraSummaryUI(pC, hC, fC, cC) {
       const summaryDiv = document.getElementById('infraSummaryDetails');

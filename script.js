@@ -2060,6 +2060,7 @@ window.initKYCLocation = function() {
             if (typeof window.reloadSafetyMap === 'function') window.reloadSafetyMap();
             if (typeof window.showToast === 'function') window.showToast(`📍 Location set to ${city}`);
             if (typeof window.kycFetchWeather === 'function') window.kycFetchWeather(latitude, longitude);
+            if (typeof window.fetchCityNeighborhoods === 'function') window.fetchCityNeighborhoods(latitude, longitude);
           } catch (e) {
             if (cityEl) cityEl.textContent = 'Set Location';
           }
@@ -2073,9 +2074,115 @@ window.initKYCLocation = function() {
   }
 };
 
+// ===== NEIGHBORHOOD DISCOVERY & SELECTION =====
+
+window.toggleNeighborhoodMenu = function(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('neighborhoodMenu');
+  if (menu) {
+    const isVisible = menu.style.display === 'block';
+    menu.style.display = isVisible ? 'none' : 'block';
+  }
+};
+
+// Close neighborhood menu on outside click
+document.addEventListener('click', () => {
+  const menu = document.getElementById('neighborhoodMenu');
+  if (menu) menu.style.display = 'none';
+});
+
+window.fetchCityNeighborhoods = async function(lat, lng) {
+  const listContainer = document.getElementById('neighborhoodList');
+  if (!listContainer) return;
+
+  try {
+    // Overpass query for main areas (suburbs, neighborhoods, etc.)
+    const query = `[out:json];(node["place"~"suburb|neighbourhood|quarter|village"](around:15000, ${lat}, ${lng}););out body 20;`;
+    const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    if (data.elements && data.elements.length > 0) {
+      listContainer.innerHTML = '';
+      
+      // Sort by prominence (nodes with more tags/data usually)
+      const areas = data.elements.map(el => ({
+        name: el.tags.name,
+        lat: el.lat,
+        lng: el.lon,
+        type: el.tags.place
+      })).filter(a => a.name);
+
+      // Remove duplicates
+      const uniqueAreas = Array.from(new Set(areas.map(a => a.name)))
+        .map(name => areas.find(a => a.name === name));
+
+      uniqueAreas.forEach(area => {
+        const item = document.createElement('div');
+        item.style.cssText = 'padding: 10px; cursor: pointer; border-radius: 6px; transition: background 0.2s; font-size: 0.85rem; color: #fff;';
+        item.innerHTML = `<strong>${area.name}</strong> <span style="font-size: 0.7rem; color: #aaa;">(${area.type})</span>`;
+        item.onmouseover = () => item.style.background = 'rgba(0, 229, 255, 0.1)';
+        item.onmouseout = () => item.style.background = 'transparent';
+        item.onclick = () => window.updateAnalysisForArea(area.name, area.lat, area.lng);
+        listContainer.appendChild(item);
+      });
+    } else {
+      listContainer.innerHTML = '<div style="padding: 10px; color: #aaa; text-align: center;">No local areas found</div>';
+    }
+  } catch (e) {
+    console.error('Failed to fetch neighborhoods:', e);
+    listContainer.innerHTML = '<div style="padding: 10px; color: #ff5252; text-align: center;">Error loading areas</div>';
+  }
+};
+
+window.updateAnalysisForArea = function(areaName, lat, lng) {
+  console.log(`Updating analysis for neighborhood: ${areaName} (${lat}, ${lng})`);
+  
+  // Update UI
+  const neighborhoodLabel = document.getElementById('currentNeighborhoodName');
+  if (neighborhoodLabel) neighborhoodLabel.textContent = areaName;
+  
+  // Dynamic Radius Logic: 10km for city centers/major suburbs, 5km for smaller ones
+  const radius = areaName.toLowerCase().includes('center') || areaName.toLowerCase().includes('main') ? 10000 : 5000;
+  
+  // Update global session/local storage for persistence
+  localStorage.setItem('kyc_tempLat', lat);
+  localStorage.setItem('kyc_tempLng', lng);
+  localStorage.setItem('kyc_currentAreaName', areaName);
+  
+  // Trigger all dynamic cards to refresh with new coordinates and radius
+  if (typeof window.fetchSafetyData === 'function') {
+    const map = window._safetyMap; // Access global map instance
+    if (map) {
+      window.fetchSafetyData(map, lat, lng, areaName, radius);
+    }
+  }
+  
+  if (typeof window.generateCityProTips === 'function') {
+    window.generateCityProTips(areaName);
+  }
+
+  // Refresh safety map if active
+  if (typeof window.reloadSafetyMap === 'function') {
+    window.reloadSafetyMap();
+  }
+
+  if (typeof window.showToast === 'function') {
+    window.showToast(`🔍 Analyzing ${areaName} (${radius/1000}km Radius)`);
+  }
+};
+
 // Initialize on DOM Load
 document.addEventListener('DOMContentLoaded', () => {
-  window.cityScout = new CityScout();
+  if (typeof CityScout === 'function') {
+    window.cityScout = new CityScout();
+  }
+  
+  // If we have a city, fetch neighborhoods immediately
+  const lat = localStorage.getItem('kyc_userLat');
+  const lng = localStorage.getItem('kyc_userLng');
+  if (lat && lng && typeof window.fetchCityNeighborhoods === 'function') {
+    window.fetchCityNeighborhoods(lat, lng);
+  }
 });
 
 
