@@ -610,6 +610,7 @@
     </div>
   </section>
 
+  <!-- Map Dependencies -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
@@ -2206,12 +2207,15 @@
       // Force 'active' class on all steps to bypass IntersectionObserver hide issues
       hiwSteps.forEach(step => step.classList.add('active'));
       
+      // Auto-expand removed to prevent recurring UI jitter/refresh effect
+      /*
       let stepIndex = 0;
       setInterval(() => {
         hiwSteps.forEach(s => s.classList.remove('expanded'));
         hiwSteps[stepIndex].classList.add('expanded');
         stepIndex = (stepIndex + 1) % hiwSteps.length;
-      }, 4000); // 4 second interval
+      }, 4000); 
+      */
     });
   </script>
 
@@ -2543,7 +2547,8 @@
       if (nextBtn) nextBtn.onclick = nextSlide;
 
       buildDots();
-      startAutoSlide();
+      // startAutoSlide() removed to prevent recurring UI jitter/refresh effect
+      // startAutoSlide();
 
       // Expose globally so feedback form can trigger dot rebuild
       window._testimonialCarousel = { buildDots, goToSlide, startAutoSlide, getTrack: () => track };
@@ -2942,10 +2947,12 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    // ===== AUTO-DETECT LOCATION ON PAGE LOAD =====
+    // Auto-detect location is now handled centrally by script.js syncPageState
+    /*
     if (typeof window.initKYCLocation === 'function') {
       window.initKYCLocation();
     }
+    */
 
   </script>
   <!-- ===== RANDOM FACT POPUP ===== -->
