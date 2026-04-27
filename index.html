@@ -2903,7 +2903,7 @@
           const { latitude, longitude } = position.coords;
           if (results) results.innerHTML = '<div class="location-searching">🔍 Looking up your location...</div>';
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&globalLat=${latitude}&lon=${longitude}`, {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
               headers: { 'Accept-Language': 'en' }
             });
             const data = await res.json();
@@ -3122,11 +3122,6 @@
                 li.innerHTML = `<div style="font-size:0.82rem; line-height:1.5; color:#cbd5e1;">${text}</div>`;
                 ul.appendChild(li);
             });
-        });
-    }splay = 'flex';
-            li.style.gap = '10px';
-            li.innerHTML = `<span style="font-size:0.85rem; line-height:1.5;">${text}</span>`;
-            ul.appendChild(li);
         });
     }
   </script>
