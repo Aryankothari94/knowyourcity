@@ -1878,9 +1878,12 @@
                     });
                     const specialtyText = topS.trim();
                     const nextSentence = sentences[sentences.indexOf(topS)+1] ? sentences[sentences.indexOf(topS)+1].trim() + '.' : '';
-                    specContent.innerHTML = `<div style="margin-bottom:8px; line-height:1.6;"><strong>${specialtyText}${specialtyText.endsWith('.') ? '' : '.'}</strong></div><div style="opacity:0.8; font-size:0.8rem;">${nextSentence}</div>`;
+                    
+                    // Formatting the specialty text to be more readable
+                    const formattedTitle = specialtyText.includes('(') ? specialtyText : `<strong>${specialtyText}${specialtyText.endsWith('.') ? '' : '.'}</strong>`;
+                    specContent.innerHTML = `<div style="margin-bottom:8px; line-height:1.6;">${formattedTitle}</div><div style="opacity:0.8; font-size:0.8rem;">${nextSentence}</div>`;
                 }).catch(() => { 
-                    if (globalCity === _lastCitySync) specContent.innerHTML = `<strong>${cleanCity}</strong> is a major city in its region, famous for its unique textiles, heritage sites, and local delicacies.`; 
+                    specContent.innerHTML = `<strong>${cleanCity}</strong> is a major city in its region, famous for its unique textiles, heritage sites, and local delicacies.`; 
                 });
 
             fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${globalLat}|${globalLng}&gsradius=10000&gslimit=5&format=json&origin=*`)
@@ -3039,7 +3042,7 @@
 
         // 3. Wikipedia Semantic Intelligence (Genuine & City-Unique)
         try {
-            const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=10&titles=${encodeURIComponent(cleanCity)}&explaintext=1&formatversion=2&format=json&origin=*`;
+            const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=15&titles=${encodeURIComponent(cleanCity)}&explaintext=1&formatversion=2&format=json&origin=*`;
             const res = await fetch(wikiUrl);
             const data = await res.json();
             const page = data.query?.pages?.[0];
@@ -3055,8 +3058,14 @@
                 if (extract.includes('it hub') || extract.includes('software') || extract.includes('technology park'))
                     smartTips.push(`💼 <strong>Career Context:</strong> Tech hub detected. Major offices often have dedicated safe-shuttle services for employees.`);
 
-                if (extract.includes('port') || extract.includes('coast') || extract.includes('beach'))
+                if (extract.includes('port') || extract.includes('coast') || extract.includes('beach') || extract.includes('ocean'))
                     smartTips.push(`🌊 <strong>Coastal Advice:</strong> Coastal city context. Check for humidity-resistant housing and monsoon-proof windows.`);
+
+                if (extract.includes('industrial') || extract.includes('manufacturing') || extract.includes('factory'))
+                    smartTips.push(`🏭 <strong>Industrial Hub:</strong> Large industrial sector. Check for peak-hour worker transit patterns for safer commutes.`);
+
+                if (extract.includes('tourism') || extract.includes('landmark') || extract.includes('monument'))
+                    smartTips.push(`🏛️ <strong>Tourism Area:</strong> High tourist footfall. Expect higher patrol presence but be aware of typical tourist-focused scams.`);
             }
         } catch(e) { console.warn("Wikipedia Tip Parse failed", e); }
 

@@ -1899,16 +1899,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   border-bottom: 1px solid var(--glass-border);
+  min-height: 80px;
 }
 
 .area-name {
   font-family: var(--font-heading);
   font-size: 1.15rem;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 .area-badge {
@@ -1918,6 +1922,8 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .badge-safe {
