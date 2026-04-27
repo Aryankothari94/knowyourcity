@@ -2949,7 +2949,7 @@
         if (cityEl) cityEl.textContent = savedCity;
         if (currentDisplay) currentDisplay.textContent = savedCity;
       } else {
-        if (cityEl) cityEl.textContent = 'Detecting...';
+        if (cityEl) cityEl.textContent = 'Detecting Location...';
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             async (position) => {
