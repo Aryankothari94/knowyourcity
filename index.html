@@ -2939,18 +2939,16 @@
     }
 
     // ===== AUTO-DETECT LOCATION ON PAGE LOAD =====
-    (function initUserLocation() {
+    (function () {
       if (localStorage.getItem('kyc_isLoggedIn') !== 'true') return;
       const savedCity = localStorage.getItem('kyc_userCity');
       const cityEl = document.getElementById('userCityName');
       const currentDisplay = document.getElementById('currentCityDisplay');
 
       if (savedCity) {
-        // Restore saved location to badge immediately
         if (cityEl) cityEl.textContent = savedCity;
         if (currentDisplay) currentDisplay.textContent = savedCity;
       } else {
-        // No saved location → auto-detect via geolocation
         if (cityEl) cityEl.textContent = 'Detecting...';
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
@@ -2969,7 +2967,6 @@
                 if (currentDisplay) currentDisplay.textContent = city;
                 if (typeof reloadSafetyMap === 'function') reloadSafetyMap();
                 showToast(`📍 Location set to ${city}`);
-                // Refresh weather
                 if (typeof window.kycFetchWeather === 'function') {
                     window.kycFetchWeather(latitude, longitude);
                 }
@@ -2978,7 +2975,6 @@
               }
             },
             () => {
-              // Permission denied or error — show fallback
               if (cityEl) cityEl.textContent = 'Set Location';
             },
             { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
