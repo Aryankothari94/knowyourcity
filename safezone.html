@@ -263,14 +263,14 @@
       let cityAreas = []; 
 
       const TOURIST_CATEGORIES_MAP = {
-        historical: '["tourism"~"museum|monument|attraction"]["historic"~".*"]',
-        natural: '["natural"~"peak|water|rock|volcano"]',
+        historical: '["historic"~"monument|memorial|castle|fort|ruins|heritage|city_gate|tomb|archaeological_site"]',
+        natural: '["natural"~"waterfall|peak|cave_entrance|rock|volcano|hot_spring"]',
         religious: '["amenity"="place_of_worship"]',
-        cultural: '["amenity"~"arts_centre|theatre|community_centre"]',
-        entertainment: '["leisure"~"theme_park|water_park|bowling_alley|cinema"]',
-        adventure: '["leisure"~"track|sports_centre"]["sport"~".*"]',
-        wildlife: '["tourism"="zoo"]["leisure"="nature_reserve"]',
-        beaches: '["natural"="beach"]["tourism"~"viewpoint|attraction"]',
+        cultural: '["amenity"~"arts_centre|theatre|library|community_centre|planetarium"]',
+        entertainment: '["leisure"~"theme_park|water_park|cinema|casino|stadium|arena"]',
+        adventure: '["leisure"~"track|sports_centre|marina"]["sport"~".*"]',
+        wildlife: '["tourism"~"zoo|aquarium"]["leisure"="nature_reserve"]',
+        beaches: '["natural"~"beach|coastline"]["tourism"~"resort|beach_resort"]',
         mountains: '["natural"="peak"]["tourism"="viewpoint"]',
         shopping: '["shop"~"mall|department_store"]["amenity"="marketplace"]',
         nightlife: '["amenity"~"pub|bar|nightclub"]',
@@ -278,8 +278,8 @@
         architecture: '["historic"~"building|castle|fort"]["tourism"="attraction"]',
         museums: '["tourism"="museum"]',
         photography: '["tourism"="viewpoint"]["natural"="viewpoint"]',
-        family: '["leisure"~"playground|theme_park"]["tourism"="aquarium"]',
-        wellness: '["amenity"~"spa|massage"]["leisure"="sauna"]',
+        family: '["leisure"~"playground|playground"]["tourism"~"theme_park|aquarium"]',
+        wellness: '["amenity"~"spa|massage|sauna"]',
         local_gems: '["tourism"="attraction"]["description"~".*"]',
         urban: '["amenity"~"cafe|restaurant"]["tourism"="attraction"]'
       };
@@ -503,21 +503,31 @@
         if (categoryFilter) {
           query += `node${categoryFilter}${filter};way${categoryFilter}${filter};relation${categoryFilter}${filter};`;
         } else {
+          // ULTRA-COMPREHENSIVE Query for "All Categories"
           query += `
-            node["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort"]${filter};
-            way["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort"]${filter};
-            node["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage"]${filter};
-            way["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage"]${filter};
-            node["amenity"="place_of_worship"]${filterSmall};
-            way["amenity"="place_of_worship"]${filterSmall};
-            node["leisure"~"park|garden|nature_reserve|water_park"]${filterSmall};
-            way["leisure"~"park|garden|nature_reserve|water_park"]${filterSmall};
-            node["natural"~"waterfall|beach|peak|cave_entrance"]${filter};
-            node["amenity"~"theatre|planetarium|stadium"]${filterSmall};
+            // Tourism & Heritage
+            node["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort|artwork"]${filter};
+            way["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort|artwork"]${filter};
+            node["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage|city_gate|boundary_stone"]${filter};
+            way["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage|city_gate|boundary_stone"]${filter};
+            
+            // Religious & Cultural
+            node["amenity"~"place_of_worship|arts_centre|theatre|community_centre|library|planetarium|stadium|cinema"]${filterSmall};
+            way["amenity"~"place_of_worship|arts_centre|theatre|community_centre|library|planetarium|stadium|cinema"]${filterSmall};
+            
+            // Nature & Outdoors
+            node["leisure"~"park|garden|nature_reserve|water_park|playground|marina|beach_resort"]${filterSmall};
+            way["leisure"~"park|garden|nature_reserve|water_park|playground|marina|beach_resort"]${filterSmall};
+            node["natural"~"waterfall|beach|peak|cave_entrance|rock|volcano|hot_spring"]${filter};
+            way["natural"~"waterfall|beach|peak|cave_entrance|rock|volcano|hot_spring"]${filter};
+
+            // Entertainment & Urban
+            node["amenity"~"pub|bar|nightclub|events_venue|casino|marketplace"]${filterSmall};
+            way["shop"~"mall|department_store"]${filterSmall};
           `;
         }
         
-        query += `);out center tags 500;`;
+        query += `);out center tags 1000;`;
 
         try {
           const endpoints = ['https://overpass-api.de/api/interpreter', 'https://lz4.overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
