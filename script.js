@@ -2074,37 +2074,73 @@ window.initKYCLocation = function() {
   }
 };
 
-// ===== NEIGHBORHOOD DISCOVERY & SELECTION =====
+// ===== TOURIST CATEGORY FILTERING =====
 
-window.toggleNeighborhoodMenu = function(e) {
+const TOURIST_CATEGORIES_MAP = {
+  historical: '["tourism"~"museum|monument|attraction"]["historic"~".*"]',
+  natural: '["natural"~"peak|water|rock|volcano"]',
+  religious: '["amenity"="place_of_worship"]',
+  cultural: '["amenity"~"arts_centre|theatre|community_centre"]',
+  entertainment: '["leisure"~"theme_park|water_park|bowling_alley|cinema"]',
+  adventure: '["leisure"~"track|sports_centre"]["sport"~".*"]',
+  wildlife: '["tourism"="zoo"]["leisure"="nature_reserve"]',
+  beaches: '["natural"="beach"]["tourism"~"viewpoint|attraction"]',
+  mountains: '["natural"="peak"]["tourism"="viewpoint"]',
+  shopping: '["shop"~"mall|department_store"]["amenity"="marketplace"]',
+  nightlife: '["amenity"~"pub|bar|nightclub"]',
+  events: '["amenity"="events_venue"]["leisure"~"stadium|arena"]',
+  architecture: '["historic"~"building|castle|fort"]["tourism"="attraction"]',
+  museums: '["tourism"="museum"]',
+  photography: '["tourism"="viewpoint"]["natural"="viewpoint"]',
+  family: '["leisure"~"playground|theme_park"]["tourism"="aquarium"]',
+  wellness: '["amenity"~"spa|massage"]["leisure"="sauna"]',
+  local_gems: '["tourism"="attraction"]["description"~".*"]',
+  urban: '["amenity"~"cafe|restaurant"]["tourism"="attraction"]'
+};
+
+window.toggleCategoryMenu = function(e) {
   if (e) e.stopPropagation();
-  const menu = document.getElementById('neighborhoodMenu');
+  const menu = document.getElementById('categoryMenu');
   if (menu) {
     const isVisible = menu.style.display === 'block';
     menu.style.display = isVisible ? 'none' : 'block';
   }
 };
 
-// Close neighborhood menu on outside click
+// Close all menus on outside click
 document.addEventListener('click', () => {
-  const menu = document.getElementById('neighborhoodMenu');
-  if (menu) menu.style.display = 'none';
+  const cMenu = document.getElementById('categoryMenu');
+  if (cMenu) cMenu.style.display = 'none';
+  const nMenu = document.getElementById('neighborhoodMenu');
+  if (nMenu) nMenu.style.display = 'none';
 });
+
+window.updateTouristCategory = function(name, key) {
+  const label = document.getElementById('currentCategoryName');
+  if (label) label.textContent = name;
+  localStorage.setItem('kyc_currentTouristCategory', key);
+  
+  // Re-trigger analysis with current area and new category
+  const areaName = localStorage.getItem('kyc_currentAreaName') || 'All Areas';
+  const lat = localStorage.getItem('kyc_tempLat') || localStorage.getItem('kyc_userLat');
+  const lng = localStorage.getItem('kyc_tempLng') || localStorage.getItem('kyc_userLng');
+  
+  window.updateAnalysisForArea(areaName, lat, lng, true);
+};
 
 window.fetchCityNeighborhoods = async function(lat, lng) {
   const listContainer = document.getElementById('neighborhoodList');
   if (!listContainer) return;
 
   try {
-    // Overpass query for main areas (suburbs, neighborhoods, etc.)
     const query = `[out:json];(node["place"~"suburb|neighbourhood|quarter|village"](around:15000, ${lat}, ${lng}););out body 20;`;
     const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
     const data = await res.json();
 
     if (data.elements && data.elements.length > 0) {
-      listContainer.innerHTML = '';
+      // Add "All Areas" option at top
+      listContainer.innerHTML = `<div onclick="window.updateAnalysisForArea('All Areas', null, null)" style="padding: 10px; cursor: pointer; border-radius: 6px; transition: background 0.2s; font-size: 0.85rem; color: #fff;"><strong>All Areas (City Wide)</strong></div>`;
       
-      // Sort by prominence (nodes with more tags/data usually)
       const areas = data.elements.map(el => ({
         name: el.tags.name,
         lat: el.lat,
@@ -2112,7 +2148,6 @@ window.fetchCityNeighborhoods = async function(lat, lng) {
         type: el.tags.place
       })).filter(a => a.name);
 
-      // Remove duplicates
       const uniqueAreas = Array.from(new Set(areas.map(a => a.name)))
         .map(name => areas.find(a => a.name === name));
 
@@ -2130,54 +2165,59 @@ window.fetchCityNeighborhoods = async function(lat, lng) {
     }
   } catch (e) {
     console.error('Failed to fetch neighborhoods:', e);
-    listContainer.innerHTML = '<div style="padding: 10px; color: #ff5252; text-align: center;">Error loading areas</div>';
   }
 };
 
-window.updateAnalysisForArea = function(areaName, lat, lng) {
-  console.log(`Updating analysis for neighborhood: ${areaName} (${lat}, ${lng})`);
-  
-  // Update UI
+window.updateAnalysisForArea = function(areaName, lat, lng, isCategoryUpdate = false) {
+  // Update UI Label
   const neighborhoodLabel = document.getElementById('currentNeighborhoodName');
   if (neighborhoodLabel) neighborhoodLabel.textContent = areaName;
   
-  // Dynamic Radius Logic: 10km for city centers/major suburbs, 5km for smaller ones
-  const radius = areaName.toLowerCase().includes('center') || areaName.toLowerCase().includes('main') ? 10000 : 5000;
+  // Use city-wide defaults if area is "All Areas"
+  const finalLat = lat || localStorage.getItem('kyc_userLat');
+  const finalLng = lng || localStorage.getItem('kyc_userLng');
+  const city = localStorage.getItem('kyc_userCity') || 'Current City';
   
-  // Update global session/local storage for persistence
-  localStorage.setItem('kyc_tempLat', lat);
-  localStorage.setItem('kyc_tempLng', lng);
+  // Radius: 25km for city-wide, 5-10km for specific areas
+  let radius = 25000;
+  if (areaName !== 'All Areas') {
+    radius = areaName.toLowerCase().includes('center') || areaName.toLowerCase().includes('main') ? 10000 : 5000;
+  }
+  
+  localStorage.setItem('kyc_tempLat', finalLat);
+  localStorage.setItem('kyc_tempLng', finalLng);
   localStorage.setItem('kyc_currentAreaName', areaName);
   
-  // Trigger all dynamic cards to refresh with new coordinates and radius
+  const categoryKey = localStorage.getItem('kyc_currentTouristCategory') || 'all';
+  const categoryFilter = categoryKey !== 'all' ? TOURIST_CATEGORIES_MAP[categoryKey] : null;
+
+  // Trigger all dynamic cards
   if (typeof window.fetchSafetyData === 'function') {
-    const map = window._safetyMap; // Access global map instance
+    const map = window._safetyMap;
     if (map) {
-      window.fetchSafetyData(map, lat, lng, areaName, radius);
+      // Pass the category filter to the fetch function
+      window.fetchSafetyData(map, finalLat, finalLng, areaName === 'All Areas' ? city : areaName, radius, categoryFilter);
     }
   }
   
   if (typeof window.generateCityProTips === 'function') {
-    window.generateCityProTips(areaName);
-  }
-
-  // Refresh safety map if active
-  if (typeof window.reloadSafetyMap === 'function') {
-    window.reloadSafetyMap();
+    window.generateCityProTips(areaName === 'All Areas' ? city : areaName);
   }
 
   if (typeof window.showToast === 'function') {
-    window.showToast(`🔍 Analyzing ${areaName} (${radius/1000}km Radius)`);
+    const catName = document.getElementById('currentCategoryName')?.textContent || 'All';
+    window.showToast(`🔍 ${areaName} | ${catName} (${radius/1000}km)`);
   }
 };
 
 // Initialize on DOM Load
 document.addEventListener('DOMContentLoaded', () => {
-  if (typeof CityScout === 'function') {
-    window.cityScout = new CityScout();
-  }
+  if (typeof CityScout === 'function') window.cityScout = new CityScout();
   
-  // If we have a city, fetch neighborhoods immediately
+  // Set default discovery states
+  localStorage.setItem('kyc_currentTouristCategory', 'all');
+  localStorage.setItem('kyc_currentAreaName', 'All Areas');
+  
   const lat = localStorage.getItem('kyc_userLat');
   const lng = localStorage.getItem('kyc_userLng');
   if (lat && lng && typeof window.fetchCityNeighborhoods === 'function') {
