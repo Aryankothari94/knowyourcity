@@ -175,19 +175,61 @@
           <h2 id="resultsCount">Searching for attractions...</h2>
           <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
         </div>
-        <div class="custom-area-dropdown">
-          <div class="dropdown-trigger" id="areaDropdownTrigger">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span id="selectedAreaText">Select your area</span>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <!-- Category Dropdown -->
+          <div class="custom-area-dropdown">
+            <div class="dropdown-trigger" id="categoryDropdownTrigger">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.7;">filter_list</span>
+                <span id="selectedCategoryText">All Categories</span>
+              </div>
+              <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.6;">expand_more</span>
             </div>
-            <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.6;">expand_more</span>
+            <div class="dropdown-menu" id="categoryDropdownMenu">
+              <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search" id="categorySearchInput" placeholder="Search category...">
+              </div>
+              <div class="dropdown-list" id="categoryDropdownList">
+                <div class="dropdown-item active" onclick="selectCategory('all', 'All Categories')"><strong>All Categories</strong></div>
+                <div class="dropdown-item" onclick="selectCategory('historical', 'Historical & Heritage')">Historical & Heritage</div>
+                <div class="dropdown-item" onclick="selectCategory('natural', 'Natural Attractions')">Natural Attractions</div>
+                <div class="dropdown-item" onclick="selectCategory('religious', 'Religious & Spiritual')">Religious & Spiritual</div>
+                <div class="dropdown-item" onclick="selectCategory('cultural', 'Cultural & Art')">Cultural & Art</div>
+                <div class="dropdown-item" onclick="selectCategory('entertainment', 'Entertainment & Leisure')">Entertainment & Leisure</div>
+                <div class="dropdown-item" onclick="selectCategory('adventure', 'Adventure & Outdoor')">Adventure & Outdoor</div>
+                <div class="dropdown-item" onclick="selectCategory('wildlife', 'Wildlife & Nature Parks')">Wildlife & Nature Parks</div>
+                <div class="dropdown-item" onclick="selectCategory('beaches', 'Beaches & Waterfronts')">Beaches & Waterfronts</div>
+                <div class="dropdown-item" onclick="selectCategory('mountains', 'Mountains & Hill Stations')">Mountains & Hill Stations</div>
+                <div class="dropdown-item" onclick="selectCategory('shopping', 'Shopping & Markets')">Shopping & Markets</div>
+                <div class="dropdown-item" onclick="selectCategory('nightlife', 'Nightlife & Party Spots')">Nightlife & Party Spots</div>
+                <div class="dropdown-item" onclick="selectCategory('events', 'Events & Festivals')">Events & Festivals</div>
+                <div class="dropdown-item" onclick="selectCategory('architecture', 'Architecture & Landmarks')">Architecture & Landmarks</div>
+                <div class="dropdown-item" onclick="selectCategory('museums', 'Museums')">Museums</div>
+                <div class="dropdown-item" onclick="selectCategory('photography', 'Photography & Scenic Spots')">Photography & Scenic Spots</div>
+                <div class="dropdown-item" onclick="selectCategory('family', 'Family & Kids Attractions')">Family & Kids Attractions</div>
+                <div class="dropdown-item" onclick="selectCategory('wellness', 'Wellness & Relaxation')">Wellness & Relaxation</div>
+                <div class="dropdown-item" onclick="selectCategory('local_gems', 'Local Experiences')">Local Experiences & Hidden Gems</div>
+                <div class="dropdown-item" onclick="selectCategory('urban', 'Urban Exploration')">Urban Exploration</div>
+              </div>
+            </div>
           </div>
-          <div class="dropdown-menu" id="areaDropdownMenu">
-            <div class="dropdown-search-wrapper">
-              <input type="text" class="dropdown-search" id="areaSearchInput" placeholder="Search area...">
+
+          <!-- Area Dropdown -->
+          <div class="custom-area-dropdown">
+            <div class="dropdown-trigger" id="areaDropdownTrigger">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.7;">location_on</span>
+                <span id="selectedAreaText">Whole City</span>
+              </div>
+              <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.6;">expand_more</span>
             </div>
-            <div class="dropdown-list" id="areaDropdownList">
-              <div class="dropdown-item active" data-value="all">Whole City (All Spots)</div>
+            <div class="dropdown-menu" id="areaDropdownMenu">
+              <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search" id="areaSearchInput" placeholder="Search area...">
+              </div>
+              <div class="dropdown-list" id="areaDropdownList">
+                <div class="dropdown-item active" data-value="all">Whole City (All Spots)</div>
+              </div>
             </div>
           </div>
         </div>
@@ -220,77 +262,132 @@
       let masterPlaces = []; 
       let cityAreas = []; 
 
-      // Initialize Custom Dropdown
-      const dropdownTrigger = document.getElementById('areaDropdownTrigger');
-      const dropdownMenu = document.getElementById('areaDropdownMenu');
-      const areaSearchInput = document.getElementById('areaSearchInput');
-      const areaDropdownList = document.getElementById('areaDropdownList');
-      const selectedAreaText = document.getElementById('selectedAreaText');
+      const TOURIST_CATEGORIES_MAP = {
+        historical: '["tourism"~"museum|monument|attraction"]["historic"~".*"]',
+        natural: '["natural"~"peak|water|rock|volcano"]',
+        religious: '["amenity"="place_of_worship"]',
+        cultural: '["amenity"~"arts_centre|theatre|community_centre"]',
+        entertainment: '["leisure"~"theme_park|water_park|bowling_alley|cinema"]',
+        adventure: '["leisure"~"track|sports_centre"]["sport"~".*"]',
+        wildlife: '["tourism"="zoo"]["leisure"="nature_reserve"]',
+        beaches: '["natural"="beach"]["tourism"~"viewpoint|attraction"]',
+        mountains: '["natural"="peak"]["tourism"="viewpoint"]',
+        shopping: '["shop"~"mall|department_store"]["amenity"="marketplace"]',
+        nightlife: '["amenity"~"pub|bar|nightclub"]',
+        events: '["amenity"="events_venue"]["leisure"~"stadium|arena"]',
+        architecture: '["historic"~"building|castle|fort"]["tourism"="attraction"]',
+        museums: '["tourism"="museum"]',
+        photography: '["tourism"="viewpoint"]["natural"="viewpoint"]',
+        family: '["leisure"~"playground|theme_park"]["tourism"="aquarium"]',
+        wellness: '["amenity"~"spa|massage"]["leisure"="sauna"]',
+        local_gems: '["tourism"="attraction"]["description"~".*"]',
+        urban: '["amenity"~"cafe|restaurant"]["tourism"="attraction"]'
+      };
 
-      dropdownTrigger.addEventListener('click', (e) => {
+      let currentArea = 'all';
+      let currentCategory = 'all';
+
+      // Initialize Custom Dropdowns
+      const areaTrigger = document.getElementById('areaDropdownTrigger');
+      const areaMenu = document.getElementById('areaDropdownMenu');
+      const areaSearch = document.getElementById('areaSearchInput');
+      const areaList = document.getElementById('areaDropdownList');
+      const areaText = document.getElementById('selectedAreaText');
+
+      const catTrigger = document.getElementById('categoryDropdownTrigger');
+      const catMenu = document.getElementById('categoryDropdownMenu');
+      const catSearch = document.getElementById('categorySearchInput');
+      const catList = document.getElementById('categoryDropdownList');
+      const catText = document.getElementById('selectedCategoryText');
+
+      areaTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        dropdownMenu.classList.toggle('active');
-        if(dropdownMenu.classList.contains('active')) areaSearchInput.focus();
+        areaMenu.classList.toggle('active');
+        catMenu.classList.remove('active');
+        if(areaMenu.classList.contains('active')) areaSearch.focus();
       });
 
-      document.addEventListener('click', () => dropdownMenu.classList.remove('active'));
-      dropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+      catTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        catMenu.classList.toggle('active');
+        areaMenu.classList.remove('active');
+        if(catMenu.classList.contains('active')) catSearch.focus();
+      });
 
-      areaSearchInput.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase();
-        const items = areaDropdownList.querySelectorAll('.dropdown-item');
-        items.forEach(item => {
-          const text = item.textContent.toLowerCase();
-          item.style.display = text.includes(q) ? 'block' : 'none';
+      document.addEventListener('click', () => {
+        areaMenu.classList.remove('active');
+        catMenu.classList.remove('active');
+      });
+
+      [areaSearch, catSearch].forEach(input => {
+        input.addEventListener('input', (e) => {
+          const q = e.target.value.toLowerCase();
+          const list = e.target.id === 'areaSearchInput' ? areaList : catList;
+          list.querySelectorAll('.dropdown-item').forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(q) ? 'block' : 'none';
+          });
         });
       });
 
       function selectArea(value, text) {
-        // Update UI
-        selectedAreaText.textContent = text;
-        areaDropdownList.querySelectorAll('.dropdown-item').forEach(item => {
+        areaText.textContent = text;
+        areaList.querySelectorAll('.dropdown-item').forEach(item => {
           item.classList.toggle('active', item.getAttribute('data-value') === value);
         });
-        dropdownMenu.classList.remove('active');
-        areaSearchInput.value = '';
-        
-        // Trigger Filter
-        filterByArea(value, text);
+        areaMenu.classList.remove('active');
+        areaSearch.value = '';
+        currentArea = value;
+        triggerCombinedSearch();
       }
 
-      window.selectArea = selectArea; // Expose for internal list clicks
+      function selectCategory(value, text) {
+        catText.textContent = text;
+        catList.querySelectorAll('.dropdown-item').forEach(item => {
+          item.classList.toggle('active', item.onclick?.toString().includes(`'${value}'`));
+        });
+        catMenu.classList.remove('active');
+        catSearch.value = '';
+        currentCategory = value;
+        triggerCombinedSearch();
+      }
 
-      const CACHE_KEY = `kyc_cache_safezone_${Math.round(lat*100)}_${Math.round(lng*100)}`;
-      const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+      window.selectArea = selectArea;
+      window.selectCategory = selectCategory;
 
-      const detailOverlay = document.getElementById('detailOverlay');
-      const detailBody = document.getElementById('detailBody');
-      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
-      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+      function triggerCombinedSearch() {
+        // If "All Areas" and "All Categories" are selected, use default city-wide fetch
+        if (currentArea === 'all' && currentCategory === 'all') {
+          fetchAllAttractions(lat, lng, city);
+          return;
+        }
 
-      // ===== FETCH CITY AREAS =====
-      async function fetchCityAreas(cityName, cLat, cLng) {
-        console.log(`🌐 Fetching areas for ${cityName}...`);
-        const query = `[out:json][timeout:25];
-          (
-            node["place"~"suburb|neighbourhood"](around:25000,${cLat},${cLng});
-            way["place"~"suburb|neighbourhood"](around:25000,${cLat},${cLng});
-          );
-          out center;`;
+        // If a specific area is selected, use its coords. Otherwise use city center.
+        let targetLat = lat, targetLng = lng;
+        let radius = 15000; // Default city-wide for category searches
+
+        if (currentArea !== 'all') {
+          const coords = JSON.parse(currentArea);
+          targetLat = coords.lat;
+          targetLng = coords.lng;
+          radius = 5000; // Narrower search for specific neighborhoods
+        }
+
+        const categoryFilter = currentCategory !== 'all' ? TOURIST_CATEGORIES_MAP[currentCategory] : null;
         
-        try {
-          const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            body: 'data=' + encodeURIComponent(query)
-          });
-          const data = await res.json();
-          cityAreas = data.elements.map(el => ({
-            name: el.tags.name || el.tags['name:en'],
-            lat: el.lat || el.center.lat,
-            lng: el.lon || el.center.lon
-          })).filter(a => a.name).sort((a,b) => a.name.localeCompare(b.name));
+        document.getElementById('loadingSpinner').style.display = 'flex';
+        document.getElementById('resultsGrid').innerHTML = '';
+        document.getElementById('resultsMeta').textContent = `Fetching ${catText.textContent} in ${areaText.textContent}...`;
 
-          // Populate Dropdown
+        fetchAllAttractions(targetLat, targetLng, city, radius, categoryFilter);
+      }
+
+      async function fetchCityAreas(cityName, cLat, cLng) {
+        const query = `[out:json][timeout:25];(node["place"~"suburb|neighbourhood"](around:25000,${cLat},${cLng});way["place"~"suburb|neighbourhood"](around:25000,${cLat},${cLng}););out center;`;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query) });
+          const data = await res.json();
+          cityAreas = data.elements.map(el => ({ name: el.tags.name || el.tags['name:en'], lat: el.lat || el.center.lat, lng: el.lon || el.center.lon })).filter(a => a.name).sort((a,b) => a.name.localeCompare(b.name));
           cityAreas.forEach(area => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
@@ -298,45 +395,23 @@
             item.setAttribute('data-value', val);
             item.textContent = area.name;
             item.onclick = () => selectArea(val, area.name);
-            areaDropdownList.appendChild(item);
+            areaList.appendChild(item);
           });
-          
-          // Ensure "Whole City" also has click handler
-          const allItem = areaDropdownList.querySelector('[data-value="all"]');
-          if(allItem) allItem.onclick = () => selectArea('all', 'Whole City (All Spots)');
-          
-          console.log(`✅ Loaded ${cityAreas.length} areas.`);
-        } catch (err) {
-          console.warn("Could not fetch city areas:", err);
-        }
-      }
-
-      function filterByArea(val, text) {
-        if (!val) return;
-        
-        if (val === 'all') {
-          document.getElementById('resultsMeta').textContent = `Fetching real-time data`;
-          renderResults(masterPlaces, city, lat, lng, false);
-          return;
-        }
-        
-        const areaCoords = JSON.parse(val);
-        const filtered = masterPlaces.filter(p => {
-          const dist = getDistance(areaCoords.lat, areaCoords.lng, p.lat, p.lng);
-          return dist <= 4.0; // Tightened radius for "nearest" attractions
-        }).sort((a,b) => {
-          const distA = getDistance(areaCoords.lat, areaCoords.lng, a.lat, a.lng);
-          const distB = getDistance(areaCoords.lat, areaCoords.lng, b.lat, b.lng);
-          return distA - distB;
-        });
-        
-        document.getElementById('resultsMeta').textContent = `Showing tourist spots within 5km of ${text}`;
-        renderResults(filtered, city, lat, lng, false, true);
+          const allItem = areaList.querySelector('[data-value="all"]');
+          if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
+        } catch (err) { console.warn("Could not fetch city areas:", err); }
       }
 
       fetchCityAreas(city, lat, lng);
 
-      // ===== SAFE ZONE KNOWLEDGE BASE (PREMIUM RESIDENTIAL & PUBLIC AREAS) =====
+      const CACHE_KEY = `kyc_cache_safezone_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000; 
+
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
+      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
+      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+
       const SAFE_ZONE_KNOWLEDGE_BASE = {
         'solapur': [
           { name: 'Civil Lines', type: 'Residential', description: 'Elite residential area with wide roads and high security presence.', lat: 17.6599, lng: 75.9064 },
@@ -354,20 +429,13 @@
         ]
       };
 
-      // Check cache or Knowledge Base first
       const cached = getCachedData(CACHE_KEY);
-      const normalizedCity = city.toLowerCase().trim();
-
       if (cached) {
-        document.getElementById('loadingText').textContent = 'Loading from cache...';
         setTimeout(() => renderResults(cached, city, lat, lng, true), 100);
       } else {
         fetchAllAttractions(lat, lng, city);
       }
 
-      // ========================
-      //  CACHE HELPERS
-      // ========================
       function getCachedData(key) {
         try {
           const raw = localStorage.getItem(key);
@@ -382,18 +450,14 @@
         try { localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() })); } catch {}
       }
 
-      // ========================
-      //  MAIN FETCH — with expanded queries + dynamic radius
-      // ========================
-      async function fetchAllAttractions(lat, lng, city) {
+      async function fetchAllAttractions(lat, lng, city, radius = 30000, categoryFilter = null) {
         const cityName = city.split(',')[0].trim();
         const normalizedCity = cityName.toLowerCase();
-        document.getElementById('loadingText').textContent = `Deep scanning ${cityName} for every tourist spot, temple, and landmark...`;
+        document.getElementById('loadingText').textContent = `Deep scanning ${cityName} for ${categoryFilter ? 'specific categories' : 'every tourist spot'}...`;
 
         let allPlaces = [];
 
-        // 0. Include Curated Safe Zones from Knowledge Base first
-        if (SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity]) {
+        if (!categoryFilter && currentArea === 'all' && SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity]) {
           const curated = SAFE_ZONE_KNOWLEDGE_BASE[normalizedCity].map(p => ({
             ...p,
             typeIcon: getTypeIcon(p.type),
@@ -403,36 +467,20 @@
           allPlaces = [...curated];
         }
 
-        // 1. Primary High-Density Fetch (City-Wide Area)
         try {
-          allPlaces = await fetchOverpass(lat, lng, 30000, 20000, cityName);
+          allPlaces = await fetchOverpass(lat, lng, radius, radius/1.5, cityName, categoryFilter);
         } catch (err) {
-          console.log('Primary fetch failed, falling back to radius...');
+          console.log('Fetch failed:', err);
         }
 
-        // 2. Wikipedia Deep Scrape (Expanded)
-        if (allPlaces.length < 50) {
-          document.getElementById('loadingText').textContent = 'Cross-referencing with Wikipedia for missing landmarks...';
+        if (!categoryFilter && allPlaces.length < 50) {
           try {
             const wikiPlaces = await fetchWikipediaAttractions(cityName, lat, lng);
             const existingNames = new Set(allPlaces.map(p => p.name.toLowerCase()));
-            wikiPlaces.forEach(p => {
-              if (!existingNames.has(p.name.toLowerCase())) allPlaces.push(p);
-            });
+            wikiPlaces.forEach(p => { if (!existingNames.has(p.name.toLowerCase())) allPlaces.push(p); });
           } catch {}
         }
 
-        // 3. Last Resort Radius Expansion
-        if (allPlaces.length < 15) {
-          document.getElementById('loadingText').textContent = 'Expanding search to metropolitan outskirts...';
-          try {
-            const wider = await fetchOverpass(lat, lng, 60000, 50000, null);
-            const existingNames = new Set(allPlaces.map(p => p.name));
-            wider.forEach(p => { if (!existingNames.has(p.name)) allPlaces.push(p); });
-          } catch {}
-        }
-
-        // Deduplicate by name and fuzzy coordinates
         const seen = new Set();
         const unique = allPlaces.filter(p => {
           const key = p.name.toLowerCase().trim();
@@ -441,135 +489,63 @@
           return true;
         });
 
-        // Cache the results
-        if (unique.length > 0) setCachedData(CACHE_KEY, unique);
-
         masterPlaces = unique;
-        renderResults(unique, city, lat, lng, false);
+        renderResults(unique, city, lat, lng, false, categoryFilter !== null);
       }
 
-      // ========================
-      //  OVERPASS QUERY — massively expanded POI types
-      // ========================
-      async function fetchOverpass(lat, lng, mainRadius, secondaryRadius, cityName = null) {
-        const areaPart = cityName ? `area["name"="${cityName}"]->.searchArea;` : '';
-        const filter = cityName ? `(area.searchArea)` : `(around:${mainRadius},${lat},${lng})`;
-        const filterSmall = cityName ? `(area.searchArea)` : `(around:${secondaryRadius},${lat},${lng})`;
+      async function fetchOverpass(lat, lng, mainRadius, secondaryRadius, cityName = null, categoryFilter = null) {
+        const areaPart = (cityName && !categoryFilter) ? `area["name"="${cityName}"]->.searchArea;` : '';
+        const filter = (cityName && !categoryFilter) ? `(area.searchArea)` : `(around:${mainRadius},${lat},${lng})`;
+        const filterSmall = (cityName && !categoryFilter) ? `(area.searchArea)` : `(around:${secondaryRadius},${lat},${lng})`;
 
-        const query = `
-          [out:json][timeout:35];
-          ${areaPart}
-          (
-            // High-Value Tourism
+        let query = `[out:json][timeout:35];${areaPart}(`;
+        
+        if (categoryFilter) {
+          query += `node${categoryFilter}${filter};way${categoryFilter}${filter};relation${categoryFilter}${filter};`;
+        } else {
+          query += `
             node["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort"]${filter};
             way["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort"]${filter};
-            
-            // Historic & Heritage (Google/Wiki common)
             node["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage"]${filter};
             way["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage"]${filter};
-            
-            // Religious Landmarks (High priority for city coverage)
             node["amenity"="place_of_worship"]${filterSmall};
             way["amenity"="place_of_worship"]${filterSmall};
-            
-            // Nature & Public Spots
             node["leisure"~"park|garden|nature_reserve|water_park"]${filterSmall};
             way["leisure"~"park|garden|nature_reserve|water_park"]${filterSmall};
             node["natural"~"waterfall|beach|peak|cave_entrance"]${filter};
-            
-            // Modern Entertainment
             node["amenity"~"theatre|planetarium|stadium"]${filterSmall};
-          );
-          out center tags 500;
-        `;
+          `;
+        }
+        
+        query += `);out center tags 500;`;
 
         try {
-          const endpoints = [
-            'https://overpass-api.de/api/interpreter',
-            'https://lz4.overpass-api.de/api/interpreter',
-            'https://overpass.kumi.systems/api/interpreter',
-            'https://overpass.osm.ch/api/interpreter'
-          ];
+          const endpoints = ['https://overpass-api.de/api/interpreter', 'https://lz4.overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+          let fastestData = await Promise.any(endpoints.map(ep => fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(query) }).then(r => r.ok ? r.json() : Promise.reject())));
           
-          let data = null;
-          let attempts = 0;
-          let currentRadius = mainRadius;
+          if (!fastestData || !fastestData.elements) return [];
 
-          while (!data || !data.elements || data.elements.length === 0) {
-            const lText = document.getElementById('loadingText');
-            if(lText) lText.textContent = "Scanning safe zones... (" + (attempts + 1) + ")";
-            
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const fetchPromises = endpoints.map(ep => 
-                    fetch(ep, {
-                        method: 'POST', 
-                        body: 'data=' + encodeURIComponent(query.replace(/around:\${mainRadius}/g, `around:${currentRadius}`)), 
-                        signal: controller.signal
-                    }).then(res => {
-                        if (!res.ok) throw new Error('Bad response');
-                        return res.json();
-                    }).then(tData => {
-                        if (tData.elements && tData.elements.length > 0) return tData;
-                        throw new Error('No results');
-                    })
-                );
-
-                data = await Promise.any(fetchPromises);
-                clearTimeout(timeoutId);
-            } catch(e) {
-                console.warn('Mirrors busy, retrying...');
-            }
-            
-            if (data && data.elements && data.elements.length > 0) break;
-
-            attempts++;
-            if (attempts >= 2) break; 
-
-            currentRadius += 15000;
-            await new Promise(r => setTimeout(r, 1000));
-          }
-
-          if (!data || !data.elements) return [];
-
-          return data.elements.map(el => {
+          return fastestData.elements.map(el => {
             const elLat = el.lat || el.center?.lat;
             const elLng = el.lon || el.center?.lon;
             if (!elLat || !elLng) return null;
-
             const pType = getPlaceType(el.tags);
-            const typeIcon = getTypeIcon(pType);
-
             return {
               name: el.tags?.name || el.tags?.['name:en'] || '',
               type: pType,
-              typeIcon,
+              typeIcon: getTypeIcon(pType),
               description: el.tags?.description || el.tags?.['description:en'] || '',
               website: el.tags?.website || el.tags?.['contact:website'] || '',
               phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
               opening: el.tags?.opening_hours || '',
               fee: el.tags?.fee || '',
-              charge: el.tags?.charge || '',
-              wheelchair: el.tags?.wheelchair || '',
-              wikipedia: el.tags?.wikipedia || '',
-              wikidata: el.tags?.wikidata || '',
-              image: el.tags?.image || '',
-              architect: el.tags?.architect || '',
-              heritage: el.tags?.heritage || '',
-              religion: el.tags?.religion || '',
-              denomination: el.tags?.denomination || '',
-              year: el.tags?.start_date || el.tags?.['year_of_construction'] || '',
-              lit: el.tags?.lit || '',
               lat: elLat, lng: elLng,
               distance: getDistance(lat, lng, elLat, elLng),
               source: 'osm'
             };
           }).filter(p => p && p.name);
-
         } catch (err) {
-          console.error('SafeNeighbourhood fetch error:', err);
+          console.error('Fetch error:', err);
           return [];
         }
       }
@@ -624,9 +600,6 @@
         return icons[type] || '📍';
       }
 
-      // ========================
-      //  WIKIPEDIA SUPPLEMENTARY FETCH
-      // ========================
       async function fetchWikipediaAttractions(city, lat, lng) {
         const searchTerms = [
           `Tourist attractions in ${city}`,
@@ -694,10 +667,25 @@
       // ========================
       function renderResults(places, city, userLat, userLng, fromCache, isFiltered = false) {
         document.getElementById('loadingSpinner').style.display = 'none';
+        const grid = document.getElementById('resultsGrid');
+        const countEl = document.getElementById('resultsCount');
+        const metaEl = document.getElementById('resultsMeta');
 
         if (!isFiltered) masterPlaces = places;
 
-        
+        if (places.length === 0) {
+          countEl.textContent = `No ${catText.textContent} Found`;
+          metaEl.textContent = `Try selecting a different category or 'Whole City'`;
+          grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+              <span class="material-symbols-outlined" style="font-size: 64px; color: var(--accent-cyan); opacity: 0.5; margin-bottom: 20px;">search_off</span>
+              <h3 style="font-size: 1.5rem; margin-bottom: 10px;">Category Not Available</h3>
+              <p style="color: var(--text-secondary); max-width: 400px; margin: 0 auto;">We couldn't find any ${catText.textContent} in ${areaText.textContent}. Try expanding your search to the Whole City or choose a different category.</p>
+              <button class="btn-primary" style="margin-top: 25px; padding: 10px 25px;" onclick="selectCategory('all', 'All Categories')">Show All Categories</button>
+            </div>
+          `;
+          return;
+        }
 
         // Sort: Wikipedia/Wikidata linked first, then heritage, then by distance
         places.sort((a, b) => {
@@ -708,11 +696,9 @@
         });
 
         const cacheLabel = fromCache ? ' (cached)' : '';
-        document.getElementById('resultsCount').textContent = `${places.length} Tourist Attractions Found${cacheLabel}`;
-        document.getElementById('resultsMeta').textContent = `Family-friendly places near ${city} • Sorted by relevance`;
-        document.getElementById('resultsGrid').style.display = 'grid';
-
-        const grid = document.getElementById('resultsGrid');
+        countEl.textContent = `${places.length} ${catText.textContent} Found${cacheLabel}`;
+        metaEl.textContent = `Family-friendly spots in ${areaText.textContent} • Sorted by relevance`;
+        grid.style.display = 'grid';
         grid.innerHTML = '';
 
         // Lazy image loading observer
