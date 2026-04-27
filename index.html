@@ -2939,7 +2939,7 @@
     }
 
     // ===== AUTO-DETECT LOCATION ON PAGE LOAD =====
-    (function autoInitLocation() {
+    (function initUserLocation() {
       if (localStorage.getItem('kyc_isLoggedIn') !== 'true') return;
       const savedCity = localStorage.getItem('kyc_userCity');
       const cityEl = document.getElementById('userCityName');
