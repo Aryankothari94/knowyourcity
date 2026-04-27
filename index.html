@@ -1395,9 +1395,8 @@
         </div>
       </div>
       <div class="safety-grid">
-        <!-- Card 1: Safety & Crimes (Dynamic) -->
-        <div class="area-card glass-card reveal" id="dynamicCityCard">
-          <div class="area-card-header">
+        <div class="area-card glass-card reveal" id="dynamicCityCard" style="overflow: visible !important; z-index: 50;">
+          <div class="area-card-header" style="overflow: visible !important; position: relative; z-index: 60;">
             <div class="area-icon-box" style="background: rgba(0,230,118,0.1); color: var(--safe-green);">
               <span class="material-symbols-outlined">shield_with_heart</span>
             </div>
@@ -1411,28 +1410,32 @@
                   <span id="currentCategoryName">All Categories</span>
                   <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
                   
-                  <div id="categoryMenu" class="glass-card" style="position: absolute; top: 100%; left: 0; width: 240px; max-height: 350px; overflow-y: auto; display: none; z-index: 20007; padding: 8px; margin-top: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.5); border: 1px solid rgba(0, 229, 255, 0.2);">
+                  <div id="categoryMenu" class="glass-card" style="position: absolute; top: 100%; left: 0; width: 240px; max-height: 350px; overflow-y: auto; display: none; z-index: 10000; padding: 8px; margin-top: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); border: 1px solid rgba(0, 229, 255, 0.4); background: #121425;">
+                    <style>
+                      .cat-item { padding: 8px 10px; cursor: pointer; border-radius: 6px; transition: all 0.2s; color: rgba(255,255,255,0.8); font-size: 0.85rem; }
+                      .cat-item:hover { background: rgba(0, 229, 255, 0.15); color: #fff; transform: translateX(5px); }
+                    </style>
                     <div id="categoryList" style="display: flex; flex-direction: column; gap: 2px;">
-                      <div class="cat-item" onclick="window.updateTouristCategory('All Categories', 'all')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px; transition: background 0.2s;"><strong>All Categories</strong></div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Historical & Heritage', 'historical')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Historical & Heritage</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Natural Attractions', 'natural')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Natural Attractions</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Religious & Spiritual', 'religious')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Religious & Spiritual</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Cultural & Art', 'cultural')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Cultural & Art</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Entertainment & Leisure', 'entertainment')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Entertainment & Leisure</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Adventure & Outdoor', 'adventure')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Adventure & Outdoor</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Wildlife & Nature Parks', 'wildlife')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Wildlife & Nature Parks</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Beaches & Waterfronts', 'beaches')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Beaches & Waterfronts</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Mountains & Hill Stations', 'mountains')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Mountains & Hill Stations</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Shopping & Markets', 'shopping')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Shopping & Markets</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Nightlife & Party Spots', 'nightlife')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Nightlife & Party Spots</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Events & Festivals', 'events')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Events & Festivals</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Architecture & Landmarks', 'architecture')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Architecture & Landmarks</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Museums', 'museums')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Museums</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Photography & Scenic Spots', 'photography')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Photography & Scenic Spots</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Family & Kids Attractions', 'family')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Family & Kids Attractions</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Wellness & Relaxation', 'wellness')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Wellness & Relaxation</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Local Experiences', 'local_gems')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Local Experiences & Hidden Gems</div>
-                      <div class="cat-item" onclick="window.updateTouristCategory('Urban Exploration', 'urban')" style="padding: 8px 10px; cursor: pointer; border-radius: 6px;">Urban Exploration</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('All Categories', 'all')"><strong>All Categories</strong></div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Historical & Heritage', 'historical')">Historical & Heritage</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Natural Attractions', 'natural')">Natural Attractions</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Religious & Spiritual', 'religious')">Religious & Spiritual</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Cultural & Art', 'cultural')">Cultural & Art</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Entertainment & Leisure', 'entertainment')">Entertainment & Leisure</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Adventure & Outdoor', 'adventure')">Adventure & Outdoor</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Wildlife & Nature Parks', 'wildlife')">Wildlife & Nature Parks</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Beaches & Waterfronts', 'beaches')">Beaches & Waterfronts</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Mountains & Hill Stations', 'mountains')">Mountains & Hill Stations</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Shopping & Markets', 'shopping')">Shopping & Markets</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Nightlife & Party Spots', 'nightlife')">Nightlife & Party Spots</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Events & Festivals', 'events')">Events & Festivals</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Architecture & Landmarks', 'architecture')">Architecture & Landmarks</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Museums', 'museums')">Museums</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Photography & Scenic Spots', 'photography')">Photography & Scenic Spots</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Family & Kids Attractions', 'family')">Family & Kids Attractions</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Wellness & Relaxation', 'wellness')">Wellness & Relaxation</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Local Experiences', 'local_gems')">Local Experiences & Hidden Gems</div>
+                      <div class="cat-item" onclick="window.updateTouristCategory('Urban Exploration', 'urban')">Urban Exploration</div>
                     </div>
                   </div>
                 </div>
@@ -1443,7 +1446,7 @@
                   <span id="currentNeighborhoodName">All Areas</span>
                   <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
                   
-                  <div id="neighborhoodMenu" class="glass-card" style="position: absolute; top: 100%; left: 0; width: 220px; max-height: 300px; overflow-y: auto; display: none; z-index: 20006; padding: 10px; margin-top: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.5); border: 1px solid rgba(0, 229, 255, 0.2);">
+                  <div id="neighborhoodMenu" class="glass-card" style="position: absolute; top: 100%; left: 0; width: 220px; max-height: 300px; overflow-y: auto; display: none; z-index: 10001; padding: 10px; margin-top: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); border: 1px solid rgba(0, 229, 255, 0.4); background: #121425;">
                     <div id="neighborhoodList" style="display: flex; flex-direction: column; gap: 4px;">
                       <div class="neighborhood-item" onclick="window.updateAnalysisForArea('All Areas', null, null)" style="padding: 10px; cursor: pointer; border-radius: 6px;"><strong>All Areas (City Wide)</strong></div>
                       <div style="padding: 10px; text-align: center; color: #aaa;">Detecting main areas...</div>
