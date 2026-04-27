@@ -252,11 +252,28 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
-      const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-      const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-      const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      let lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      let lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      let city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      
+      // STRICT CITY SYNC: Resolve city coordinates if city name is provided to prevent "other city" data
+      if (city && city !== 'Your Area') {
+          try {
+              const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`);
+              const data = await res.json();
+              if (data && data.length > 0) {
+                  lat = parseFloat(data[0].lat);
+                  lng = parseFloat(data[0].lon);
+                  // Update storage to keep synced
+                  localStorage.setItem('kyc_userLat', lat);
+                  localStorage.setItem('kyc_userLng', lng);
+                  console.log(`📍 City Resolved & Locked: ${city} at ${lat}, ${lng}`);
+              }
+          } catch(e) { console.warn("City resolution failed, using provided/stored coords"); }
+      }
+
       document.getElementById('cityName').textContent = city;
 
       let masterPlaces = []; 
@@ -356,28 +373,21 @@
       window.selectCategory = selectCategory;
 
       function triggerCombinedSearch() {
-        // If "All Areas" and "All Categories" are selected, use default city-wide fetch
-        if (currentArea === 'all' && currentCategory === 'all') {
-          fetchAllAttractions(lat, lng, city);
-          return;
-        }
-
-        // If a specific area is selected, use its coords. Otherwise use city center.
         let targetLat = lat, targetLng = lng;
-        let radius = 15000; // Default city-wide for category searches
+        let radius = 25000; // City-wide radius
 
         if (currentArea !== 'all') {
           const coords = JSON.parse(currentArea);
           targetLat = coords.lat;
           targetLng = coords.lng;
-          radius = 5000; // Narrower search for specific neighborhoods
+          radius = 5000; 
         }
 
         const categoryFilter = currentCategory !== 'all' ? TOURIST_CATEGORIES_MAP[currentCategory] : null;
         
         document.getElementById('loadingSpinner').style.display = 'flex';
         document.getElementById('resultsGrid').innerHTML = '';
-        document.getElementById('resultsMeta').textContent = `Fetching ${catText.textContent} in ${areaText.textContent}...`;
+        document.getElementById('resultsMeta').textContent = `Syncing results for ${catText.textContent} in ${areaText.textContent}...`;
 
         fetchAllAttractions(targetLat, targetLng, city, radius, categoryFilter);
       }
@@ -404,7 +414,7 @@
 
       fetchCityAreas(city, lat, lng);
 
-      const CACHE_KEY = `kyc_cache_safezone_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_KEY = `kyc_cache_safezone_${city.replace(/\s/g,'_')}`;
       const CACHE_TTL = 30 * 60 * 1000; 
 
       const detailOverlay = document.getElementById('detailOverlay');
@@ -412,29 +422,7 @@
       document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
       detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
 
-      const SAFE_ZONE_KNOWLEDGE_BASE = {
-        'solapur': [
-          { name: 'Civil Lines', type: 'Residential', description: 'Elite residential area with wide roads and high security presence.', lat: 17.6599, lng: 75.9064 },
-          { name: 'Siddheshwar Temple Area', type: 'Public Safety', description: 'Highly monitored religious zone with 24/7 CCTV and police post.', lat: 17.6715, lng: 75.9102 },
-          { name: 'Saddu Basti', type: 'Residential', description: 'Quiet family-oriented neighbourhood near the lake.', lat: 17.6655, lng: 75.9188 }
-        ],
-        'mumbai': [
-          { name: 'Juhu Scheme', type: 'Residential', description: 'High-end residential zone with excellent private security and lighting.', lat: 19.1075, lng: 72.8263 },
-          { name: 'Marine Drive Promenade', type: 'Public Safety', description: 'Verified safe night-walk zone with constant PCR patrolling.', lat: 18.9438, lng: 72.8231 },
-          { name: 'Hiranandani Gardens, Powai', type: 'Residential', description: 'Planned community with integrated surveillance and gated security.', lat: 19.1176, lng: 72.9060 }
-        ],
-        'pune': [
-          { name: 'Koregaon Park', type: 'Residential', description: 'Premium residential and social hub with high surveillance.', lat: 18.5362, lng: 73.8885 },
-          { name: 'Amanora Park Town', type: 'Residential', description: 'Gated township with centralized security monitoring.', lat: 18.5186, lng: 73.9351 }
-        ]
-      };
-
-      const cached = getCachedData(CACHE_KEY);
-      if (cached) {
-        setTimeout(() => renderResults(cached, city, lat, lng, true), 100);
-      } else {
-        fetchAllAttractions(lat, lng, city);
-      }
+      fetchAllAttractions(lat, lng, city);
 
       function getCachedData(key) {
         try {
