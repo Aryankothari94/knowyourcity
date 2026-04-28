@@ -650,9 +650,9 @@
               
               if (contentData.query?.pages) {
                 Object.values(contentData.query.pages).forEach(page => {
-                  if (page.coordinates || page.extract) {
-                    const pLat = page.coordinates ? page.coordinates[0].lat : lat;
-                    const pLng = page.coordinates ? page.coordinates[0].lon : lng;
+                  if (page.coordinates) {
+                    const pLat = page.coordinates[0].lat;
+                    const pLng = page.coordinates[0].lon;
                     
                     const dist = getDistance(lat, lng, pLat, pLng);
                     if (dist < 50) { // Limit to city region
