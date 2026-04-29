@@ -947,30 +947,40 @@
     // HIGH-PRECISION CONCURRENT OVERPASS RACE (Police, Hospital, Fire, CCTV)
     async function fetchSafetyDataDirect(lat, lng, city, customRadius = null, categoryFilter = null) {
       const radius = customRadius || 25000; // Default 25km radius for better city-wide coverage
-      
-      // CLEAN CITY NAME: "Mumbai, Maharashtra, India" -> "Mumbai"
       let searchName = city ? city.split(',')[0].trim() : null;
+      let bboxFilter = '';
+      let isBbox = false;
       
-      // SMART QUERY: Try searching by area first for "Whole City" context, UNLESS a custom radius is provided (Neighborhood mode)
-      const areaPart = (searchName && !customRadius) ? `area[name="${searchName}"]->.searchArea;` : '';
-      const filterPart = (searchName && !customRadius) ? `(area.searchArea)` : `(around:${radius},${lat},${lng})`;
+      // Attempt to get strict bounding box for the city from Nominatim
+      if (searchName && !customRadius) {
+        try {
+          const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchName)}&limit=1&countrycodes=in`);
+          const nomData = await nomRes.json();
+          if (nomData && nomData.length > 0 && nomData[0].boundingbox) {
+             const b = nomData[0].boundingbox; // [latMin, latMax, lonMin, lonMax]
+             bboxFilter = `(${b[0]},${b[2]},${b[1]},${b[3]})`; // (south, west, north, east)
+             isBbox = true;
+          }
+        } catch(e) { console.warn("Nominatim bbox fetch failed", e); }
+      }
       
-      const query = categoryFilter ? `[out:json][timeout:30];
-        ${areaPart}
+      // Fallback to radius if bbox fails or custom radius is provided
+      const filterPart = isBbox ? bboxFilter : `(around:${radius},${lat},${lng})`;
+      
+      const query = categoryFilter ? `[out:json][timeout:15];
         (
           node${categoryFilter}${filterPart};
           way${categoryFilter}${filterPart};
           relation${categoryFilter}${filterPart};
         );
-        out center tags 100;` : `[out:json][timeout:30];
-        ${areaPart}
+        out center tags 100;` : `[out:json][timeout:15];
         (
-          nw['amenity'='police']${filterPart};
-          nw['amenity'~'hospital|clinic']${filterPart};
-          nw['healthcare'~'hospital|clinic']${filterPart};
-          nw['amenity'='fire_station']${filterPart};
-          node['man_made'~'surveillance|security']${filterPart};
-          node['amenity'='cctv']${filterPart};
+          nwr['amenity'='police']${filterPart};
+          nwr['amenity'~'hospital|clinic']${filterPart};
+          nwr['healthcare'~'hospital|clinic']${filterPart};
+          nwr['amenity'='fire_station']${filterPart};
+          nwr['man_made'~'surveillance|security']${filterPart};
+          nwr['amenity'='cctv']${filterPart};
         );
         out center tags 5000;`;
       
@@ -988,14 +998,14 @@
           }).then(r => r.ok ? r.json() : Promise.reject())
         ));
         
-        // SMART FALLBACK: If area search returned 0 results, retry with radius search
-        if ((!fastestResponse.elements || fastestResponse.elements.length === 0) && searchName && !customRadius) {
+        // SMART FALLBACK: If bbox search returned 0 results, retry with radius search
+        if ((!fastestResponse.elements || fastestResponse.elements.length === 0) && isBbox) {
            console.log(`⚠️ No area data for "${searchName}", falling back to radius search...`);
            return fetchSafetyDataDirect(lat, lng, null, radius, categoryFilter); // Pass null to force radius search
         }
 
         return { 
-          source: searchName && fastestResponse.elements?.length > 0 && !customRadius ? `City-Wide Data for ${searchName}` : `Live Proximity Search (${radius/1000}km)`, 
+          source: isBbox && fastestResponse.elements?.length > 0 ? `City-Wide Data for ${searchName}` : `Live Proximity Search (${radius/1000}km)`, 
           elements: fastestResponse.elements || [] 
         };
       } catch (e) {
@@ -3440,3 +3450,7 @@
   </script>
 </body>
 </html>
+
+
+
+
