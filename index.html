@@ -946,26 +946,11 @@
 
     // HIGH-PRECISION CONCURRENT OVERPASS RACE (Police, Hospital, Fire, CCTV)
     async function fetchSafetyDataDirect(lat, lng, city, customRadius = null, categoryFilter = null) {
-      const radius = customRadius || 25000; // Default 25km radius for better city-wide coverage
+      // Force a strict 12km radius (10-15km requested) to prevent cross-city data bleeding
+      const radius = customRadius || 12000; 
       let searchName = city ? city.split(',')[0].trim() : null;
-      let bboxFilter = '';
-      let isBbox = false;
       
-      // Attempt to get strict bounding box for the city from Nominatim
-      if (searchName && !customRadius) {
-        try {
-          const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchName)}&limit=1&countrycodes=in`);
-          const nomData = await nomRes.json();
-          if (nomData && nomData.length > 0 && nomData[0].boundingbox) {
-             const b = nomData[0].boundingbox; // [latMin, latMax, lonMin, lonMax]
-             bboxFilter = `(${b[0]},${b[2]},${b[1]},${b[3]})`; // (south, west, north, east)
-             isBbox = true;
-          }
-        } catch(e) { console.warn("Nominatim bbox fetch failed", e); }
-      }
-      
-      // Fallback to radius if bbox fails or custom radius is provided
-      const filterPart = isBbox ? bboxFilter : `(around:${radius},${lat},${lng})`;
+      const filterPart = `(around:${radius},${lat},${lng})`;
       
       const query = categoryFilter ? `[out:json][timeout:15];
         (
@@ -997,15 +982,9 @@
             body: 'data=' + encodeURIComponent(query)
           }).then(r => r.ok ? r.json() : Promise.reject())
         ));
-        
-        // SMART FALLBACK: If bbox search returned 0 results, retry with radius search
-        if ((!fastestResponse.elements || fastestResponse.elements.length === 0) && isBbox) {
-           console.log(`⚠️ No area data for "${searchName}", falling back to radius search...`);
-           return fetchSafetyDataDirect(lat, lng, null, radius, categoryFilter); // Pass null to force radius search
-        }
 
         return { 
-          source: isBbox && fastestResponse.elements?.length > 0 ? `City-Wide Data for ${searchName}` : `Live Proximity Search (${radius/1000}km)`, 
+          source: `Live Proximity Search (${radius/1000}km)`, 
           elements: fastestResponse.elements || [] 
         };
       } catch (e) {
