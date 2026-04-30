@@ -430,10 +430,12 @@
       }
 
       async function fetchCityAreas(cityName, cLat, cLng) {
-        // High-precision query for main city areas, suburbs, and districts
+        // High-precision query for main city areas, suburbs, districts, localities, and Indian names
         const query = `[out:json][timeout:30];
           (
-            nwr["place"~"suburb|city_district|borough|quarter|neighbourhood|village"](around:25000,${cLat},${cLng});
+            nwr["place"~"suburb|city_district|borough|quarter|neighbourhood|village|locality|hamlet|town"](around:25000,${cLat},${cLng});
+            nwr["landuse"="residential"]["name"](around:25000,${cLat},${cLng});
+            nwr["name"~"Peth|Nagar|Wadi|Colony|Vihar|Enclave|Baug|Khand|Ganj",i](around:25000,${cLat},${cLng});
           );
           out center;`;
         
@@ -450,19 +452,29 @@
               name: el.tags.name || el.tags['name:en'],
               lat: el.lat || el.center.lat,
               lng: el.lon || el.center.lon,
-              type: el.tags.place
+              type: el.tags.place || (el.tags.landuse === 'residential' ? 'residential' : 'locality')
             }))
             .filter(a => {
-              if (!a.name || seen.has(a.name.toLowerCase())) return false;
-              seen.add(a.name.toLowerCase());
+              if (!a.name || a.name.length < 3) return false;
+              const cleanName = a.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+              if (seen.has(cleanName)) return false;
+              seen.add(cleanName);
               return true;
             })
             .sort((a, b) => {
-              // Priority: city_district/borough (1) > suburb (2) > quarter (3) > neighbourhood (4) > others (5)
-              const priority = { 'city_district': 1, 'borough': 1, 'suburb': 2, 'quarter': 3, 'neighbourhood': 4, 'village': 5 };
+              // Priority: city_district/borough (1) > suburb (2) > residential/Peths (3) > quarter/neighbourhood (4) > others
+              const priority = { 'city_district': 1, 'borough': 1, 'suburb': 2, 'residential': 3, 'quarter': 4, 'neighbourhood': 4, 'locality': 5, 'village': 6, 'hamlet': 7, 'town': 8 };
               const pA = priority[a.type] || 6;
               const pB = priority[b.type] || 6;
-              if (pA !== pB) return pA - pB;
+              
+              // Boost specifically for known Indian suffixes
+              const boostA = /peth|nagar|wadi|colony|vihar/i.test(a.name) ? -0.5 : 0;
+              const boostB = /peth|nagar|wadi|colony|vihar/i.test(b.name) ? -0.5 : 0;
+
+              const finalPA = pA + boostA;
+              const finalPB = pB + boostB;
+
+              if (finalPA !== finalPB) return finalPA - finalPB;
               return a.name.localeCompare(b.name);
             });
           
