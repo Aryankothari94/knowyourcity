@@ -9,7 +9,9 @@ const client = new OAuth2Client("808171982330-2hrbreabki0uj3aluob8vhbsecnu00ob.a
 
 // Setup the Transporter with high-speed optimization
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     pool: true,
     family: 4,    // STRICT IPv4 only to avoid ENETUNREACH IPv6 timeout
     auth: {
