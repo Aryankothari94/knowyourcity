@@ -110,8 +110,8 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
         try {
             const query = `[out:json][timeout:25];
                 (
-                    node["place"~"suburb|neighbourhood"](around:25000,${lat},${lng});
-                    way["place"~"suburb|neighbourhood"](around:25000,${lat},${lng});
+                    node["place"~"suburb|neighbourhood|quarter|village|city_district"](around:25000,${lat},${lng});
+                    way["place"~"suburb|neighbourhood|quarter|village|city_district"](around:25000,${lat},${lng});
                 );
                 out center;`;
             
@@ -165,12 +165,14 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
 
     const fetchBestTouristSpots = async (lat, lon, cityName) => {
         try {
+            // Reduce radius if we are searching for a specific area (detected by checking if selectedAreaName is not default)
+            const searchRadius = selectedAreaName !== 'Select your area' ? 3000 : 20000;
             const query = `[out:json][timeout:25];
                 (
-                    node["tourism"~"attraction|museum|zoo|theme_park|gallery|viewpoint|resort"](around:20000,${lat},${lon});
-                    way["tourism"~"attraction|museum|zoo|theme_park|gallery|viewpoint|resort"](around:20000,${lat},${lon});
-                    node["historic"~"monument|memorial|castle|fort|heritage"](around:20000,${lat},${lon});
-                    way["historic"~"monument|memorial|castle|fort|heritage"](around:20000,${lat},${lon});
+                    node["tourism"~"attraction|museum|zoo|theme_park|gallery|viewpoint|resort"](around:${searchRadius},${lat},${lon});
+                    way["tourism"~"attraction|museum|zoo|theme_park|gallery|viewpoint|resort"](around:${searchRadius},${lat},${lon});
+                    node["historic"~"monument|memorial|castle|fort|heritage"](around:${searchRadius},${lat},${lon});
+                    way["historic"~"monument|memorial|castle|fort|heritage"](around:${searchRadius},${lat},${lon});
                 );
                 out center tags 80;`;
 

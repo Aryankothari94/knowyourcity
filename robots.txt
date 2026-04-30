@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and backend routes
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /server/
+Disallow: /scratch/
+
+# Sitemap location
+Sitemap: https://knowyourcitys.in/sitemap.xml

@@ -5,6 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Safe Neighbourhoods — KnowYourCity</title>
   <meta name="description" content="Discover safe, family-friendly tourist attractions and heritage sites near your location." />
+
+  <!-- SEO & Primary Meta Tags -->
+  <meta name="keywords" content="safe neighborhoods India, safezone, city relocation guide, local area safety" />
+  <meta name="author" content="Know Your City" />
+  <link rel="canonical" href="https://knowyourcitys.in/safezone.html" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://knowyourcitys.in/safezone.html" />
+  <meta property="og:title" content="Safe Neighbourhoods — KnowYourCity" />
+  <meta property="og:description" content="Discover safe, family-friendly tourist attractions and heritage sites near your location." />
+  <meta property="og:image" content="https://knowyourcitys.in/logo.png" />
+  <meta property="og:site_name" content="Know Your City" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://knowyourcitys.in/safezone.html" />
+  <meta property="twitter:title" content="Safe Neighbourhoods — KnowYourCity" />
+  <meta property="twitter:description" content="Discover safe, family-friendly tourist attractions and heritage sites near your location." />
+  <meta property="twitter:image" content="https://knowyourcitys.in/logo.png" />
+  
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Safe Neighbourhoods — KnowYourCity",
+    "url": "https://knowyourcitys.in/safezone.html",
+    "description": "Discover safe, family-friendly tourist attractions and heritage sites near your location.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Know Your City",
+      "logo": "https://knowyourcitys.in/logo.png"
+    }
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
@@ -380,7 +417,7 @@
           const coords = JSON.parse(currentArea);
           targetLat = coords.lat;
           targetLng = coords.lng;
-          radius = 5000; 
+          radius = 3000; // Focused area radius
         }
 
         const categoryFilter = currentCategory !== 'all' ? TOURIST_CATEGORIES_MAP[currentCategory] : null;
@@ -393,17 +430,55 @@
       }
 
       async function fetchCityAreas(cityName, cLat, cLng) {
-        const query = `[out:json][timeout:25];(node["place"~"suburb|neighbourhood"](around:25000,${cLat},${cLng});way["place"~"suburb|neighbourhood"](around:25000,${cLat},${cLng}););out center;`;
+        // High-precision query for main city areas, suburbs, and districts
+        const query = `[out:json][timeout:30];
+          (
+            nwr["place"~"suburb|city_district|borough|quarter|neighbourhood|village"](around:25000,${cLat},${cLng});
+          );
+          out center;`;
+        
         try {
-          const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query) });
-          const data = await res.json();
-          cityAreas = data.elements.map(el => ({ name: el.tags.name || el.tags['name:en'], lat: el.lat || el.center.lat, lng: el.lon || el.center.lon })).filter(a => a.name).sort((a,b) => a.name.localeCompare(b.name));
+          const mirrors = ['https://overpass-api.de/api/interpreter', 'https://lz4.overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+          const res = await Promise.any(mirrors.map(url => 
+            fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(query) })
+              .then(r => r.ok ? r.json() : Promise.reject())
+          ));
+          
+          const seen = new Set();
+          cityAreas = res.elements
+            .map(el => ({
+              name: el.tags.name || el.tags['name:en'],
+              lat: el.lat || el.center.lat,
+              lng: el.lon || el.center.lon,
+              type: el.tags.place
+            }))
+            .filter(a => {
+              if (!a.name || seen.has(a.name.toLowerCase())) return false;
+              seen.add(a.name.toLowerCase());
+              return true;
+            })
+            .sort((a, b) => {
+              // Priority: city_district/borough (1) > suburb (2) > quarter (3) > neighbourhood (4) > others (5)
+              const priority = { 'city_district': 1, 'borough': 1, 'suburb': 2, 'quarter': 3, 'neighbourhood': 4, 'village': 5 };
+              const pA = priority[a.type] || 6;
+              const pB = priority[b.type] || 6;
+              if (pA !== pB) return pA - pB;
+              return a.name.localeCompare(b.name);
+            });
+          
+          // Clear current items (except Whole City)
+          const itemsToRemove = areaList.querySelectorAll('.dropdown-item:not([data-value="all"])');
+          itemsToRemove.forEach(item => item.remove());
+
           cityAreas.forEach(area => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
             const val = JSON.stringify({lat: area.lat, lng: area.lng});
             item.setAttribute('data-value', val);
-            item.textContent = area.name;
+            item.innerHTML = `<span>${area.name}</span><small style="opacity:0.5; font-size:0.7rem; margin-left:auto;">${area.type.replace('_',' ')}</small>`;
+            item.style.display = 'flex';
+            item.style.justifyContent = 'space-between';
+            item.style.alignItems = 'center';
             item.onclick = () => selectArea(val, area.name);
             areaList.appendChild(item);
           });
@@ -446,9 +521,10 @@
         let allPlaces = [];
 
         // 1. Wikipedia Category-Specific Scrape (New: targeted search)
+        const searchLocation = currentArea !== 'all' ? `${areaText.textContent}, ${cityName}` : cityName;
         if (currentCategory !== 'all' || allPlaces.length < 20) {
             try {
-                const wikiPlaces = await fetchWikipediaByCategory(cityName, currentCategory, lat, lng);
+                const wikiPlaces = await fetchWikipediaByCategory(searchLocation, currentCategory, lat, lng);
                 allPlaces = [...allPlaces, ...wikiPlaces];
             } catch(e) { console.warn("Wiki category fetch failed", e); }
         }
