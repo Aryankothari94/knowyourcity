@@ -431,11 +431,11 @@
 
       async function fetchCityAreas(cityName, cLat, cLng) {
         // High-precision query for main city areas, suburbs, districts, localities, and Indian names
-        const query = `[out:json][timeout:30];
+        // Optimized: 15km radius, and regex applied ONLY to nodes to prevent API timeouts.
+        const query = `[out:json][timeout:25];
           (
-            nwr["place"~"suburb|city_district|borough|quarter|neighbourhood|village|locality|hamlet|town"](around:25000,${cLat},${cLng});
-            nwr["landuse"="residential"]["name"](around:25000,${cLat},${cLng});
-            nwr["name"~"Peth|Nagar|Wadi|Colony|Vihar|Enclave|Baug|Khand|Ganj",i](around:25000,${cLat},${cLng});
+            nwr["place"~"suburb|city_district|borough|quarter|neighbourhood|village|locality|hamlet|town"](around:15000,${cLat},${cLng});
+            node["name"~"Peth|Nagar|Wadi|Colony|Vihar|Enclave|Baug|Khand|Ganj",i](around:15000,${cLat},${cLng});
           );
           out center;`;
         
