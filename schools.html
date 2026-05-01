@@ -52,6 +52,112 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
+
+  <style>
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .custom-area-dropdown {
+      position: relative;
+      width: 200px;
+      z-index: 1000;
+    }
+    .dropdown-trigger {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px !important;
+      border-radius: 50px !important;
+      border: 1px solid rgba(255,255,255,0.15) !important;
+      background: rgba(30,32,47,0.8) !important;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.8rem;
+      font-weight: 500;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .dropdown-trigger:hover {
+      border-color: var(--accent-cyan) !important;
+      background: rgba(35,38,55,0.9) !important;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    }
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      background: rgba(20, 22, 35, 0.95);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideDown 0.3s ease forwards;
+    }
+    .dropdown-menu.active {
+      display: flex;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown-search-wrapper {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .dropdown-search {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    .dropdown-search:focus {
+      border-color: var(--accent-cyan);
+    }
+    .dropdown-list {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .dropdown-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dropdown-item:hover {
+      background: rgba(0, 229, 255, 0.1);
+      color: #fff;
+    }
+    .dropdown-item.active {
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+    .dropdown-list::-webkit-scrollbar { width: 4px; }
+    .dropdown-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    @media (max-width: 768px) {
+      .results-header { flex-direction: column; align-items: flex-start; }
+      .custom-area-dropdown { width: 100%; }
+    }
+  </style>
 </head>
 <body>
   <!-- ===== NAVBAR ===== -->
@@ -101,8 +207,52 @@
   <section class="feature-results">
     <div class="container">
       <div class="results-header">
-        <h2 id="resultsCount">Searching for schools...</h2>
-        <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+        <div class="header-main">
+          <h2 id="resultsCount">Searching for schools...</h2>
+          <div class="results-meta" id="resultsMeta">Fetching real-time data</div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <!-- Category Dropdown -->
+          <div class="custom-area-dropdown">
+            <div class="dropdown-trigger" id="categoryDropdownTrigger">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.7;">filter_list</span>
+                <span id="selectedCategoryText">All Categories</span>
+              </div>
+              <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.6;">expand_more</span>
+            </div>
+            <div class="dropdown-menu" id="categoryDropdownMenu">
+              <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search" id="categorySearchInput" placeholder="Search category...">
+              </div>
+              <div class="dropdown-list" id="categoryDropdownList">
+                <div class="dropdown-item active" onclick="selectCategory('all', 'All Categories')"><strong>All Categories</strong></div>
+                <div class="dropdown-item" onclick="selectCategory('school', 'Schools')">Schools</div>
+                <div class="dropdown-item" onclick="selectCategory('college', 'Colleges & Universities')">Colleges & Universities</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Area Dropdown -->
+          <div class="custom-area-dropdown">
+            <div class="dropdown-trigger" id="areaDropdownTrigger">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.7;">location_on</span>
+                <span id="selectedAreaText">Whole City</span>
+              </div>
+              <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.6;">expand_more</span>
+            </div>
+            <div class="dropdown-menu" id="areaDropdownMenu">
+              <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search" id="areaSearchInput" placeholder="Search area...">
+              </div>
+              <div class="dropdown-list" id="areaDropdownList">
+                <div class="dropdown-item active" data-value="all">Whole City</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner"></div>
@@ -130,7 +280,7 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
 
       // --- Dynamic Loading Text ---
       const loadingTexts = [
@@ -154,102 +304,177 @@
       // ----------------------------
 
       const params = new URLSearchParams(window.location.search);
-      const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-      const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-      const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      let lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      let lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      let city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      
       document.getElementById('cityName').textContent = city;
 
-      const CACHE_KEY = `kyc_cache_schools_${Math.round(lat*100)}_${Math.round(lng*100)}`;
-      const CACHE_TTL = 30 * 60 * 1000;
+      let currentArea = 'all';
+      let currentCategory = 'all';
 
-      const detailOverlay = document.getElementById('detailOverlay');
-      const detailBody = document.getElementById('detailBody');
-      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
-      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
+      // Dropdown Elements
+      const areaTrigger = document.getElementById('areaDropdownTrigger');
+      const areaMenu = document.getElementById('areaDropdownMenu');
+      const areaSearch = document.getElementById('areaSearchInput');
+      const areaList = document.getElementById('areaDropdownList');
+      const areaText = document.getElementById('selectedAreaText');
 
-      // Check cache
-      try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (raw) {
-          const { data, timestamp } = JSON.parse(raw);
-          if (Date.now() - timestamp < CACHE_TTL) {
-            document.getElementById('loadingSpinner').style.display = 'none';
-            renderSchools(data, city);
-            return;
-          } else { localStorage.removeItem(CACHE_KEY); }
+      const catTrigger = document.getElementById('categoryDropdownTrigger');
+      const catMenu = document.getElementById('categoryDropdownMenu');
+      const catSearch = document.getElementById('categorySearchInput');
+      const catList = document.getElementById('categoryDropdownList');
+      const catText = document.getElementById('selectedCategoryText');
+
+      areaTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        areaMenu.classList.toggle('active');
+        catMenu.classList.remove('active');
+        if(areaMenu.classList.contains('active')) areaSearch.focus();
+      });
+
+      catTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        catMenu.classList.toggle('active');
+        areaMenu.classList.remove('active');
+        if(catMenu.classList.contains('active')) catSearch.focus();
+      });
+
+      document.addEventListener('click', () => {
+        areaMenu.classList.remove('active');
+        catMenu.classList.remove('active');
+      });
+
+      [areaSearch, catSearch].forEach(input => {
+        input.addEventListener('input', (e) => {
+          const q = e.target.value.toLowerCase();
+          const list = e.target.id === 'areaSearchInput' ? areaList : catList;
+          list.querySelectorAll('.dropdown-item').forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(q) ? 'block' : 'none';
+          });
+        });
+      });
+
+      window.selectArea = (value, text) => {
+        areaText.textContent = text;
+        areaList.querySelectorAll('.dropdown-item').forEach(item => {
+          item.classList.toggle('active', item.getAttribute('data-value') === value);
+        });
+        areaMenu.classList.remove('active');
+        areaSearch.value = '';
+        currentArea = value;
+        triggerFilter();
+      };
+
+      window.selectCategory = (value, text) => {
+        catText.textContent = text;
+        catList.querySelectorAll('.dropdown-item').forEach(item => {
+           const onClickStr = item.getAttribute('onclick') || '';
+           item.classList.toggle('active', onClickStr.includes(`'${value}'`));
+        });
+        catMenu.classList.remove('active');
+        catSearch.value = '';
+        currentCategory = value;
+        triggerFilter();
+      };
+
+      function triggerFilter() {
+        let targetLat = lat, targetLng = lng;
+        let radius = 25000;
+
+        if (currentArea !== 'all') {
+          const coords = JSON.parse(currentArea);
+          targetLat = coords.lat;
+          targetLng = coords.lng;
+          radius = 5000; 
         }
-      } catch {}
 
+        document.getElementById('loadingSpinner').style.display = 'flex';
+        document.getElementById('resultsGrid').innerHTML = '';
+        document.getElementById('resultsMeta').textContent = `Filtering for ${catText.textContent} in ${areaText.textContent}...`;
+        
+        fetchSchools(targetLat, targetLng, radius, currentCategory);
+      }
+
+      async function fetchCityAreas(cLat, cLng) {
+        const query = `[out:json][timeout:25];
+          (
+            nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${cLat},${cLng});
+          );
+          out center;`;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          const seen = new Set();
+          const areas = data.elements.map(el => ({
+            name: el.tags.name || el.tags['name:en'],
+            lat: el.lat || el.center.lat,
+            lng: el.lon || el.center.lon,
+            type: el.tags.place
+          })).filter(a => a.name && !seen.has(a.name) && seen.add(a.name))
+          .sort((a,b) => a.name.localeCompare(b.name));
+
+          areas.forEach(area => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            const val = JSON.stringify({lat: area.lat, lng: area.lng});
+            item.setAttribute('data-value', val);
+            item.innerHTML = `<span>${area.name}</span><small style="opacity:0.5; font-size:0.7rem; margin-left:auto;">${area.type}</small>`;
+            item.style.display = 'flex';
+            item.onclick = () => selectArea(val, area.name);
+            areaList.appendChild(item);
+          });
+          const allItem = areaList.querySelector('[data-value="all"]');
+          if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
+        } catch(e) {}
+      }
+
+      fetchCityAreas(lat, lng);
       fetchSchools(lat, lng);
 
-      async function fetchSchools(lat, lng) {
+      async function fetchSchools(targetLat, targetLng, radius = 25000, category = 'all') {
+        const categoryFilter = category === 'school' ? 'node["amenity"="school"]' : 
+                               category === 'college' ? 'node["amenity"="college"]' : 
+                               '(node["amenity"="school"];node["amenity"="college"];way["amenity"="school"];way["amenity"="college"];)';
+        
         const query = `
           [out:json][timeout:25];
           (
-            node["amenity"="school"](around:25000,${lat},${lng});
-            way["amenity"="school"](around:25000,${lat},${lng});
-            node["amenity"="college"](around:25000,${lat},${lng});
-            way["amenity"="college"](around:25000,${lat},${lng});
+            ${category === 'all' ? categoryFilter.replace(/;/g, `(around:${radius},${targetLat},${targetLng});`).replace(/\)$/, `(around:${radius},${targetLat},${targetLng});)`) : `${categoryFilter}(around:${radius},${targetLat},${targetLng});`}
           );
-          out center tags 500;
+          out center tags 300;
         `;
-                try {
-          let data = null;
-          const endpoints = [
-            'https://overpass.kumi.systems/api/interpreter',
-            'https://lz4.overpass-api.de/api/interpreter',
-            'https://overpass-api.de/api/interpreter',
-            'https://overpass.osm.ch/api/interpreter'
-          ];
-          let attempts = 0;
-          let currentRadius = 15000;
-          let dynamicQuery = query;
 
-          while (!data || !data.elements || data.elements.length === 0) {
-            for (const ep of endpoints) {
-                try {
-                    const lText = document.getElementById('loadingText');
-                    if(lText) lText.textContent = "Fetching data fast for city... (" + attempts + ")";
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const res = await fetch(ep, {
-                        method: 'POST', body: 'data=' + encodeURIComponent(dynamicQuery), signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    if (res.ok) {
-                        const tData = await res.json();
-                        if (tData.elements && tData.elements.length > 0) {
-                            data = tData;
-                            break;
-                        }
-                    }
-                } catch(e) {}
-                attempts++;
-            }
-            if (!data || !data.elements || data.elements.length === 0) {
-                const lText = document.getElementById('loadingText');
-                if(lText) lText.textContent = "Data not shown, continuing to spin wheel & fetch (expanding radius)...";
-                
-                // Expand radius to fetch all data related to city slowly if needed
-                currentRadius += 10000;
-                // Replace strictly around:XXXXX with around:NEW
-                dynamicQuery = dynamicQuery.replace(/around:\d+/g, 'around:' + currentRadius);
-                
-                await new Promise(r => setTimeout(r, 2000));
-            }
+        // Manual adjustment for 'all' query to be valid Overpass
+        let finalQuery = query;
+        if (category === 'all') {
+            finalQuery = `[out:json][timeout:25];(node["amenity"="school"](around:${radius},${targetLat},${targetLng});way["amenity"="school"](around:${radius},${targetLat},${targetLng});node["amenity"="college"](around:${radius},${targetLat},${targetLng});way["amenity"="college"](around:${radius},${targetLat},${targetLng}););out center tags 300;`;
+        }
+        
+        try {
+          const endpoints = ['https://overpass-api.de/api/interpreter', 'https://lz4.overpass-api.de/api/interpreter'];
+          let data = null;
+          for (const ep of endpoints) {
+            try {
+              const res = await fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(finalQuery) });
+              if (res.ok) { data = await res.json(); break; }
+            } catch(e) {}
           }
           
+          if (!data || !data.elements) throw new Error("No data");
+
           document.getElementById('loadingSpinner').style.display = 'none';
-          document.getElementById('emptyState').style.display = 'none';
+          document.getElementById('emptyState').style.display = data.elements.length === 0 ? 'block' : 'none';
 
           const schools = data.elements.map(el => {
             const elLat = el.lat || el.center?.lat;
             const elLng = el.lon || el.center?.lon;
             const { rating, reviews, safety } = generatePremiumRating(el.id);
             return {
-              name: el.tags?.name || el.tags?.['name:en'] || '',
+              name: el.tags?.name || el.tags?.['name:en'] || 'Unnamed Institution',
               address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
               operator: el.tags?.operator || '',
               website: el.tags?.website || el.tags?.['contact:website'] || '',
@@ -266,12 +491,12 @@
               distance: getDistance(lat, lng, elLat, elLng),
               rating, reviews, safety
             };
-          }).filter(s => s.name).sort((a, b) => b.rating - a.rating);
+          }).filter(s => s.name !== 'Unnamed Institution').sort((a, b) => a.distance - b.distance);
 
-          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: schools, timestamp: Date.now() })); } catch {}
           renderSchools(schools, city);
         } catch (err) {
-          console.error('Data flow error', err);
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('emptyState').style.display = 'block';
         }
       }
 
