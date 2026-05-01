@@ -525,7 +525,7 @@
 
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner"></div>
-                <p>Locating verified hotels near you...</p>
+                <p id="loadingText">Locating verified hotels near you...</p>
             </div>
 
             <div class="results-grid" id="hotelsGrid">
@@ -609,7 +609,7 @@
 
             function triggerFilter() {
                 let targetLat = lat, targetLng = lng;
-                let radius = 15000;
+                let radius = 25000;
 
                 if (currentArea !== 'all') {
                     const coords = JSON.parse(currentArea);
@@ -625,64 +625,70 @@
                 fetchHotels(targetLat, targetLng, city, radius);
             }
 
-            async function fetchCityAreas(cLat, cLng) {
-                const query = `[out:json][timeout:25];
-                  (
-                    nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${cLat},${cLng});
-                  );
-                  out center;`;
-                try {
-                    const res = await fetch('https://overpass-api.de/api/interpreter', {
-                        method: 'POST', body: 'data=' + encodeURIComponent(query)
-                    });
-                    const data = await res.json();
-                    const seen = new Set();
-                    const areas = data.elements.map(el => ({
-                        name: el.tags.name || el.tags['name:en'],
-                        lat: el.lat || el.center.lat,
-                        lng: el.lon || el.center.lon,
-                        type: el.tags.place
-                    })).filter(a => a.name && !seen.has(a.name) && seen.add(a.name))
-                    .sort((a,b) => a.name.localeCompare(b.name));
-
-                    areas.forEach(area => {
-                        const item = document.createElement('div');
-                        item.className = 'dropdown-item';
-                        const val = JSON.stringify({lat: area.lat, lng: area.lng});
-                        item.setAttribute('data-value', val);
-                        item.innerHTML = `<span>${area.name}</span><small style="opacity:0.5; font-size:0.7rem; margin-left:auto;">${area.type}</small>`;
-                        item.style.display = 'flex';
-                        item.onclick = () => selectArea(val, area.name);
-                        areaList.appendChild(item);
-                    });
-                    const allItem = areaList.querySelector('[data-value="all"]');
-                    if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
-                } catch(e) {}
-            }
-
             fetchCityAreas(lat, lng);
-            await fetchHotels(lat, lng, city);
+            await fetchHotels(lat, lng, city, 25000);
         });
 
-        async function fetchHotels(lat, lng, city, radius = 15000) {
+        async function fetchHotels(lat, lng, city, radius = 25000) {
+            const cacheKey = `kyc_hotels_${city.toLowerCase().replace(/\s+/g, '_')}_${radius}`;
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const { timestamp, data } = JSON.parse(cached);
+                if (Date.now() - timestamp < 3600000) {
+                    allHotels = data;
+                    applyFilters();
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    return;
+                }
+            }
+
+            const loadingText = document.getElementById('loadingText');
+            const messages = [
+                "Locating verified hotels...",
+                "Connecting to hospitality mirrors...",
+                "Fetching real-time pricing...",
+                "Analyzing safety ratings...",
+                "Finalizing stay options..."
+            ];
+            let msgIdx = 0;
+            const msgInterval = setInterval(() => {
+                if (document.getElementById('loadingSpinner').style.display !== 'none') {
+                    loadingText.textContent = messages[msgIdx % messages.length];
+                    msgIdx++;
+                } else {
+                    clearInterval(msgInterval);
+                }
+            }, 3000);
+
             document.getElementById('loadingSpinner').style.display = 'flex';
             
-            // Broad OSM Query for all stay types
+            const mirrors = [
+                'https://overpass-api.de/api/interpreter',
+                'https://overpass.kumi.systems/api/interpreter',
+                'https://lz4.overpass-api.de/api/interpreter',
+                'https://overpass.openstreetmap.ru/cgi/interpreter'
+            ];
+
             const query = `[out:json][timeout:30];
                 (node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng});
                  way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng}););
-                out center tags;`;
-            
-            try {
-                // Fetch OSM data
-                const osmTask = fetch('https://overpass-api.de/api/interpreter', {
-                    method: 'POST',
-                    body: 'data=' + encodeURIComponent(query)
-                }).then(r => r.json());
+                out center tags 300;`;
 
-                // Fetch Wikipedia data for notable hotels
-                const wikiTask = fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=10000&gscoord=${lat}|${lng}&gslimit=20&format=json&origin=*&gsprop=type|name`)
-                    .then(r => r.json());
+            try {
+                const osmTask = Promise.any(mirrors.map(url => 
+                    fetch(url, {
+                        method: 'POST',
+                        body: 'data=' + encodeURIComponent(query),
+                        signal: AbortSignal.timeout(12000)
+                    }).then(r => {
+                        if (!r.ok) throw new Error('Mirror failed');
+                        return r.json();
+                    })
+                ));
+
+                const wikiTask = fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=10000&gscoord=${lat}|${lng}&gslimit=20&format=json&origin=*&gsprop=type|name`, {
+                    signal: AbortSignal.timeout(5000)
+                }).then(r => r.json()).catch(() => ({ query: { geosearch: [] } }));
 
                 const [osmData, wikiData] = await Promise.all([osmTask, wikiTask]);
                 
@@ -691,7 +697,6 @@
                     results = osmData.elements.map(el => processHotel(el, lat, lng));
                 }
 
-                // Merge Wikipedia notable hotels (avoiding simple duplicates)
                 if (wikiData.query && wikiData.query.geosearch) {
                     wikiData.query.geosearch.forEach(place => {
                         const isStay = place.title.toLowerCase().includes('hotel') || 
@@ -705,15 +710,66 @@
                 }
 
                 if (results.length === 0) {
+                    clearInterval(msgInterval);
                     showEmpty();
                     return;
                 }
 
                 allHotels = results;
+                localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
+                
                 applyFilters();
                 document.getElementById('loadingSpinner').style.display = 'none';
+                clearInterval(msgInterval);
+            } catch (err) {
+                console.error("Fetch failed:", err);
+                clearInterval(msgInterval);
                 showEmpty();
             }
+        }
+
+        async function fetchCityAreas(cLat, cLng) {
+            const query = `[out:json][timeout:25];
+              (
+                nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${cLat},${cLng});
+              );
+              out center;`;
+            
+            const mirrors = [
+                'https://overpass-api.de/api/interpreter',
+                'https://lz4.overpass-api.de/api/interpreter'
+            ];
+
+            try {
+                const res = await Promise.any(mirrors.map(url => 
+                    fetch(url, {
+                        method: 'POST', body: 'data=' + encodeURIComponent(query),
+                        signal: AbortSignal.timeout(8000)
+                    }).then(r => r.ok ? r.json() : Promise.reject())
+                ));
+
+                const seen = new Set();
+                const areas = res.elements.map(el => ({
+                    name: el.tags.name || el.tags['name:en'],
+                    lat: el.lat || el.center.lat,
+                    lng: el.lon || el.center.lon,
+                    type: el.tags.place
+                })).filter(a => a.name && !seen.has(a.name) && seen.add(a.name))
+                .sort((a,b) => a.name.localeCompare(b.name));
+
+                areas.forEach(area => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item';
+                    const val = JSON.stringify({lat: area.lat, lng: area.lng});
+                    item.setAttribute('data-value', val);
+                    item.innerHTML = `<span>${area.name}</span><small style="opacity:0.5; font-size:0.7rem; margin-left:auto;">${area.type}</small>`;
+                    item.style.display = 'flex';
+                    item.onclick = () => selectArea(val, area.name);
+                    areaList.appendChild(item);
+                });
+                const allItem = areaList.querySelector('[data-value="all"]');
+                if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
+            } catch(e) {}
         }
 
         function showEmpty() {
