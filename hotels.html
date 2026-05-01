@@ -664,11 +664,26 @@
             document.getElementById('loadingSpinner').style.display = 'flex';
             document.getElementById('resultsMeta').textContent = "Syncing with real-time stay databases...";
 
+            // Global Safety Timeout: Ensure spinner hides after 20s no matter what
+            window.safetyTimeout = setTimeout(() => {
+                const spinner = document.getElementById('loadingSpinner');
+                if (spinner && spinner.style.display !== 'none') {
+                    console.warn("[Hotels] Global Safety Timeout reached.");
+                    clearInterval(msgInterval);
+                    showEmpty();
+                }
+            }, 20000);
+
             // --- PRIMARY: BACKEND AGGREGATOR (Mappls + Nominatim + OSM) ---
             try {
                 console.log(`[Hotels] Primary: Attempting Backend Aggregator Fallback (City: ${city})`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 14000); // 14s timeout
+
                 const proxyUrl = `https://knowyourcity.onrender.com/api/safety/hotels?lat=${lat}&lng=${lng}&radius=${radius}&city=${encodeURIComponent(city)}`;
-                const proxyRes = await fetch(proxyUrl);
+                const proxyRes = await fetch(proxyUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 const proxyData = await proxyRes.json();
                 if (proxyData && proxyData.elements && proxyData.elements.length > 0) {
                     console.log(`[Hotels] Backend Success: Found ${proxyData.elements.length} hotels via Aggregator`);
@@ -676,7 +691,10 @@
                     finishFetch(results, cacheKey, msgInterval);
                     return;
                 }
-            } catch (e) { console.error("[Hotels] Backend Aggregator failed", e); }
+            } catch (e) { 
+                console.error("[Hotels] Backend Aggregator failed or timed out", e);
+                // Continue to secondary sources
+            }
 
             // --- SECONDARY: NOMINATIM (Direct Fallback) ---
             if (radius > 10000) {
@@ -710,13 +728,6 @@
                     }
                 } catch (e) { console.warn("Nominatim Stage failed"); }
             }
-
-            // --- STAGE 2: DIRECT OVERPASS MIRRORS (High Precision) ---
-            const mirrors = [
-                'https://overpass-api.de/api/interpreter',
-                'https://lz4.overpass-api.de/api/interpreter',
-                'https://overpass.kumi.systems/api/interpreter'
-            ];
 
             // --- TERTIARY: DIRECT OVERPASS MIRRORS ---
             const mirrors = [
@@ -766,6 +777,8 @@
             localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
             applyFilters();
             document.getElementById('loadingSpinner').style.display = 'none';
+            // Clear any pending safety timeouts
+            if (window.safetyTimeout) clearTimeout(window.safetyTimeout);
         }
 
         async function fetchCityAreas(cLat, cLng) {

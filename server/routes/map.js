@@ -42,13 +42,14 @@ async function getMapplsToken() {
     }
 }
 
-async function fetchMapplsPOI(lat, lng, keyword, radius = 5000) {
+async function fetchMapplsPOI(lat, lng, keyword, radius = 5000, signal) {
     const token = await getMapplsToken();
     if (!token) return [];
     try {
         const url = `https://atlas.mapmyindia.com/api/places/textsearch/json?query=${encodeURIComponent(keyword)}&location=${lat},${lng}&radius=${radius}`;
         const res = await fetch(url, {
-            headers: { 'Authorization': `bearer ${token}` }
+            headers: { 'Authorization': `bearer ${token}` },
+            signal
         });
         if (!res.ok) return [];
         const data = await res.json();
@@ -134,13 +135,14 @@ router.get('/hotels', async (req, res) => {
     const l = parseFloat(lat);
     const ln = parseFloat(lng);
 
-    const fetchOSM = async () => {
+    const fetchOSM = async (signal) => {
         const query = `[out:json][timeout:20];(node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${r},${l},${ln});way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${r},${l},${ln}););out center tags 200;`;
         try {
             const response = await fetch('https://overpass-api.de/api/interpreter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'data=' + encodeURIComponent(query)
+                body: 'data=' + encodeURIComponent(query),
+                signal
             });
             if (response.ok) {
                 const data = await response.json();
@@ -150,9 +152,9 @@ router.get('/hotels', async (req, res) => {
         return [];
     };
 
-    const fetchMappls = async () => {
+    const fetchMappls = async (signal) => {
         try {
-            const pois = await fetchMapplsPOI(l, ln, 'hotel', r);
+            const pois = await fetchMapplsPOI(l, ln, 'hotel', r, signal);
             return (pois || []).map(p => ({
                 id: p.eLoc || p.placeId,
                 tags: { name: p.placeName, tourism: 'hotel', 'addr:street': p.placeAddress },
@@ -163,12 +165,15 @@ router.get('/hotels', async (req, res) => {
         } catch (e) { return []; }
     };
 
-    const fetchNominatim = async () => {
+    const fetchNominatim = async (signal) => {
         if (!city || city === 'Your Area') return [];
         try {
             const primaryCity = city.split(',')[0].trim();
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=hotels+in+${encodeURIComponent(primaryCity)}&limit=100`;
-            const res = await fetch(url, { headers: { 'User-Agent': 'KnowYourCity/1.0' } });
+            const res = await fetch(url, { 
+                headers: { 'User-Agent': 'KnowYourCity/1.0' },
+                signal
+            });
             if (!res.ok) return [];
             const data = await res.json();
             return data.map(p => ({
@@ -181,8 +186,20 @@ router.get('/hotels', async (req, res) => {
         } catch (e) { return []; }
     };
 
+    const fetchWithTimeout = async (fn, timeoutMs = 12000) => {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            return await fn(controller.signal).finally(() => clearTimeout(timeoutId));
+        } catch (e) { return []; }
+    };
+
     try {
-        const [osm, mappls, nom] = await Promise.all([fetchOSM(), fetchMappls(), fetchNominatim()]);
+        const [osm, mappls, nom] = await Promise.all([
+            fetchWithTimeout(signal => fetchOSM(signal)),
+            fetchWithTimeout(signal => fetchMappls(signal)),
+            fetchWithTimeout(signal => fetchNominatim(signal))
+        ]);
         
         const results = [];
         const seen = new Set();
