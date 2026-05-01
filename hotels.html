@@ -662,11 +662,14 @@
             // --- STAGE 1: NOMINATIM (High Reliability) ---
             if (radius > 10000) {
                 try {
-                    const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=hotels+in+${encodeURIComponent(city)}&limit=100&extratags=1`;
+                    const primaryCity = city.split(',')[0].trim();
+                    console.log(`[Hotels] Stage 1: Nominatim search for "hotels in ${primaryCity}"`);
+                    const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=hotels+in+${encodeURIComponent(primaryCity)}&limit=100&extratags=1`;
                     const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'KnowYourCity/1.0' } });
                     const nomData = await nomRes.json();
                     
-                    if (nomData && nomData.length > 5) {
+                    if (nomData && nomData.length > 0) {
+                        console.log(`[Hotels] Stage 1 Success: Found ${nomData.length} hotels via Nominatim`);
                         const results = nomData.map(place => ({
                             id: place.osm_id,
                             name: place.display_name.split(',')[0],
@@ -676,7 +679,7 @@
                             area: place.display_name.split(',')[1]?.trim() || "City Center",
                             rating: 4.0 + (place.osm_id % 10) / 10,
                             reviews: 50 + (place.osm_id % 1500),
-                            price: 1500 + (place.osm_id % 5000),
+                            price: 1500 + (Math.abs(place.osm_id) % 5000),
                             safety: 4.2 + (place.osm_id % 8) / 10,
                             essentials: ["WiFi", "Reception", "CCTV"],
                             distance: getDist(lat, lng, parseFloat(place.lat), parseFloat(place.lon)),
@@ -699,6 +702,7 @@
             const query = `[out:json][timeout:30];(node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng});way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng}););out center tags 400;`;
 
             try {
+                console.log(`[Hotels] Stage 2: Racing Direct Overpass Mirrors (Radius: ${radius}m)`);
                 const osmData = await Promise.any(mirrors.map(mirrorUrl => {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 12000);
@@ -713,23 +717,26 @@
                 }));
 
                 if (osmData && osmData.elements && osmData.elements.length > 0) {
+                    console.log(`[Hotels] Stage 2 Success: Found ${osmData.elements.length} hotels via Direct Overpass`);
                     const results = osmData.elements.map(el => processHotel(el, lat, lng));
                     finishFetch(results, cacheKey, msgInterval);
                     return;
                 }
-            } catch (err) { console.warn("Direct Overpass Stage failed"); }
+            } catch (err) { console.warn("[Hotels] Stage 2 failed", err); }
 
             // --- STAGE 3: BACKEND PROXY FALLBACK (Ultimate Reliability) ---
             try {
-                const proxyUrl = `https://knowyourcity-1.onrender.com/api/safety/hotels?lat=${lat}&lng=${lng}&radius=${radius}`;
+                console.log(`[Hotels] Stage 3: Attempting Backend Proxy Fallback`);
+                const proxyUrl = `https://knowyourcity.onrender.com/api/safety/hotels?lat=${lat}&lng=${lng}&radius=${radius}`;
                 const proxyRes = await fetch(proxyUrl);
                 const proxyData = await proxyRes.json();
                 if (proxyData && proxyData.elements && proxyData.elements.length > 0) {
+                    console.log(`[Hotels] Stage 3 Success: Found ${proxyData.elements.length} hotels via Proxy`);
                     const results = proxyData.elements.map(el => processHotel(el, lat, lng));
                     finishFetch(results, cacheKey, msgInterval);
                     return;
                 }
-            } catch (e) { console.error("Ultimate Proxy Fallback failed"); }
+            } catch (e) { console.error("[Hotels] Ultimate Proxy Fallback failed", e); }
 
             // Final Failure
             clearInterval(msgInterval);
