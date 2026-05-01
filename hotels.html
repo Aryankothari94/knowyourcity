@@ -626,83 +626,80 @@
             }
 
             fetchCityAreas(lat, lng);
-            await fetchHotels(lat, lng, city, 25000);
+            fetchHotels(lat, lng, city, 25000);
         });
 
         async function fetchHotels(lat, lng, city, radius = 25000) {
             const cacheKey = `kyc_hotels_${city.toLowerCase().replace(/\s+/g, '_')}_${radius}`;
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
-                const { timestamp, data } = JSON.parse(cached);
-                if (Date.now() - timestamp < 3600000) {
-                    allHotels = data;
-                    applyFilters();
-                    document.getElementById('loadingSpinner').style.display = 'none';
-                    return;
-                }
+                try {
+                    const { timestamp, data } = JSON.parse(cached);
+                    if (Date.now() - timestamp < 3600000 && data.length > 0) {
+                        allHotels = data;
+                        applyFilters();
+                        document.getElementById('loadingSpinner').style.display = 'none';
+                        return;
+                    }
+                } catch(e) { localStorage.removeItem(cacheKey); }
             }
 
             const loadingText = document.getElementById('loadingText');
-            const messages = [
-                "Locating verified hotels...",
-                "Connecting to hospitality mirrors...",
-                "Fetching real-time pricing...",
-                "Analyzing safety ratings...",
-                "Finalizing stay options..."
-            ];
+            const messages = ["Locating hotels...", "Trying hospitality mirrors...", "Processing data..."];
             let msgIdx = 0;
             const msgInterval = setInterval(() => {
-                if (document.getElementById('loadingSpinner').style.display !== 'none') {
+                const spinner = document.getElementById('loadingSpinner');
+                if (spinner && spinner.style.display !== 'none') {
                     loadingText.textContent = messages[msgIdx % messages.length];
                     msgIdx++;
-                } else {
-                    clearInterval(msgInterval);
-                }
+                } else { clearInterval(msgInterval); }
             }, 3000);
 
             document.getElementById('loadingSpinner').style.display = 'flex';
+            document.getElementById('resultsMeta').textContent = "Connecting to global hospitality networks...";
             
             const mirrors = [
                 'https://overpass-api.de/api/interpreter',
-                'https://overpass.kumi.systems/api/interpreter',
                 'https://lz4.overpass-api.de/api/interpreter',
+                'https://overpass.kumi.systems/api/interpreter',
                 'https://overpass.openstreetmap.ru/cgi/interpreter'
             ];
 
-            const query = `[out:json][timeout:30];
-                (node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng});
-                 way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng}););
-                out center tags 300;`;
+            const query = `[out:json][timeout:30];(node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng});way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng}););out center tags 400;`;
 
             try {
-                const osmTask = Promise.any(mirrors.map(url => 
-                    fetch(url, {
-                        method: 'POST',
-                        body: 'data=' + encodeURIComponent(query),
-                        signal: AbortSignal.timeout(12000)
-                    }).then(r => {
-                        if (!r.ok) throw new Error('Mirror failed');
-                        return r.json();
-                    })
-                ));
+                // Racing Mirrors with GET (to avoid preflight CORS blocks)
+                const osmTask = Promise.any(mirrors.map(mirrorUrl => {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000);
+                    const finalUrl = `${mirrorUrl}?data=${encodeURIComponent(query)}`;
+                    
+                    return fetch(finalUrl, { signal: controller.signal })
+                        .then(r => {
+                            clearTimeout(timeoutId);
+                            if (!r.ok) throw new Error('Mirror status ' + r.status);
+                            return r.json();
+                        })
+                        .catch(err => {
+                            clearTimeout(timeoutId);
+                            throw err;
+                        });
+                }));
 
-                const wikiTask = fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=10000&gscoord=${lat}|${lng}&gslimit=20&format=json&origin=*&gsprop=type|name`, {
-                    signal: AbortSignal.timeout(5000)
-                }).then(r => r.json()).catch(() => ({ query: { geosearch: [] } }));
+                const wikiTask = fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=10000&gscoord=${lat}|${lng}&gslimit=20&format=json&origin=*&gsprop=type|name`)
+                    .then(r => r.json())
+                    .catch(() => ({ query: { geosearch: [] } }));
 
                 const [osmData, wikiData] = await Promise.all([osmTask, wikiTask]);
                 
                 let results = [];
-                if (osmData.elements) {
+                if (osmData && osmData.elements) {
                     results = osmData.elements.map(el => processHotel(el, lat, lng));
                 }
 
-                if (wikiData.query && wikiData.query.geosearch) {
+                if (wikiData && wikiData.query && wikiData.query.geosearch) {
                     wikiData.query.geosearch.forEach(place => {
-                        const isStay = place.title.toLowerCase().includes('hotel') || 
-                                       place.title.toLowerCase().includes('resort') ||
-                                       place.title.toLowerCase().includes('palace');
-                        
+                        const isStay = /hotel|resort|palace|stay|inn/i.test(place.title);
                         if (isStay && !results.some(h => h.name.toLowerCase() === place.title.toLowerCase())) {
                             results.push(processWikiHotel(place, lat, lng));
                         }
@@ -710,43 +707,36 @@
                 }
 
                 if (results.length === 0) {
-                    clearInterval(msgInterval);
+                    document.getElementById('resultsMeta').textContent = "No stays found in this area.";
                     showEmpty();
-                    return;
+                } else {
+                    allHotels = results;
+                    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
+                    applyFilters();
+                    document.getElementById('loadingSpinner').style.display = 'none';
                 }
-
-                allHotels = results;
-                localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
-                
-                applyFilters();
-                document.getElementById('loadingSpinner').style.display = 'none';
-                clearInterval(msgInterval);
             } catch (err) {
-                console.error("Fetch failed:", err);
-                clearInterval(msgInterval);
+                console.error("Hotels Fetch Error:", err);
+                document.getElementById('resultsMeta').textContent = "Service temporarily busy. Please try again or select a specific area.";
                 showEmpty();
+            } finally {
+                clearInterval(msgInterval);
             }
         }
 
         async function fetchCityAreas(cLat, cLng) {
-            const query = `[out:json][timeout:25];
-              (
-                nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${cLat},${cLng});
-              );
-              out center;`;
-            
+            const query = `[out:json][timeout:25];(nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${cLat},${cLng}););out center;`;
             const mirrors = [
                 'https://overpass-api.de/api/interpreter',
-                'https://lz4.overpass-api.de/api/interpreter'
+                'https://lz4.overpass-api.de/api/interpreter',
+                'https://overpass.kumi.systems/api/interpreter'
             ];
 
             try {
-                const res = await Promise.any(mirrors.map(url => 
-                    fetch(url, {
-                        method: 'POST', body: 'data=' + encodeURIComponent(query),
-                        signal: AbortSignal.timeout(8000)
-                    }).then(r => r.ok ? r.json() : Promise.reject())
-                ));
+                const res = await Promise.any(mirrors.map(url => {
+                    const finalUrl = `${url}?data=${encodeURIComponent(query)}`;
+                    return fetch(finalUrl).then(r => r.ok ? r.json() : Promise.reject());
+                }));
 
                 const seen = new Set();
                 const areas = res.elements.map(el => ({
@@ -767,9 +757,7 @@
                     item.onclick = () => selectArea(val, area.name);
                     areaList.appendChild(item);
                 });
-                const allItem = areaList.querySelector('[data-value="all"]');
-                if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
-            } catch(e) {}
+            } catch(e) { console.error("Areas fetch failed"); }
         }
 
         function showEmpty() {
