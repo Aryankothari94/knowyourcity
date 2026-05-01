@@ -1262,8 +1262,8 @@
           let cctv = parsedOsm.cctv;
           
           if (backendResults && backendResults.infrastructures) {
-            const backendFire = backendResults.infrastructures.filter(i => i.nodeType === 'fire_station').map(i => ({ lat: i.lat, lon: i.lng, tags: { name: i.name } }));
-            const backendCctv = backendResults.infrastructures.filter(i => i.nodeType === 'surveillance').map(i => ({ lat: i.lat, lon: i.lng, tags: { name: i.name } }));
+            const backendFire = backendResults.infrastructures.filter(i => i.nodeType === 'fire_station').map(i => ({ lat: i.lat, lng: i.lng, tags: { name: i.name } }));
+            const backendCctv = backendResults.infrastructures.filter(i => i.nodeType === 'surveillance').map(i => ({ lat: i.lat, lng: i.lng, tags: { name: i.name } }));
             if (backendFire.length > 0) fire = backendFire;
             if (backendCctv.length > 0) cctv = backendCctv;
           }

@@ -140,8 +140,9 @@ router.get('/insights', async (req, res) => {
         
         if (cachedCity && cachedCity.lastUpdated > sevenDaysAgo) {
             const stats = cachedCity.safetyStats || {};
-            // AUTO-BUST: If any critical infra is 0 or missing, re-fetch to ensure accuracy
-            if (stats.policeCount > 0 && stats.hospitalCount > 0 && stats.fireCount > 0 && stats.cctvCount > 0) {
+            const hasMapplsData = cachedCity.infrastructures && cachedCity.infrastructures.some(i => i.name && i.name.includes('Verified by Mappls'));
+            // AUTO-BUST: If any critical infra is 0 or missing, OR if Mappls data hasn't been integrated yet, re-fetch
+            if (stats.policeCount > 0 && stats.hospitalCount > 0 && stats.fireCount > 0 && stats.cctvCount > 0 && hasMapplsData) {
               return res.json({ 
                 source: 'cache', 
                 safetyStats: cachedCity.safetyStats, 
