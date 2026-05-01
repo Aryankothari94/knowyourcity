@@ -847,14 +847,23 @@
 
         function processHotel(el, userLat, userLng) {
             const tags = el.tags || {};
-            const id = el.id;
-            const hotelLat = el.lat || el.center.lat;
-            const hotelLng = el.lon || el.center.lon;
+            const id = el.id || Math.random();
+            const hotelLat = el.lat || el.center?.lat;
+            const hotelLng = el.lon || el.center?.lon || el.lon;
             const tourism = tags.tourism || 'hotel';
 
-            // High-precision deterministic simulator
-            const hash = (id * 97) % 1000;
-            const seed = Math.abs(hash);
+            // High-precision deterministic simulator (Supports numeric and string IDs)
+            let seed = 0;
+            if (typeof id === 'number') {
+                seed = Math.abs((id * 97) % 1000);
+            } else {
+                const str = String(id);
+                for (let i = 0; i < str.length; i++) {
+                    seed = ((seed << 5) - seed) + str.charCodeAt(i);
+                    seed |= 0;
+                }
+                seed = Math.abs(seed % 1000);
+            }
             
             let basePrice = 1800;
             if (tourism === 'resort') basePrice = 6500;
