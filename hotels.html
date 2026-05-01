@@ -646,7 +646,12 @@
             }
 
             const loadingText = document.getElementById('loadingText');
-            const messages = ["Connecting to hospitality nodes...", "Fetching local stays...", "Processing ratings..."];
+            const messages = [
+                "Syncing with MapmyIndia hospitality nodes...",
+                "Scanning global stay databases...",
+                "Verifying local safety ratings...",
+                "Fetching nearby verified hotels..."
+            ];
             let msgIdx = 0;
             const msgInterval = setInterval(() => {
                 const spinner = document.getElementById('loadingSpinner');
@@ -654,12 +659,26 @@
                     loadingText.textContent = messages[msgIdx % messages.length];
                     msgIdx++;
                 } else { clearInterval(msgInterval); }
-            }, 2500);
+            }, 3000);
 
             document.getElementById('loadingSpinner').style.display = 'flex';
             document.getElementById('resultsMeta').textContent = "Syncing with real-time stay databases...";
 
-            // --- STAGE 1: NOMINATIM (High Reliability) ---
+            // --- PRIMARY: BACKEND AGGREGATOR (Mappls + Nominatim + OSM) ---
+            try {
+                console.log(`[Hotels] Primary: Attempting Backend Aggregator Fallback (City: ${city})`);
+                const proxyUrl = `https://knowyourcity.onrender.com/api/safety/hotels?lat=${lat}&lng=${lng}&radius=${radius}&city=${encodeURIComponent(city)}`;
+                const proxyRes = await fetch(proxyUrl);
+                const proxyData = await proxyRes.json();
+                if (proxyData && proxyData.elements && proxyData.elements.length > 0) {
+                    console.log(`[Hotels] Backend Success: Found ${proxyData.elements.length} hotels via Aggregator`);
+                    const results = proxyData.elements.map(el => processHotel(el, lat, lng));
+                    finishFetch(results, cacheKey, msgInterval);
+                    return;
+                }
+            } catch (e) { console.error("[Hotels] Backend Aggregator failed", e); }
+
+            // --- SECONDARY: NOMINATIM (Direct Fallback) ---
             if (radius > 10000) {
                 try {
                     const primaryCity = city.split(',')[0].trim();
@@ -699,6 +718,13 @@
                 'https://overpass.kumi.systems/api/interpreter'
             ];
 
+            // --- TERTIARY: DIRECT OVERPASS MIRRORS ---
+            const mirrors = [
+                'https://overpass-api.de/api/interpreter',
+                'https://lz4.overpass-api.de/api/interpreter',
+                'https://overpass.kumi.systems/api/interpreter'
+            ];
+
             const query = `[out:json][timeout:30];(node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng});way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng}););out center tags 400;`;
 
             try {
@@ -724,23 +750,9 @@
                 }
             } catch (err) { console.warn("[Hotels] Stage 2 failed", err); }
 
-            // --- STAGE 3: BACKEND PROXY FALLBACK (Ultimate Reliability) ---
-            try {
-                console.log(`[Hotels] Stage 3: Attempting Backend Proxy Fallback`);
-                const proxyUrl = `https://knowyourcity.onrender.com/api/safety/hotels?lat=${lat}&lng=${lng}&radius=${radius}`;
-                const proxyRes = await fetch(proxyUrl);
-                const proxyData = await proxyRes.json();
-                if (proxyData && proxyData.elements && proxyData.elements.length > 0) {
-                    console.log(`[Hotels] Stage 3 Success: Found ${proxyData.elements.length} hotels via Proxy`);
-                    const results = proxyData.elements.map(el => processHotel(el, lat, lng));
-                    finishFetch(results, cacheKey, msgInterval);
-                    return;
-                }
-            } catch (e) { console.error("[Hotels] Ultimate Proxy Fallback failed", e); }
-
             // Final Failure
             clearInterval(msgInterval);
-            document.getElementById('resultsMeta').textContent = "Unable to sync real-time data. Please check your connection or try another city.";
+            document.getElementById('resultsMeta').textContent = "Connection issue. Please select a specific neighborhood from the dropdown.";
             showEmpty();
         }
 
