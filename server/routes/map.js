@@ -125,6 +125,44 @@ async function fetchTouristZones(lat, lng, radius = 15000) {
 }
 
 // GET /api/safety/insights
+// Server-side Proxy for Hotels Data (Resolves CORS and mirror blocks)
+router.get('/hotels', async (req, res) => {
+    const { lat, lng, radius } = req.query;
+    if (!lat || !lng) return res.status(400).json({ message: 'Missing coordinates' });
+
+    const searchRadius = parseInt(radius) || 25000;
+    const query = `[out:json][timeout:30];
+        (node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${searchRadius},${lat},${lng});
+         way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${searchRadius},${lat},${lng}););
+        out center tags 400;`;
+
+    try {
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'data=' + encodeURIComponent(query)
+        });
+        if (!response.ok) throw new Error('Overpass status ' + response.status);
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Backend Hotels Fetch Error:', error.message);
+        // Secondary mirror fallback in backend
+        try {
+            const fallbackRes = await fetch('https://lz4.overpass-api.de/api/interpreter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'data=' + encodeURIComponent(query)
+            });
+            if (!fallbackRes.ok) throw new Error('Secondary mirror failed');
+            const data = await fallbackRes.json();
+            res.json(data);
+        } catch (e) {
+            res.status(500).json({ message: 'Backend proxy failure' });
+        }
+    }
+});
+
 router.get('/insights', async (req, res) => {
     try {
         const q = req.query;

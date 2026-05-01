@@ -532,10 +532,11 @@
                 <!-- Cards injected here -->
             </div>
 
-            <div class="empty-state" id="emptyState" style="display:none;">
-                <div class="empty-icon">🚫</div>
-                <h3>No Hotels Found</h3>
-                <p>Try adjusting your filters or expanding your search radius.</p>
+            <div class="empty-state" id="emptyState" style="display:none; text-align:center; padding:60px 20px;">
+                <div class="material-symbols-outlined" style="font-size:64px; color:#ff4d4d; margin-bottom:20px;">block</div>
+                <h2 style="margin-bottom:10px;">No Hotels Found</h2>
+                <p style="color:#94a3b8; margin-bottom:30px;">Unable to sync real-time data. Please try again or check your connection.</p>
+                <button class="btn-primary" onclick="location.reload()" style="padding:12px 30px; border-radius:50px;">Retry Search</button>
             </div>
         </div>
     </section>
@@ -658,14 +659,14 @@
             document.getElementById('loadingSpinner').style.display = 'flex';
             document.getElementById('resultsMeta').textContent = "Syncing with real-time stay databases...";
 
-            // 1. TRY NOMINATIM FIRST FOR WHOLE CITY (Very reliable)
+            // --- STAGE 1: NOMINATIM (High Reliability) ---
             if (radius > 10000) {
                 try {
                     const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=hotels+in+${encodeURIComponent(city)}&limit=100&extratags=1`;
                     const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'KnowYourCity/1.0' } });
                     const nomData = await nomRes.json();
                     
-                    if (nomData && nomData.length > 0) {
+                    if (nomData && nomData.length > 5) {
                         const results = nomData.map(place => ({
                             id: place.osm_id,
                             name: place.display_name.split(',')[0],
@@ -682,17 +683,13 @@
                             source: 'Nominatim'
                         }));
                         
-                        allHotels = results;
-                        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
-                        applyFilters();
-                        document.getElementById('loadingSpinner').style.display = 'none';
-                        clearInterval(msgInterval);
+                        finishFetch(results, cacheKey, msgInterval);
                         return;
                     }
-                } catch (e) { console.warn("Nominatim failed, falling back to Overpass"); }
+                } catch (e) { console.warn("Nominatim Stage failed"); }
             }
 
-            // 2. OVERPASS FALLBACK OR LOCALIZED SEARCH
+            // --- STAGE 2: DIRECT OVERPASS MIRRORS (High Precision) ---
             const mirrors = [
                 'https://overpass-api.de/api/interpreter',
                 'https://lz4.overpass-api.de/api/interpreter',
@@ -702,64 +699,54 @@
             const query = `[out:json][timeout:30];(node["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng});way["tourism"~"hotel|hostel|guest_house|motel|apartment|resort"](around:${radius},${lat},${lng}););out center tags 400;`;
 
             try {
-                // Racing Mirrors with POST (Back to POST but with correct headers to avoid 406)
-                const osmTask = Promise.any(mirrors.map(mirrorUrl => {
+                const osmData = await Promise.any(mirrors.map(mirrorUrl => {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 18000);
-                    
+                    const timeoutId = setTimeout(() => controller.abort(), 12000);
                     return fetch(mirrorUrl, { 
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: 'data=' + encodeURIComponent(query),
                         signal: controller.signal 
                     })
-                    .then(r => {
-                        clearTimeout(timeoutId);
-                        if (!r.ok) throw new Error('Mirror status ' + r.status);
-                        return r.json();
-                    })
-                    .catch(err => {
-                        clearTimeout(timeoutId);
-                        throw err;
-                    });
+                    .then(r => { clearTimeout(timeoutId); if (!r.ok) throw new Error(); return r.json(); })
+                    .catch(err => { clearTimeout(timeoutId); throw err; });
                 }));
 
-                const wikiTask = fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=10000&gscoord=${lat}|${lng}&gslimit=20&format=json&origin=*&gsprop=type|name`)
-                    .then(r => r.json())
-                    .catch(() => ({ query: { geosearch: [] } }));
-
-                const [osmData, wikiData] = await Promise.all([osmTask, wikiTask]);
-                
-                let results = [];
-                if (osmData && osmData.elements) {
-                    results = osmData.elements.map(el => processHotel(el, lat, lng));
+                if (osmData && osmData.elements && osmData.elements.length > 0) {
+                    const results = osmData.elements.map(el => processHotel(el, lat, lng));
+                    finishFetch(results, cacheKey, msgInterval);
+                    return;
                 }
+            } catch (err) { console.warn("Direct Overpass Stage failed"); }
 
-                if (wikiData && wikiData.query && wikiData.query.geosearch) {
-                    wikiData.query.geosearch.forEach(place => {
-                        const isStay = /hotel|resort|palace|stay|inn/i.test(place.title);
-                        if (isStay && !results.some(h => h.name.toLowerCase() === place.title.toLowerCase())) {
-                            results.push(processWikiHotel(place, lat, lng));
-                        }
-                    });
+            // --- STAGE 3: BACKEND PROXY FALLBACK (Ultimate Reliability) ---
+            try {
+                const proxyUrl = `https://knowyourcity-1.onrender.com/api/safety/hotels?lat=${lat}&lng=${lng}&radius=${radius}`;
+                const proxyRes = await fetch(proxyUrl);
+                const proxyData = await proxyRes.json();
+                if (proxyData && proxyData.elements && proxyData.elements.length > 0) {
+                    const results = proxyData.elements.map(el => processHotel(el, lat, lng));
+                    finishFetch(results, cacheKey, msgInterval);
+                    return;
                 }
+            } catch (e) { console.error("Ultimate Proxy Fallback failed"); }
 
-                if (results.length === 0) {
-                    document.getElementById('resultsMeta').textContent = "No stays found. Please refine your area.";
-                    showEmpty();
-                } else {
-                    allHotels = results;
-                    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
-                    applyFilters();
-                    document.getElementById('loadingSpinner').style.display = 'none';
-                }
-            } catch (err) {
-                console.error("Hotels Fetch Error:", err);
-                document.getElementById('resultsMeta').textContent = "Connection issue. Please select a specific neighborhood from the dropdown.";
+            // Final Failure
+            clearInterval(msgInterval);
+            document.getElementById('resultsMeta').textContent = "Unable to sync real-time data. Please check your connection or try another city.";
+            showEmpty();
+        }
+
+        function finishFetch(results, cacheKey, interval) {
+            clearInterval(interval);
+            if (results.length === 0) {
                 showEmpty();
-            } finally {
-                clearInterval(msgInterval);
+                return;
             }
+            allHotels = results;
+            localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
+            applyFilters();
+            document.getElementById('loadingSpinner').style.display = 'none';
         }
 
         async function fetchCityAreas(cLat, cLng) {
