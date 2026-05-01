@@ -59,6 +59,112 @@
   </style>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
+
+  <style>
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .custom-area-dropdown {
+      position: relative;
+      width: 200px;
+      z-index: 1000;
+    }
+    .dropdown-trigger {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px !important;
+      border-radius: 50px !important;
+      border: 1px solid rgba(255,255,255,0.15) !important;
+      background: rgba(30,32,47,0.8) !important;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.8rem;
+      font-weight: 500;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .dropdown-trigger:hover {
+      border-color: var(--accent-cyan) !important;
+      background: rgba(35,38,55,0.9) !important;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    }
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      background: rgba(20, 22, 35, 0.95);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideDown 0.3s ease forwards;
+    }
+    .dropdown-menu.active {
+      display: flex;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown-search-wrapper {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .dropdown-search {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    .dropdown-search:focus {
+      border-color: var(--accent-cyan);
+    }
+    .dropdown-list {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .dropdown-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dropdown-item:hover {
+      background: rgba(0, 229, 255, 0.1);
+      color: #fff;
+    }
+    .dropdown-item.active {
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+    .dropdown-list::-webkit-scrollbar { width: 4px; }
+    .dropdown-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    @media (max-width: 768px) {
+      .results-header { flex-direction: column; align-items: flex-start; }
+      .custom-area-dropdown { width: 100%; }
+    }
+  </style>
 </head>
 <body class="feature-page">
   <!-- ===== NAVBAR ===== -->
@@ -108,8 +214,31 @@
   <section class="feature-results">
     <div class="container">
       <div class="results-header">
-        <h2 id="resultsCount">Searching for places...</h2>
-        <div class="results-meta" id="resultsMeta">Fetching real-time dining data...</div>
+        <div class="header-main">
+          <h2 id="resultsCount">Searching for places...</h2>
+          <div class="results-meta" id="resultsMeta">Fetching real-time dining data...</div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <!-- Area Dropdown -->
+          <div class="custom-area-dropdown">
+            <div class="dropdown-trigger" id="areaDropdownTrigger">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.7;">location_on</span>
+                <span id="selectedAreaText">Whole City</span>
+              </div>
+              <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.6;">expand_more</span>
+            </div>
+            <div class="dropdown-menu" id="areaDropdownMenu">
+              <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search" id="areaSearchInput" placeholder="Search area...">
+              </div>
+              <div class="dropdown-list" id="areaDropdownList">
+                <div class="dropdown-item active" data-value="all">Whole City</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="loading-spinner" id="loadingSpinner">
@@ -140,16 +269,16 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
 
       // Extract search query options
       const params = new URLSearchParams(window.location.search);
       const placeType = params.get('type') || 'restaurant'; 
       const isCafe = placeType.toLowerCase() === 'cafe';
 
-      const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-      const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-      const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+      let lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      let lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      let city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
       
       document.title = isCafe ? "Best Cafes in " + city + " — KnowYourCity" : "Best Restaurants in " + city + " — KnowYourCity";
       document.getElementById('cityName').textContent = city;
@@ -158,6 +287,99 @@
 
       document.getElementById('resultsCount').textContent = isCafe ? "Searching cafes in your city..." : "Searching restaurants in your city...";
       document.getElementById('resultsMeta').textContent = isCafe ? "Locating top coffee spots..." : "Locating top dining spots...";
+
+      let currentArea = 'all';
+
+      // Dropdown Elements
+      const areaTrigger = document.getElementById('areaDropdownTrigger');
+      const areaMenu = document.getElementById('areaDropdownMenu');
+      const areaSearch = document.getElementById('areaSearchInput');
+      const areaList = document.getElementById('areaDropdownList');
+      const areaText = document.getElementById('selectedAreaText');
+
+      areaTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        areaMenu.classList.toggle('active');
+        if(areaMenu.classList.contains('active')) areaSearch.focus();
+      });
+
+      document.addEventListener('click', () => {
+        areaMenu.classList.remove('active');
+      });
+
+      areaSearch.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        areaList.querySelectorAll('.dropdown-item').forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(q) ? 'block' : 'none';
+        });
+      });
+
+      window.selectArea = (value, text) => {
+        areaText.textContent = text;
+        areaList.querySelectorAll('.dropdown-item').forEach(item => {
+          item.classList.toggle('active', item.getAttribute('data-value') === value);
+        });
+        areaMenu.classList.remove('active');
+        areaSearch.value = '';
+        currentArea = value;
+        triggerFilter();
+      };
+
+      function triggerFilter() {
+        let targetLat = lat, targetLng = lng;
+        let radius = 10000;
+
+        if (currentArea !== 'all') {
+          const coords = JSON.parse(currentArea);
+          targetLat = coords.lat;
+          targetLng = coords.lng;
+          radius = 5000; 
+        }
+
+        document.getElementById('loadingSpinner').style.display = 'flex';
+        document.getElementById('resultsGrid').innerHTML = '';
+        document.getElementById('resultsMeta').textContent = `Filtering for places in ${areaText.textContent}...`;
+        
+        fetchPlaces(targetLat, targetLng, isCafe, city, radius);
+      }
+
+      async function fetchCityAreas(cLat, cLng) {
+        const query = `[out:json][timeout:25];
+          (
+            nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${cLat},${cLng});
+          );
+          out center;`;
+        try {
+          const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST', body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          const seen = new Set();
+          const areas = data.elements.map(el => ({
+            name: el.tags.name || el.tags['name:en'],
+            lat: el.lat || el.center.lat,
+            lng: el.lon || el.center.lon,
+            type: el.tags.place
+          })).filter(a => a.name && !seen.has(a.name) && seen.add(a.name))
+          .sort((a,b) => a.name.localeCompare(b.name));
+
+          areas.forEach(area => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            const val = JSON.stringify({lat: area.lat, lng: area.lng});
+            item.setAttribute('data-value', val);
+            item.innerHTML = `<span>${area.name}</span><small style="opacity:0.5; font-size:0.7rem; margin-left:auto;">${area.type}</small>`;
+            item.style.display = 'flex';
+            item.onclick = () => selectArea(val, area.name);
+            areaList.appendChild(item);
+          });
+          const allItem = areaList.querySelector('[data-value="all"]');
+          if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
+        } catch(e) {}
+      }
+
+      fetchCityAreas(lat, lng);
 
       // Set initial loading text specific to category
       const specificLine = isCafe ? "Searching cafes in your city..." : "Searching restaurants in your city...";
@@ -182,36 +404,9 @@
         }
       }, 2000);
 
-      const CACHE_KEY = `kyc_cache_${placeType}_${Math.round(lat*100)}_${Math.round(lng*100)}`;
-      const CACHE_TTL = 30 * 60 * 1000;
-
-      const detailOverlay = document.getElementById('detailOverlay');
-      const detailBody = document.getElementById('detailBody');
-      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
-      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
-
-      // ===== DINING KNOWLEDGE BASE (PREMIUM SPOTS) =====
-      const DINING_KNOWLEDGE_BASE = {
-        'solapur': [
-          { id: 101, name: 'Hotel Pratham', type: 'Restaurant', cuisine: 'Indian, Maharashtrian', phone: '0217 232 4522', lat: 17.6599, lng: 75.9064, stars: 4.4, count: 1250, distance: 1.2 },
-          { id: 102, name: 'Lotus Hotel', type: 'Restaurant', cuisine: 'Multi-cuisine', phone: '0217 231 7001', lat: 17.6715, lng: 75.9102, stars: 4.2, count: 850, distance: 2.1 },
-          { id: 103, name: 'Vrindavan Pure Veg', type: 'Restaurant', cuisine: 'Vegetarian', phone: '0217 232 0233', lat: 17.6655, lng: 75.9188, stars: 4.3, count: 2100, distance: 1.5 },
-          { id: 104, name: 'Cafe Coffee Day - Solapur', type: 'Cafe', cuisine: 'Coffee, Snacks', phone: '1800 102 5093', lat: 17.6744, lng: 75.9033, stars: 4.0, count: 450, distance: 2.8 }
-        ],
-        'mumbai': [
-          { id: 201, name: 'Leopold Cafe', type: 'Cafe', cuisine: 'Multi-cuisine, Continental', phone: '022 2282 8185', lat: 18.9223, lng: 72.8317, stars: 4.5, count: 15400, distance: 0.5 },
-          { id: 202, name: 'Britannia & Co.', type: 'Restaurant', cuisine: 'Parsi, Iranian', phone: '022 2261 5264', lat: 18.9382, lng: 72.8391, stars: 4.6, count: 8200, distance: 1.8 },
-          { id: 203, name: 'Cafe Leopold', type: 'Cafe', cuisine: 'International', phone: '022 2284 8021', lat: 18.9231, lng: 72.8315, stars: 4.4, count: 5600, distance: 0.6 }
-        ],
-        'pune': [
-          { id: 301, name: 'German Bakery', type: 'Cafe', cuisine: 'Bakery, Continental', phone: '020 2613 0000', lat: 18.5362, lng: 73.8885, stars: 4.4, count: 12000, distance: 1.1 },
-          { id: 302, name: 'Goodluck Cafe', type: 'Cafe', cuisine: 'Bun Maska, Iranian', phone: '020 2567 6730', lat: 18.5212, lng: 73.8421, stars: 4.5, count: 9800, distance: 2.3 }
-        ]
-      };
-
       fetchPlaces(lat, lng, isCafe, city);
 
-      async function fetchPlaces(lat, lng, isCafe, cityName) {
+      async function fetchPlaces(targetLat, targetLng, isCafe, cityName, radius = 10000) {
         const normalizedCity = cityName.toLowerCase().trim();
         
         // 1. Check Knowledge Base First
@@ -261,12 +456,11 @@
 
         const amenities = isCafe ? '["amenity"~"cafe|tea_room"]' : '["amenity"~"restaurant|food_court|fast_food"]';
         
-        let radius = 25000; // Optimized to 25km for stable API performance in dense cities
         let dynamicQuery = `
           [out:json][timeout:30];
           (
-            node${amenities}(around:${radius},${lat},${lng});
-            way${amenities}(around:${radius},${lat},${lng});
+            node${amenities}(around:${radius},${targetLat},${targetLng});
+            way${amenities}(around:${radius},${targetLat},${targetLng});
           );
           out center tags 1000;
         `;
