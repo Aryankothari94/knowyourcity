@@ -147,13 +147,13 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: #0a0e27;
-  background-image: linear-gradient(135deg, #0a0e27 0%, #1a1a4e 50%, #0d1b3e 100%);
+  background-color: var(--bg-primary);
+  background-image: var(--bg-gradient);
   background-attachment: fixed;
-  color: #ffffff;
+  color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  line-height: 1.6;
+  line-height: 1.7; /* Increased for better legibility */
   position: relative;
 }
 
@@ -205,17 +205,18 @@ body {
 
 .section-title {
   font-family: var(--font-heading);
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 16px;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 800; /* Stronger hierarchy */
+  line-height: 1.15;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px; /* Professional typographic touch */
 }
 
 .section-subtitle {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   color: var(--text-secondary);
   max-width: 600px;
-  line-height: 1.7;
+  line-height: 1.8; /* Relaxed reading experience */
 }
 
 .gradient-text {
@@ -888,7 +889,7 @@ body {
 }
 
 .feature-card {
-  padding: 36px 28px;
+  padding: 48px 36px; /* Generous professional whitespace */
   text-align: center;
   position: relative;
   overflow: hidden;
