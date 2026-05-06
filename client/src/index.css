@@ -6,53 +6,52 @@
 
 /* === Design Tokens === */
 :root {
-  /* Background */
-  --bg-primary: #0a0e27;
-  --bg-secondary: #0f1435;
-  --bg-gradient: linear-gradient(135deg, #0a0e27 0%, #1a1a4e 50%, #0d1b3e 100%);
+  /* Background - Professional Slate Palette */
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --bg-gradient: radial-gradient(circle at top right, #1E293B, #0F172A);
 
-  /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-bg-hover: rgba(255, 255, 255, 0.1);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-hover: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --glass-blur: blur(20px);
+  /* Glass - Subtle and Sophisticated */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg-hover: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+  --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --glass-blur: blur(25px);
 
-  /* Accent Colors */
-  --accent-cyan: #00d4ff;
-  --accent-teal: #00b894;
-  --accent-blue: #6c5ce7;
-  --accent-gradient: linear-gradient(135deg, #00d4ff 0%, #00b894 100%);
+  /* Accent Colors - Sapphire & Emerald (Trustworthy) */
+  --accent-cyan: #38BDF8;      /* Sky Blue */
+  --accent-teal: #10B981;      /* Emerald */
+  --accent-blue: #6366F1;      /* Indigo */
+  --accent-gradient: linear-gradient(135deg, #38BDF8 0%, #10B981 100%);
 
-  /* Safety Colors */
-  --safe-green: #00e676;
-  --moderate-amber: #ffab40;
-  --caution-red: #ff5252;
+  /* Safety Colors - Muted for Professionalism */
+  --safe-green: #22C55E;
+  --moderate-amber: #F59E0B;
+  --caution-red: #EF4444;
 
-  /* Text */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.4);
+  /* Text - High Legibility */
+  --text-primary: #F8FAF8;
+  --text-secondary: #94A3B8;   /* Slate 400 */
+  --text-muted: #64748B;      /* Slate 500 */
 
-  /* Typography */
+  /* Typography - Precise Spacing */
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
 
   /* Spacing */
-  --section-padding: 100px 0;
-  --container-width: 1200px;
+  --section-padding: 120px 0;
+  --container-width: 1280px;
 
-  /* Border Radius */
+  /* Border Radius - Modern & Precise */
   --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-xl: 48px;
 
-  /* Transitions */
-  --transition-fast: 0.2s ease;
-  --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Transitions - Snap & Fluid */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* === Reset & Base === */
