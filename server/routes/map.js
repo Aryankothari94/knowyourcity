@@ -377,10 +377,16 @@ router.get('/insights', async (req, res) => {
         let cCount = infrastructures.filter(i => i.nodeType === 'surveillance').length;
 
         // SCORING
+        // SCORING: Deterministic unique base score per city
+        const cityHash = cityName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const baseSafe = 75 + (cityHash % 20);
+        const baseFam = 70 + ((cityHash * 2) % 25);
+        const baseWalk = 65 + ((cityHash * 3) % 30);
+
         const crimePoints = incidents.length * 2.5; 
-        const sSafe = Math.max(65, Math.min(99, Math.floor(92 - crimePoints + (pCount * 0.8))));
-        const sFam = Math.max(68, Math.min(99, Math.floor(85 - (incidents.length * 1.2) + (hCount * 1.5) + (touristZones.filter(t => t.type === 'park').length * 0.4))));
-        const sWalk = Math.max(70, Math.min(99, Math.floor(88 - (incidents.length * 1.8) + (cCount * 0.2) + (touristZones.length * 0.2))));
+        const sSafe = Math.max(40, Math.min(99, Math.floor(baseSafe - crimePoints + (pCount * 0.5))));
+        const sFam = Math.max(40, Math.min(99, Math.floor(baseFam - (incidents.length * 1.2) + (hCount * 0.8) + (touristZones.filter(t => t.type === 'park').length * 0.3))));
+        const sWalk = Math.max(40, Math.min(99, Math.floor(baseWalk - (incidents.length * 1.8) + (cCount * 0.1) + (touristZones.length * 0.1))));
 
         const safetyStats = {
             policeCount: pCount,

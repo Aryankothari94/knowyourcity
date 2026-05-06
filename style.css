@@ -685,6 +685,8 @@ body {
   gap: 8px;
   font-size: 0.8rem;
   font-weight: 500;
+  color: var(--text-primary) !important; /* Ensure text is highly visible */
+  text-decoration: none;
   animation: floatCard 6s ease-in-out infinite;
   white-space: nowrap;
   overflow: hidden;

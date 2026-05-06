@@ -91,12 +91,12 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
 
         } catch (err) {
             console.error("Fetch Error:", err);
-            // Dynamic Fallback generation based on name length if API is down
-            const seed = cityName.length;
+            // Dynamic Fallback generation based on name hash if API is down
+            const cityHash = cityName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
             setSafetyData({ 
-                crimeScore: 70 + (seed % 20), 
-                familyScore: 65 + (seed % 25), 
-                walkScore: 60 + (seed % 30) 
+                crimeScore: 75 + (cityHash % 20), 
+                familyScore: 70 + ((cityHash * 2) % 25), 
+                walkScore: 65 + ((cityHash * 3) % 30) 
             });
             setIncidents([]);
             setLandmarks([]);
