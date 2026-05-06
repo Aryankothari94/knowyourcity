@@ -91,12 +91,12 @@ router.post('/register', async (req, res) => {
             to: email,
             subject: 'Verify Your Account — Know Your City',
             html: `
-                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
-                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Account Verification</h2>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${firstName},</p>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Welcome to Know Your City! Please use the following code to verify your email and complete your registration:</p>
-                    <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
-                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #00e5ff; letter-spacing: 5px;">${otp}</span>
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #F0FDF4; color: #052E16; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(22, 163, 74, 0.1);">
+                    <h2 style="color: #16A34A; margin-bottom: 20px;">Account Verification</h2>
+                    <p style="color: #052E16; font-size: 16px; line-height: 1.6;">Hello ${firstName},</p>
+                    <p style="color: #052E16; font-size: 16px; line-height: 1.6;">Welcome to Know Your City! Please use the following code to verify your email and complete your registration:</p>
+                    <div style="background: rgba(22, 163, 74, 0.1); border: 1px solid #16A34A; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
+                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #16A34A; letter-spacing: 5px;">${otp}</span>
                     </div>
                 </div>
             `
@@ -300,12 +300,12 @@ router.post('/forgot-password', async (req, res) => {
             to: email,
             subject: 'Password Recovery Code — Know Your City',
             html: `
-                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0b1a; color: #fff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(255,255,255,0.1);">
-                    <h2 style="color: #00e5ff; margin-bottom: 20px;">Password Recovery</h2>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">Hello ${user.firstName},</p>
-                    <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">You requested a password reset. Use the following 6-digit code to reset your password. This code is valid for <b>15 minutes</b>:</p>
-                    <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
-                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #00e5ff; letter-spacing: 5px;">${otp}</span>
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #F0FDF4; color: #052E16; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; border: 1px solid rgba(22, 163, 74, 0.1);">
+                    <h2 style="color: #16A34A; margin-bottom: 20px;">Password Recovery</h2>
+                    <p style="color: #052E16; font-size: 16px; line-height: 1.6;">Hello ${user.firstName},</p>
+                    <p style="color: #052E16; font-size: 16px; line-height: 1.6;">You requested a password reset. Use the following 6-digit code to reset your password. This code is valid for <b>15 minutes</b>:</p>
+                    <div style="background: rgba(22, 163, 74, 0.1); border: 1px solid #16A34A; padding: 15px; border-radius: 10px; text-align: center; margin: 25px 0;">
+                        <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #16A34A; letter-spacing: 5px;">${otp}</span>
                     </div>
                     <p style="color: #94a3b8; font-size: 14px;">If you did not request this, please ignore this email or contact support if you have concerns.</p>
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">

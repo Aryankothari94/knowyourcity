@@ -49,12 +49,13 @@
   <link rel="icon" href="logo.png" type="image/png" />
   <style>
     :root {
-      --bg-primary: #0a0b1a;
-      --bg-secondary: #12132a;
-      --text-primary: #f0f0f5;
-      --text-secondary: #8899aa;
-      --accent-cyan: #00e5ff;
-      --accent-green: #00e676;
+      --bg-primary: #F0FDF4;
+      --bg-secondary: #DCFCE7;
+      --text-primary: #052E16;
+      --text-secondary: #166534;
+      --accent-cyan: #16A34A;
+      --accent-green: #22C55E;
+      --accent-gradient: linear-gradient(135deg, #16A34A, #22C55E);
       --font-body: 'Inter', sans-serif;
       --font-heading: 'Outfit', sans-serif;
     }
@@ -83,9 +84,9 @@
       filter: blur(120px);
       opacity: 0.15;
     }
-    .orb-1 { width: 500px; height: 500px; background: #00e5ff; top: -100px; left: -100px; }
-    .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
-    .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .orb-1 { width: 500px; height: 500px; background: #4ADE80; top: -100px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: #22C55E; bottom: -50px; right: -80px; }
+    .orb-3 { width: 300px; height: 300px; background: #16A34A; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
     /* Back button */
     .back-nav {
@@ -97,9 +98,9 @@
       align-items: center;
       gap: 8px;
       padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(22, 163, 74, 0.06);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(22, 163, 74, 0.1);
       border-radius: 50px;
       color: var(--text-primary);
       text-decoration: none;
@@ -109,9 +110,9 @@
     }
     .back-nav:hover {
       background: var(--accent-cyan);
-      color: #0a0b1a;
+      color: #fff;
       border-color: var(--accent-cyan);
-      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+      box-shadow: 0 0 25px rgba(22, 163, 74, 0.2);
       transform: translateY(-1px);
     }
 
@@ -137,7 +138,7 @@
       margin-bottom: 16px;
     }
     .gradient-text {
-      background: linear-gradient(135deg, #00e5ff, #00e676);
+      background: linear-gradient(135deg, #16A34A, #15803D);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -158,8 +159,8 @@
       animation: fadeInUp 0.7s ease;
     }
     .city-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(22, 163, 74, 0.03);
+      border: 1px solid rgba(22, 163, 74, 0.08);
       border-radius: 24px;
       padding: 30px;
       backdrop-filter: blur(10px);
@@ -179,8 +180,8 @@
       transition: opacity 0.3s;
     }
     .city-card:hover {
-      border-color: rgba(0, 229, 255, 0.3);
-      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(22, 163, 74, 0.3);
+      background: rgba(22, 163, 74, 0.06);
       transform: translateY(-8px);
     }
     .city-card:hover::before { opacity: 1; }
@@ -193,7 +194,7 @@
     .city-card .tag {
       display: inline-flex;
       padding: 4px 12px;
-      background: rgba(0, 229, 255, 0.1);
+      background: rgba(22, 163, 74, 0.1);
       border-radius: 50px;
       color: var(--accent-cyan);
       font-size: 0.75rem;
@@ -211,15 +212,15 @@
       justify-content: space-between;
       margin-top: auto;
       padding-top: 15px;
-      border-top: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(22, 163, 74, 0.05);
       font-size: 0.85rem;
       color: var(--text-secondary);
     }
 
     /* Info Section */
     .guides-info {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(22, 163, 74, 0.02);
+      border: 1px solid rgba(22, 163, 74, 0.08);
       border-radius: 24px;
       padding: 40px;
       text-align: center;
@@ -371,7 +372,7 @@
 
     <div style="text-align: center; margin-top: 60px;">
       <p style="color: var(--text-secondary); margin-bottom: 20px;">Can't find your city?</p>
-      <a href="contact.html" style="color: var(--accent-cyan); text-decoration: none; font-weight: 700; border: 1px solid var(--accent-cyan); padding: 12px 24px; border-radius: 50px; transition: all 0.3s;" onmouseover="this.style.background='var(--accent-cyan)'; this.style.color='#0a0b1a'" onmouseout="this.style.background='transparent'; this.style.color='var(--accent-cyan)'">Request a City Mapping</a>
+      <a href="contact.html" style="color: var(--accent-cyan); text-decoration: none; font-weight: 700; border: 1px solid var(--accent-cyan); padding: 12px 24px; border-radius: 50px; transition: all 0.3s;" onmouseover="this.style.background='var(--accent-cyan)'; this.style.color='#fff'" onmouseout="this.style.background='transparent'; this.style.color='var(--accent-cyan)'">Request a City Mapping</a>
     </div>
   </div>
 </body>

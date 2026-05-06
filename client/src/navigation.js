@@ -50,12 +50,12 @@ export const initNavigation = () => {
                             const c = wData.hourly.weathercode[i];
                             const dFlag = wData.hourly.is_day[i];
                             
-                            let bg = i === currentIndex ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)';
-                            let bder = i === currentIndex ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid transparent';
+                            let bg = i === currentIndex ? 'rgba(22, 163, 74, 0.15)' : 'rgba(22, 163, 74, 0.05)';
+                            let bder = i === currentIndex ? '1px solid rgba(22, 163, 74, 0.4)' : '1px solid transparent';
                             
                             hourlyHTML += `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: ${bg}; border: ${bder}; border-radius: 10px; margin-bottom: 6px;">
-                                    <span style="font-size:0.85rem; color:#fff; width: 60px;">${timeString}</span>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: ${bg}; border: ${bder}; border-radius: 10px; margin-bottom: 6px; color: var(--text-primary);">
+                                    <span style="font-size:0.85rem; color: inherit; width: 60px;">${timeString}</span>
                                     <span style="font-size:1.2rem;">${iconMap(c, dFlag)}</span>
                                     <span style="font-size:0.95rem; font-weight:bold; width: 40px; text-align:right;">${t}°C</span>
                                 </div>

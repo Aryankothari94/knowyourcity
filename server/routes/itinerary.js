@@ -141,16 +141,16 @@ router.post('/send-email', [
 
                 const emailHtml = `
                     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 700px; margin: 0 auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
-                        <div style="background: #0f172a; padding: 30px; text-align: center; color: white;">
-                            <h1 style="margin: 0; color: #00e5ff;">🗺️ Your Smart Itinerary</h1>
-                            <p style="margin: 10px 0 0; opacity: 0.8; font-size: 1.1rem;">Exploration Guide for <strong>${itineraryData.city}</strong></p>
+                        <div style="background: #16A34A; padding: 30px; text-align: center; color: white;">
+                            <h1 style="margin: 0; color: #FFFFFF;">🗺️ Your Smart Itinerary</h1>
+                            <p style="margin: 10px 0 0; opacity: 0.9; font-size: 1.1rem; color: #DCFCE7;">Exploration Guide for <strong>${itineraryData.city}</strong></p>
                         </div>
                         <div style="padding: 30px; line-height: 1.6;">
                             <p>Hi there,</p>
                             <p>We've crafted a special travel plan just for you. Here's a summary of your upcoming adventure.</p>
                             
-                            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #00e5ff;">
-                                <h3 style="margin-top: 0; color: #0f172a;">Plan Overview</h3>
+                            <div style="background: #F0FDF4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #16A34A;">
+                                <h3 style="margin-top: 0; color: #052E16;">Plan Overview</h3>
                                 <p style="margin: 0;">${itineraryData.summary}</p>
                             </div>
 
@@ -158,7 +158,7 @@ router.post('/send-email', [
 
                             ${itineraryData.days.map(day => `
                                 <div style="margin-bottom: 30px;">
-                                    <h2 style="color: #00e5ff; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Day ${day.dayNumber}</h2>
+                                    <h2 style="color: #16A34A; border-bottom: 1px solid #DCFCE7; padding-bottom: 8px;">Day ${day.dayNumber}</h2>
                                     ${day.activities.map(act => `
                                         <div style="margin-bottom: 15px; padding-left: 15px; border-left: 2px solid #cbd5e1;">
                                             <div style="font-weight: bold; font-size: 1rem;">
@@ -173,11 +173,11 @@ router.post('/send-email', [
                                 </div>
                             `).join('')}
 
-                            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-                                <a href="https://knowyourcitys.in" style="display: inline-block; padding: 12px 25px; background: #00e5ff; color: #000; text-decoration: none; border-radius: 30px; font-weight: bold;">Explore More on Know Your City</a>
+                            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #F0FDF4;">
+                                <a href="https://knowyourcitys.in" style="display: inline-block; padding: 12px 25px; background: #16A34A; color: #FFFFFF; text-decoration: none; border-radius: 30px; font-weight: bold;">Explore More on Know Your City</a>
                             </div>
                         </div>
-                        <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b;">
+                        <div style="background: #F0FDF4; padding: 20px; text-align: center; font-size: 0.8rem; color: #166534;">
                             <p style="margin: 0;">&copy; 2026 KnowYourCitys.in | Built for Smart Travelers 🚀</p>
                         </div>
                     </div>
@@ -203,9 +203,9 @@ router.post('/send-email', [
             });
 
             // PDF DESIGN
-            doc.rect(0, 0, doc.page.width, 100).fill('#0f172a');
-            doc.fillColor('#00e5ff').fontSize(24).font('Helvetica-Bold').text('Smart Itinerary Guide', 50, 40);
-            doc.fillColor('#ffffff').fontSize(12).font('Helvetica').text(`Destination: ${itineraryData.city}`, 50, 70);
+            doc.rect(0, 0, doc.page.width, 100).fill('#16A34A');
+            doc.fillColor('#FFFFFF').fontSize(24).font('Helvetica-Bold').text('Smart Itinerary Guide', 50, 40);
+            doc.fillColor('#DCFCE7').fontSize(12).font('Helvetica').text(`Destination: ${itineraryData.city}`, 50, 70);
             doc.moveDown(4);
 
             doc.fillColor('#333333').fontSize(12).text(itineraryData.summary, { align: 'justify' });
@@ -215,14 +215,14 @@ router.post('/send-email', [
                 // Page check for new day
                 if (doc.y > 650) doc.addPage();
                 
-                doc.fillColor('#00e5ff').fontSize(20).font('Helvetica-Bold').text(`Day ${day.dayNumber}`, { underline: true });
+                doc.fillColor('#16A34A').fontSize(20).font('Helvetica-Bold').text(`Day ${day.dayNumber}`, { underline: true });
                 doc.moveDown(0.5);
                 
                 day.activities.forEach(act => {
                     // Page check for new activity (prevent split activities)
                     if (doc.y > 680) doc.addPage();
 
-                    doc.fillColor('#0f172a').fontSize(12).font('Helvetica-Bold').text(`${act.time} - ${act.place}`);
+                    doc.fillColor('#052E16').fontSize(12).font('Helvetica-Bold').text(`${act.time} - ${act.place}`);
                     doc.fillColor('#444444').font('Helvetica').fontSize(10).text(act.description, { indent: 15, align: 'justify' });
                     doc.fillColor('#888888').fontSize(9).text(`Estimated Cost: ${act.costEstimate} | Safety Score: ${act.safetyScore}%`, { indent: 15 });
                     doc.moveDown(1.2);
@@ -233,7 +233,7 @@ router.post('/send-email', [
             // Footer on last page
             if (doc.y > 700) doc.addPage();
             doc.moveDown(2);
-            doc.fontSize(10).fillColor('#94a3b8').text('Generated by KnowYourCitys.in', { align: 'center' });
+            doc.fontSize(10).fillColor('#166534').text('Generated by KnowYourCitys.in', { align: 'center' });
             doc.text('Built for Smart & Safe Travelers 🚀', { align: 'center' });
 
             doc.end();

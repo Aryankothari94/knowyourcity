@@ -133,39 +133,39 @@ We typically respond within 24–48 hours. If your matter is urgent, please emai
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Know Your City — Response</title>
 </head>
-<body style="margin:0;padding:0;background:#0a0b1a;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0b1a;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#F0FDF4;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF4;padding:40px 20px;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
           <!-- HEADER -->
           <tr>
-            <td style="background:linear-gradient(135deg,#00e5ff,#00e676);border-radius:20px 20px 0 0;padding:40px 40px 30px;text-align:center;">
-              <h1 style="margin:0;font-size:28px;font-weight:800;color:#0a0b1a;letter-spacing:-0.5px;">🏙️ Know Your City</h1>
-              <p style="margin:8px 0 0;font-size:14px;color:#0a0b1a;opacity:0.8;font-weight:600;">Safe Neighborhoods for Newcomers</p>
+            <td style="background:linear-gradient(135deg,#16A34A,#22C55E);border-radius:20px 20px 0 0;padding:40px 40px 30px;text-align:center;">
+              <h1 style="margin:0;font-size:28px;font-weight:800;color:#052E16;letter-spacing:-0.5px;">🏙️ Know Your City</h1>
+              <p style="margin:8px 0 0;font-size:14px;color:#16A34A;opacity:0.8;font-weight:600;">Safe Neighborhoods for Newcomers</p>
             </td>
           </tr>
 
           <!-- BODY -->
           <tr>
-            <td style="background:#12132a;padding:40px;border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">
-              <h2 style="margin:0 0 24px;font-size:20px;color:#00e5ff;font-weight:700;">${template.heading}</h2>
-              <div style="color:#c8d0dc;font-size:15px;line-height:1.8;white-space:pre-line;">${template.body}</div>
+            <td style="background:#FFFFFF;padding:40px;border-left:1px solid rgba(22,163,74,0.08);border-right:1px solid rgba(22,163,74,0.08);">
+              <h2 style="margin:0 0 24px;font-size:20px;color:#16A34A;font-weight:700;">${template.heading}</h2>
+              <div style="color:#052E16;font-size:15px;line-height:1.8;white-space:pre-line;">${template.body}</div>
             </td>
           </tr>
 
           <!-- DIVIDER -->
           <tr>
-            <td style="background:#12132a;padding:0 40px;border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">
-              <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:0;">
+            <td style="background:#FFFFFF;padding:0 40px;border-left:1px solid rgba(22,163,74,0.08);border-right:1px solid rgba(22,163,74,0.08);">
+              <hr style="border:none;border-top:1px solid rgba(22,163,74,0.08);margin:0;">
             </td>
           </tr>
 
           <!-- CTA -->
           <tr>
-            <td style="background:#12132a;padding:30px 40px;text-align:center;border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">
-              <a href="https://knowyourcity.vercel.app" style="display:inline-block;background:linear-gradient(135deg,#00e5ff,#00e676);color:#0a0b1a;font-weight:700;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:50px;">
+            <td style="background:#FFFFFF;padding:30px 40px;text-align:center;border-left:1px solid rgba(22,163,74,0.08);border-right:1px solid rgba(22,163,74,0.08);">
+              <a href="https://knowyourcitys.in" style="display:inline-block;background:linear-gradient(135deg,#16A34A,#22C55E);color:#fff;font-weight:700;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:50px;">
                 Explore Safety Maps →
               </a>
             </td>
@@ -173,12 +173,12 @@ We typically respond within 24–48 hours. If your matter is urgent, please emai
 
           <!-- FOOTER -->
           <tr>
-            <td style="background:#0d0e20;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
-              <p style="margin:0;color:#4a5568;font-size:13px;">
+            <td style="background:#F0FDF4;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border:1px solid rgba(22,163,74,0.06);">
+              <p style="margin:0;color:#166534;font-size:13px;">
                 This is an automated response from Know Your City.<br>
-                Reply directly to this email to reach our team at <a href="mailto:knowyourcity000@gmail.com" style="color:#00e5ff;text-decoration:none;">knowyourcity000@gmail.com</a>
+                Reply directly to this email to reach our team at <a href="mailto:knowyourcity000@gmail.com" style="color:#16A34A;text-decoration:none;font-weight:600;">knowyourcity000@gmail.com</a>
               </p>
-              <p style="margin:12px 0 0;color:#2d3748;font-size:12px;">© 2025 Know Your City — Solapur, Maharashtra 413006</p>
+              <p style="margin:12px 0 0;color:#052E16;font-size:12px;">© 2025 Know Your City — India</p>
             </td>
           </tr>
 

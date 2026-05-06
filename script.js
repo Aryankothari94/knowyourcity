@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Visual feedback
           showError(document.getElementById('signupError'), 'Google account recognized! Please complete your profile to continue.');
-          document.getElementById('signupError').style.color = '#00e5ff'; // Make it look like a tip/info
+          document.getElementById('signupError').style.color = '#16A34A'; // Make it look like a tip/info
           document.getElementById('signupError').classList.add('active');
 
           if (signupPhone) signupPhone.focus();
