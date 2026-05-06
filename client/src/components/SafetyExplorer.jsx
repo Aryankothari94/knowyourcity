@@ -346,7 +346,7 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                                 className="search-input" 
                                 placeholder="Search any area or city..." 
-                                style={{ width: '100%', padding: '16px 24px', paddingRight: '120px', borderRadius: '50px', border: '1px solid rgba(22, 163, 74, 0.1)', background: 'rgba(240, 253, 244, 0.8)', color: '#052E16', fontSize: '1.1rem', boxShadow: '0 8px 32px rgba(22, 163, 74, 0.1)', backdropFilter: 'blur(10px)' }}
+                                style={{ width: '100%', padding: '16px 24px', paddingRight: '120px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(30, 32, 47, 0.8)', color: 'white', fontSize: '1.1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)' }}
                             />
                             
                             {/* Suggestions Dropdown */}
@@ -360,8 +360,8 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                                             onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                                         >
-                                            <div style={{ color: '#16A34A', fontWeight: 600, fontSize: '1rem' }}>📍 {p.display_name.split(',')[0]}</div>
-                                            <div style={{ color: '#166534', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name}</div>
+                                            <div style={{ color: '#00e5ff', fontWeight: 600, fontSize: '1rem' }}>📍 {p.display_name.split(',')[0]}</div>
+                                            <div style={{ color: '#aaa', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -389,11 +389,11 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                     style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                                 >
                                     <h3 className="area-name" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>{selectedAreaName}</h3>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#16A34A', transform: isAreaDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}>expand_more</span>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#00e5ff', transform: isAreaDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}>expand_more</span>
                                 </div>
 
                                 {isAreaDropdownOpen && (
-                                    <div className="glass-card area-dropdown-menu" style={{ position: 'absolute', top: 'calc(100% + 12px)', left: '0', width: '280px', zIndex: 100, padding: '12px', border: '1px solid rgba(22, 163, 74, 0.3)', borderRadius: '16px', background: '#F0FDF4' }}>
+                                    <div className="glass-card area-dropdown-menu" style={{ position: 'absolute', top: 'calc(100% + 12px)', left: '0', width: '280px', zIndex: 100, padding: '12px', border: '1px solid rgba(0, 229, 255, 0.3)', borderRadius: '16px' }}>
                                         <div className="dropdown-search-wrapper" style={{ marginBottom: '10px' }}>
                                             <input 
                                                 type="text" 
@@ -401,7 +401,7 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                                 value={areaSearchTerm}
                                                 onChange={(e) => setAreaSearchTerm(e.target.value)}
                                                 onClick={(e) => e.stopPropagation()}
-                                                style={{ width: '100%', background: 'rgba(22, 163, 74, 0.05)', border: '1px solid rgba(22, 163, 74, 0.1)', borderRadius: '8px', padding: '8px 12px', color: '#052E16', fontSize: '0.85rem' }}
+                                                style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 12px', color: 'white', fontSize: '0.85rem' }}
                                             />
                                         </div>
                                         <div className="dropdown-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
@@ -411,7 +411,7 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                                     className="dropdown-item"
                                                     onClick={(e) => { e.stopPropagation(); handleSelectArea(area); }}
                                                     style={{ padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s', color: 'rgba(255,255,255,0.8)' }}
-                                                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(22, 163, 74, 0.1)'}
+                                                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0, 229, 255, 0.1)'}
                                                     onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                                                 >
                                                     {area.name}
@@ -433,14 +433,14 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                     <div className="metric-bar"><div className={`metric-fill ${stats.crimeScore > 75 ? 'green' : 'amber'}`} style={{ width: `${stats.crimeScore}%` }}></div></div>
                                 </div>
                                 <div className="recent-activity" style={{ marginTop: '20px', textAlign: 'left' }}>
-                                    <h4 style={{ fontSize: '0.9rem', color: '#16A34A', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <h4 style={{ fontSize: '0.9rem', color: '#00e5ff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>warning</span> Recent Activity
                                     </h4>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         {incidents.length > 0 ? incidents.slice(0, 3).map((inc, i) => (
                                             <div key={i} style={{ padding: '10px', background: 'rgba(255,82,82,0.08)', borderLeft: '3px solid #ff5252', borderRadius: '6px', border: '1px solid rgba(255,82,82,0.1)' }}>
                                                 <div style={{ color: '#ff5252', fontWeight: 600, fontSize: '0.85rem' }}>{inc.type}</div>
-                                                <div style={{ color: '#166534', fontSize: '0.78rem', lineHeight: '1.4' }}>{inc.description}</div>
+                                                <div style={{ color: '#cbd5e1', fontSize: '0.78rem', lineHeight: '1.4' }}>{inc.description}</div>
                                             </div>
                                         )) : (
                                             <div style={{ color: '#64748b', fontSize: '0.8rem', padding: '10px', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '6px', textAlign: 'center' }}>
@@ -467,22 +467,22 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     <span className="material-symbols-outlined" style={{ color: '#00e676', fontSize: '24px', marginBottom: '8px' }}>shield</span>
-                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#052E16' }}>{infraLoading ? '...' : safetyInfra.counts.police}</div>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.police}</div>
                                     <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>Police Stations</div>
                                 </div>
                                 <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     <span className="material-symbols-outlined" style={{ color: '#2196f3', fontSize: '24px', marginBottom: '8px' }}>add_box</span>
-                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#052E16' }}>{infraLoading ? '...' : safetyInfra.counts.hospitals}</div>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.hospitals}</div>
                                     <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>Hospitals</div>
                                 </div>
                                 <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     <span className="material-symbols-outlined" style={{ color: '#ff9800', fontSize: '24px', marginBottom: '8px' }}>local_fire_department</span>
-                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#052E16' }}>{infraLoading ? '...' : safetyInfra.counts.fire}</div>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.fire}</div>
                                     <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>Fire Stations</div>
                                 </div>
                                 <div className="metric-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     <span className="material-symbols-outlined" style={{ color: '#9c27b0', fontSize: '24px', marginBottom: '8px' }}>videocam</span>
-                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#052E16' }}>{infraLoading ? '...' : safetyInfra.counts.cctv}</div>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>{infraLoading ? '...' : safetyInfra.counts.cctv}</div>
                                     <div style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>CCTV/Surveillance</div>
                                 </div>
                             </div>
@@ -499,17 +499,17 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                 <span className="material-symbols-outlined">photo_camera</span>
                             </div>
                             <h3 className="area-name">Top Trusted Landmarks: {searchedCity}</h3>
-                            <span className="area-badge badge-safe" style={{ background: 'linear-gradient(135deg, #16A34A, #22C55E)', color: '#fff', fontWeight: 800 }}>TRUSTED</span>
+                            <span className="area-badge badge-safe" style={{ background: 'linear-gradient(135deg, #00e5ff, #00bfa5)', color: '#000', fontWeight: 800 }}>TRUSTED</span>
                         </div>
                         <div className="area-card-content">
                             <div className="exploration-list" style={{ textAlign: 'left' }}>
                                 {landmarks.length > 0 ? landmarks.slice(0, 4).map((p, i) => (
-                                    <div key={i} style={{ marginBottom: '20px', padding: '16px', background: 'rgba(22, 163, 74, 0.04)', borderRadius: '14px', border: '1px solid rgba(22, 163, 74, 0.12)' }}>
+                                    <div key={i} style={{ marginBottom: '20px', padding: '16px', background: 'rgba(0, 229, 255, 0.04)', borderRadius: '14px', border: '1px solid rgba(0, 229, 255, 0.12)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                            <div style={{ color: '#16A34A', fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ color: '#00e5ff', fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>verified</span> {p.title}
                                             </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#16A34A', background: 'rgba(22,163,74,0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                                            <div style={{ fontSize: '0.75rem', color: '#00e5ff', background: 'rgba(0,229,255,0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
                                                 {(p.distance || 0).toFixed(1)} km away
                                             </div>
                                         </div>
@@ -520,17 +520,17 @@ const SafetyExplorer = ({ safetyInfra, infraLoading }) => {
                                                     <span key={i} style={{ opacity: i < Math.floor(p.rating || 0) ? 1 : 0.3 }}>★</span>
                                                 ))}
                                             </div>
-                                            <span style={{ color: '#052E16', fontSize: '0.85rem', fontWeight: 700 }}>{(p.rating || 0).toFixed(1)}</span>
-                                            <span style={{ color: '#166534', fontSize: '0.75rem' }}>({(p.reviews || 0).toLocaleString()} Google Reviews)</span>
+                                            <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>{(p.rating || 0).toFixed(1)}</span>
+                                            <span style={{ color: '#aaa', fontSize: '0.75rem' }}>({(p.reviews || 0).toLocaleString()} Google Reviews)</span>
                                         </div>
 
-                                        <div style={{ color: '#166534', fontSize: '0.78rem', lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden', fontStyle: 'italic' }}>
+                                        <div style={{ color: '#cbd5e1', fontSize: '0.78rem', lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden', fontStyle: 'italic' }}>
                                             &ldquo;{p.description}&rdquo;
                                         </div>
                                         
                                         <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ color: '#64748b', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.5px' }}>KYC VERIFIED SOURCE</span>
-                                            <span className="material-symbols-outlined" style={{ color: '#16A34A', fontSize: '18px', cursor: 'pointer' }}>info</span>
+                                            <span className="material-symbols-outlined" style={{ color: '#00e5ff', fontSize: '18px', cursor: 'pointer' }}>info</span>
                                         </div>
                                     </div>
                                 )) : (

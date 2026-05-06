@@ -103,26 +103,24 @@
       min-height: 460px !important;
       max-height: 460px !important;
       margin: 0 !important;
-      background: var(--glass-bg) !important;
-      border: 1px solid var(--glass-border) !important;
+      background: rgba(30, 32, 47, 0.75) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
       backdrop-filter: blur(16px) !important;
-      box-shadow: 0 10px 30px rgba(22, 163, 74, 0.1) !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
       transition: all 0.3s ease !important;
       border-radius: 20px !important;
       position: relative !important;
       overflow: hidden !important;
-      color: var(--text-primary) !important;
     }
 
     .card-title,
     .area-card-header {
       margin-bottom: 20px !important;
       padding-bottom: 12px !important;
-      border-bottom: 1px solid rgba(22, 163, 74, 0.1) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
       display: flex !important;
       align-items: center !important;
       gap: 12px !important;
-      color: var(--text-primary) !important;
     }
 
     .safety-card-content,
@@ -160,8 +158,7 @@
     .safety-card:hover {
       transform: translateY(-5px) !important;
       border-color: var(--accent-cyan) !important;
-      background: var(--glass-bg-hover) !important;
-      box-shadow: 0 15px 40px rgba(22, 163, 74, 0.15) !important;
+      background: rgba(35, 38, 55, 0.85) !important;
     }
 
     @media (max-width: 1100px) {
@@ -255,11 +252,11 @@
 
     /* Premium Autocomplete Styles */
     .area-suggestion-item:hover {
-      background: rgba(22, 163, 74, 0.1) !important;
+      background: rgba(0, 229, 255, 0.1) !important;
     }
 
     .area-suggestion-item.active {
-      background: rgba(22, 163, 74, 0.15) !important;
+      background: rgba(0, 229, 255, 0.15) !important;
     }
 
     .area-search-wrapper:focus-within input {
@@ -277,15 +274,15 @@
     }
 
     .metric-fill.amber {
-      background: #f59e0b !important;
+      background: #ffb300 !important;
     }
 
     .metric-fill.red {
-      background: #ef4444 !important;
+      background: #ff5252 !important;
     }
 
     .metric-fill.green {
-      background: #16a34a !important;
+      background: #00e676 !important;
     }
 
     /* Map Pulse Animations */
@@ -341,15 +338,15 @@
 
     @keyframes pulse-hosp {
       0% {
-        filter: drop-shadow(0 0 0 rgba(22, 163, 74, 0.7));
+        filter: drop-shadow(0 0 0 rgba(0, 230, 118, 0.7));
       }
 
       70% {
-        filter: drop-shadow(0 0 10px rgba(22, 163, 74, 0));
+        filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0));
       }
 
       100% {
-        filter: drop-shadow(0 0 0 rgba(22, 163, 74, 0));
+        filter: drop-shadow(0 0 0 rgba(0, 230, 118, 0));
       }
     }
 
@@ -360,15 +357,15 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
-      background: var(--glass-bg);
+      background: rgba(30, 32, 47, 0.85);
       backdrop-filter: blur(12px);
-      border: 1px solid var(--glass-border);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
       padding: 8px 12px;
-      color: var(--text-primary);
+      color: white;
       font-size: 0.85rem;
       font-weight: 600;
-      box-shadow: 0 8px 25px rgba(22, 163, 74, 0.15);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -402,8 +399,8 @@
     }
 
     .map-layer-control select option {
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      background: #1a1b2e;
+      color: white;
     }
 
     /* Interactive Mobile Widgets */
@@ -859,7 +856,7 @@
         // Add grouped layers to map
         Object.keys(_mapLayers).forEach(k => _mapLayers[k].addTo(_safetyMap));
 
-        L.circleMarker([globalLat, globalLng], { radius: 8, fillColor: '#16A34A', fillOpacity: 1, color: '#fff', weight: 2 })
+        L.circleMarker([globalLat, globalLng], { radius: 8, fillColor: '#00e5ff', fillOpacity: 1, color: '#fff', weight: 2 })
           .addTo(_safetyMap).bindPopup('📍 You — ' + city).openPopup();
         document.getElementById('policeCount').textContent = '--';
         document.getElementById('hospitalCount').textContent = '--';
@@ -2179,7 +2176,7 @@
       function appendTouristCard(name, type, globalCityStr, container) {
         const placeDiv = document.createElement('div');
         placeDiv.style.cssText = 'padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 12px;';
-        placeDiv.innerHTML = `<div style="color:#16A34A; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#166534; font-size:0.8rem;">Loading Wikipedia insight...</div>`;
+        placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#888; font-size:0.8rem;">Loading Wikipedia insight...</div>`;
         container.appendChild(placeDiv);
 
         fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=2&exlimit=1&titles=${encodeURIComponent(name)}&explaintext=1&formatversion=2&format=json&origin=*`)
@@ -2187,12 +2184,12 @@
           .then(wData => {
             let ext = wData.query?.pages[0]?.extract;
             if (ext && ext.length > 20 && !ext.trim().endsWith('may refer to:')) {
-              placeDiv.innerHTML = `<div style="color:#16A34A; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#052E16; font-size:0.82rem; line-height:1.5;">${ext}</div>`;
+              placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">${ext}</div>`;
             } else {
-              placeDiv.innerHTML = `<div style="color:#16A34A; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#052E16; font-size:0.82rem; line-height:1.5;">A notable ${type} attraction located in ${globalCityStr}. Highly recommended for exploring!</div>`;
+              placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">A notable ${type} attraction located in ${globalCityStr}. Highly recommended for exploring!</div>`;
             }
           }).catch(() => {
-            placeDiv.innerHTML = `<div style="color:#16A34A; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#052E16; font-size:0.82rem; line-height:1.5;">A popular landmark to visit around ${globalCityStr}.</div>`;
+            placeDiv.innerHTML = `<div style="color:#00e5ff; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span> ${name}</div><div style="color:#cbd5e1; font-size:0.82rem; line-height:1.5;">A popular landmark to visit around ${globalCityStr}.</div>`;
           });
       }
     </script>
@@ -2374,15 +2371,15 @@
         width: 44px;
         height: 44px;
         border-radius: 50%;
-        background: var(--accent-gradient);
+        background: linear-gradient(135deg, #00e5ff, #00e676);
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
         font-size: 1.1rem;
-        color: #fff;
+        color: #0a0b1a;
         flex-shrink: 0;
-        box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
         transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
 
@@ -2552,7 +2549,7 @@
         border-radius: 20px;
         background: rgba(0, 229, 255, 0.1);
         border: 1px solid rgba(0, 229, 255, 0.25);
-        color: #16A34A;
+        color: #00e5ff;
         font-size: 0.75rem;
         font-weight: 600;
         margin-bottom: 6px;
@@ -2880,9 +2877,9 @@
 
       .carousel-nav-btn:hover {
         background: var(--accent-cyan);
-        color: #fff;
+        color: #0a0b1a;
         border-color: var(--accent-cyan);
-        box-shadow: 0 0 15px rgba(22, 163, 74, 0.4);
+        box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
       }
 
       .carousel-nav-btn.prev-btn {
@@ -3018,7 +3015,7 @@
         card.innerHTML = `
         <p class="testimonial-quote">${chosenResponse}</p>
         <div class="testimonial-author">
-          <div class="author-avatar" style="background: var(--accent-gradient); color:#fff;">${initials}</div>
+          <div class="author-avatar" style="background: linear-gradient(135deg, #00e5ff, #00e676); color:#0a0b1a;">${initials}</div>
           <div class="author-info">
             <h4>${userName}</h4>
             <p>Moved from ${cityFrom} to ${cityTo}</p>
@@ -3844,7 +3841,7 @@
             <button type="button" class="toggle-password" data-target="adminPassword">👁️</button>
           </div>
         </div>
-        <button type="submit" class="btn-auth" style="background:var(--accent-gradient);">Unlock
+        <button type="submit" class="btn-auth" style="background:linear-gradient(135deg, #00e5ff, #0a0b1a);">Unlock
           Admin Dashboard</button>
         <button type="button" class="btn-back-auth" onclick="closeAuthModal()" style="margin-top: 20px;">← Go Back to
           Dashboard</button>

@@ -75,9 +75,9 @@
       gap: 10px;
       padding: 6px 12px !important;
       border-radius: 50px !important;
-      border: 1px solid var(--glass-border) !important;
-      background: var(--glass-bg) !important;
-      color: var(--text-primary);
+      border: 1px solid rgba(255,255,255,0.15) !important;
+      background: rgba(30,32,47,0.8) !important;
+      color: #fff;
       cursor: pointer;
       transition: all 0.3s ease;
       font-size: 0.8rem;
@@ -87,19 +87,19 @@
     }
     .dropdown-trigger:hover {
       border-color: var(--accent-cyan) !important;
-      background: var(--glass-bg-hover) !important;
-      box-shadow: 0 0 15px rgba(22, 163, 74, 0.1);
+      background: rgba(35,38,55,0.9) !important;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
     }
     .dropdown-menu {
       position: absolute;
       top: calc(100% + 8px);
       left: 0;
       width: 100%;
-      background: var(--bg-secondary);
-      border: 1px solid var(--glass-border);
+      background: rgba(20, 22, 35, 0.95);
+      border: 1px solid rgba(0, 229, 255, 0.3);
       border-radius: 16px;
       backdrop-filter: blur(20px);
-      box-shadow: 0 20px 40px rgba(22, 163, 74, 0.1);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
       display: none;
       flex-direction: column;
       overflow: hidden;
@@ -118,11 +118,11 @@
     }
     .dropdown-search {
       width: 100%;
-      background: rgba(22, 163, 74, 0.05);
-      border: 1px solid rgba(22, 163, 74, 0.1);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 8px;
       padding: 8px 12px;
-      color: var(--text-primary);
+      color: #fff;
       font-size: 0.8rem;
       outline: none;
     }
@@ -137,17 +137,17 @@
     .dropdown-item {
       padding: 10px 14px;
       border-radius: 8px;
-      color: var(--text-secondary);
+      color: rgba(255,255,255,0.7);
       font-size: 0.85rem;
       cursor: pointer;
       transition: all 0.2s;
     }
     .dropdown-item:hover {
-      background: rgba(22, 163, 74, 0.1);
-      color: var(--text-primary);
+      background: rgba(0, 229, 255, 0.1);
+      color: #fff;
     }
     .dropdown-item.active {
-      background: rgba(22, 163, 74, 0.15);
+      background: rgba(0, 229, 255, 0.15);
       color: var(--accent-cyan);
       font-weight: 600;
     }
@@ -781,7 +781,7 @@
           countEl.textContent = `No ${catText.textContent} Found`;
           metaEl.textContent = `Try selecting a different category or 'Whole City'`;
           grid.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(22, 163, 74, 0.03); border-radius: 20px; border: 1px dashed rgba(22, 163, 74, 0.1);">
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
               <span class="material-symbols-outlined" style="font-size: 64px; color: var(--accent-cyan); opacity: 0.5; margin-bottom: 20px;">search_off</span>
               <h3 style="font-size: 1.5rem; margin-bottom: 10px;">Category Not Available</h3>
               <p style="color: var(--text-secondary); max-width: 400px; margin: 0 auto;">We couldn't find any ${catText.textContent} in ${areaText.textContent}. Try expanding your search to the Whole City or choose a different category.</p>
@@ -1186,7 +1186,7 @@
             <button type="button" class="toggle-password" data-target="adminPassword">👁️</button>
           </div>
         </div>
-        <button type="submit" class="btn-auth" style="background:var(--accent-gradient);">Unlock Admin Dashboard</button>
+        <button type="submit" class="btn-auth" style="background:linear-gradient(135deg, #00e5ff, #0a0b1a);">Unlock Admin Dashboard</button>
         <div class="auth-footer" style="text-align:center; margin-top:15px;">
           <a href="#" onclick="switchTab('login')" style="color:var(--text-secondary); text-decoration:none; font-size:0.9rem;">← Back to User Login</a>
         </div>

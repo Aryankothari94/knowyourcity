@@ -35,7 +35,7 @@ export default function SafetyMap({ userLocation, safetyInfra }) {
     const getStatusColor = (status) => {
         if (status === 'red') return '#FF5252';
         if (status === 'yellow') return '#FFD740';
-        return '#16A34A';
+        return '#00E676';
     };
 
     return (
@@ -44,7 +44,7 @@ export default function SafetyMap({ userLocation, safetyInfra }) {
                 <MapContainer center={[userLocation.lat, userLocation.lng]} zoom={14} style={{ height: '100%', width: '100%', zIndex: 1 }}>
                     <ChangeView center={[userLocation.lat, userLocation.lng]} zoom={14} />
                     <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                     />
 
@@ -69,7 +69,7 @@ export default function SafetyMap({ userLocation, safetyInfra }) {
                         </CircleMarker>
                     ))}
                     {safetyInfra.hospitals.map((h, i) => (
-                        <CircleMarker key={`h-${i}`} center={[h.lat, h.lng]} radius={6} pathOptions={{ color: '#16A34A', fillColor: '#16A34A', fillOpacity: 0.8 }}>
+                        <CircleMarker key={`h-${i}`} center={[h.lat, h.lng]} radius={6} pathOptions={{ color: '#00e676', fillColor: '#00e676', fillOpacity: 0.8 }}>
                             <Popup><strong>Hospital/Medical</strong><br/>{h.name}</Popup>
                         </CircleMarker>
                     ))}

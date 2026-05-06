@@ -7,33 +7,33 @@
 /* === Design Tokens === */
 :root {
   /* Background */
-  --bg-primary: #F0FDF4;
+  --bg-primary: #F8F5F2;
   --bg-secondary: #FFFFFF;
-  --bg-gradient: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+  --bg-gradient: linear-gradient(135deg, #F8F5F2 0%, #E8E4E1 100%);
 
   /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-bg-hover: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(22, 163, 74, 0.15);
-  --glass-border-hover: rgba(22, 163, 74, 0.3);
-  --glass-shadow: 0 8px 32px rgba(22, 163, 74, 0.1);
+  --glass-border: rgba(58, 90, 122, 0.15);
+  --glass-border-hover: rgba(58, 90, 122, 0.3);
+  --glass-shadow: 0 8px 32px rgba(58, 90, 122, 0.1);
   --glass-blur: blur(20px);
 
   /* Accent Colors */
-  --accent-cyan: #16A34A;
-  --accent-teal: #22C55E;
-  --accent-blue: #4ADE80;
-  --accent-gradient: linear-gradient(135deg, #16A34A 0%, #22C55E 100%);
+  --accent-cyan: #3A5A7A;
+  --accent-teal: #E76F51;
+  --accent-blue: #2A4A6A;
+  --accent-gradient: linear-gradient(135deg, #3A5A7A 0%, #E76F51 100%);
 
   /* Safety Colors */
-  --safe-green: #16A34A;
+  --safe-green: #2ecc71;
   --moderate-amber: #f39c12;
-  --caution-red: #ef4444;
+  --caution-red: #e74c3c;
 
   /* Text */
-  --text-primary: #052E16;
-  --text-secondary: #166534;
-  --text-muted: #3F6212;
+  --text-primary: #2B2B2B;
+  --text-secondary: #4A4A4A;
+  --text-muted: #7F8C8D;
 
   /* Typography */
   --font-heading: 'Outfit', sans-serif;
@@ -829,12 +829,11 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: rgba(30, 32, 47, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   backdrop-filter: blur(20px);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-  color: var(--text-primary);
 }
 
 /* Hide horizontal scrollbar for safety grid */
@@ -864,15 +863,14 @@ body {
 
 /* Active/Featured card glowing state (as in reference image) */
 .area-card.active-card {
-  border: 1.5px solid var(--accent-cyan) !important;
-  box-shadow: 0 0 30px rgba(22, 163, 74, 0.2), inset 0 0 15px rgba(22, 163, 74, 0.1) !important;
+  border: 1.5px solid rgba(0, 212, 255, 0.6) !important;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.1) !important;
 }
 
 .area-card:hover {
   transform: translateY(-8px);
-  border-color: var(--accent-cyan);
-  box-shadow: 0 20px 40px rgba(22, 163, 74, 0.15);
-  background: var(--glass-bg-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 .area-card-header {
@@ -886,8 +884,8 @@ body {
 .area-icon-box {
   width: 58px;
   height: 58px;
-  background: rgba(22, 163, 74, 0.05);
-  border: 1px solid rgba(22, 163, 74, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -907,7 +905,7 @@ body {
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 8px;
-  color: var(--text-primary);
+  color: white;
 }
 
 .area-badge {
@@ -1099,7 +1097,7 @@ body {
 .metric-bar {
   width: 100%;
   height: 6px;
-  background: rgba(22, 163, 74, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -1131,8 +1129,8 @@ body {
 
 .area-tag {
   padding: 5px 12px;
-  background: rgba(22, 163, 74, 0.04);
-  border: 1px solid rgba(22, 163, 74, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 50px;
   font-size: 0.75rem;
   color: var(--text-secondary);
