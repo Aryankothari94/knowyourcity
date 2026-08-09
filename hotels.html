@@ -835,45 +835,50 @@
         }
 
         function applyFilters() {
-            const priceVal = document.getElementById('priceFilter').value;
-            const typeVal = document.getElementById('typeFilter').value;
-            const areaVal = document.getElementById('areaFilter').value;
-            const ratingVal = document.getElementById('ratingFilter').value;
-            const safetyVal = document.getElementById('safetyFilter').value;
-            const sortVal = document.getElementById('sortFilter').value;
-            
-            const checkboxes = document.querySelectorAll('#essentialsDrop input:checked');
-            const selectedEssentials = Array.from(checkboxes).map(cb => cb.value);
+            try {
+                const priceVal  = document.getElementById('priceFilter').value;
+                const typeVal   = document.getElementById('typeFilter').value;
+                const ratingVal = document.getElementById('ratingFilter').value;
+                const safetyVal = document.getElementById('safetyFilter').value;
+                const sortVal   = document.getElementById('sortFilter').value;
 
-            let filtered = allHotels.filter(h => {
-                const matchesPrice = priceVal === 'all' || 
-                    (priceVal === 'budget' && h.price <= 2000) ||
-                    (priceVal === 'mid' && h.price > 2000 && h.price <= 5000) ||
-                    (priceVal === 'luxury' && h.price > 5000);
-                
-                const matchesType = typeVal === 'all' || h.type === typeVal || (typeVal === 'hotel' && h.type === 'motel');
-                const matchesRating = ratingVal === 'all' || h.rating >= parseFloat(ratingVal);
-                
-                const matchesSafety = safetyVal === 'all' ||
-                    (safetyVal === 'high' && h.safety >= 4.5) ||
-                    (safetyVal === 'medium' && h.safety >= 3.8 && h.safety < 4.5) ||
-                    (safetyVal === 'low' && h.safety < 3.8);
+                const checkboxes = document.querySelectorAll('#essentialsDrop input:checked');
+                const selectedEssentials = Array.from(checkboxes).map(cb => cb.value);
 
-                const matchesEssentials = selectedEssentials.every(e => (h.essentials || []).includes(e));
+                let filtered = allHotels.filter(h => {
+                    const matchesPrice = priceVal === 'all' ||
+                        (priceVal === 'budget' && h.price <= 2000) ||
+                        (priceVal === 'mid'    && h.price > 2000 && h.price <= 5000) ||
+                        (priceVal === 'luxury' && h.price > 5000);
 
-                return matchesPrice && matchesType && matchesRating && matchesSafety && matchesEssentials;
-            });
+                    const matchesType    = typeVal === 'all' || h.type === typeVal || (typeVal === 'hotel' && h.type === 'motel');
+                    const matchesRating  = ratingVal === 'all' || h.rating >= parseFloat(ratingVal);
 
-            // Default Sorting: Rating High to Low
-            filtered.sort((a, b) => {
-                if (sortVal === 'safety') return b.safety - a.safety;
-                if (sortVal === 'price') return a.price - b.price;
-                if (sortVal === 'distance') return (a.distance || 0) - (b.distance || 0);
-                return b.rating - a.rating; // Default highest rating first
-            });
+                    const matchesSafety = safetyVal === 'all' ||
+                        (safetyVal === 'high'   && h.safety >= 4.5) ||
+                        (safetyVal === 'medium' && h.safety >= 3.8 && h.safety < 4.5) ||
+                        (safetyVal === 'low'    && h.safety < 3.8);
 
-            renderGrid(filtered);
-            if (map) updateMap(filtered);
+                    const matchesEssentials = selectedEssentials.every(e => (h.essentials || []).includes(e));
+
+                    return matchesPrice && matchesType && matchesRating && matchesSafety && matchesEssentials;
+                });
+
+                // Sort: Rating high-to-low by default
+                filtered.sort((a, b) => {
+                    if (sortVal === 'safety')   return b.safety - a.safety;
+                    if (sortVal === 'price')    return a.price - b.price;
+                    if (sortVal === 'distance') return (a.distance || 0) - (b.distance || 0);
+                    return b.rating - a.rating;
+                });
+
+                renderGrid(filtered);
+                if (map) updateMap(filtered);
+            } catch (err) {
+                console.error('[applyFilters] Error:', err);
+                // Still hide spinner so user sees something
+                document.getElementById('loadingSpinner').style.display = 'none';
+            }
         }
 
         function renderGrid(hotels) {
