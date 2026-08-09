@@ -557,43 +557,47 @@
 
     <script src="script.js?v=88"></script>
     <script>
+        // ── Module-level state (accessible by ALL functions) ──────────────────
         let allHotels = [];
         let map = null;
         let markers = [];
         let currentView = 'grid';
+        let _lat = 19.0760, _lng = 72.8777, _city = 'Your Area';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const params = new URLSearchParams(window.location.search);
-            let lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-            let lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-            let city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+            // Clear any stale cache that might block rendering
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('kyc_hotels_')) localStorage.removeItem(k);
+            });
 
-            document.getElementById('cityName').textContent = city;
+            const params = new URLSearchParams(window.location.search);
+            _lat  = parseFloat(params.get('lat'))  || parseFloat(localStorage.getItem('kyc_userLat'))  || 19.0760;
+            _lng  = parseFloat(params.get('lng'))  || parseFloat(localStorage.getItem('kyc_userLng'))  || 72.8777;
+            _city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
+
+            document.getElementById('cityName').textContent = _city;
 
             let currentArea = 'all';
 
             // Dropdown Elements
             const areaTrigger = document.getElementById('areaDropdownTrigger');
-            const areaMenu = document.getElementById('areaDropdownMenu');
-            const areaSearch = document.getElementById('areaSearchInput');
-            const areaList = document.getElementById('areaDropdownList');
-            const areaText = document.getElementById('selectedAreaText');
+            const areaMenu    = document.getElementById('areaDropdownMenu');
+            const areaSearch  = document.getElementById('areaSearchInput');
+            const areaList    = document.getElementById('areaDropdownList');
+            const areaText    = document.getElementById('selectedAreaText');
 
             areaTrigger.addEventListener('click', (e) => {
                 e.stopPropagation();
                 areaMenu.classList.toggle('active');
-                if(areaMenu.classList.contains('active')) areaSearch.focus();
+                if (areaMenu.classList.contains('active')) areaSearch.focus();
             });
 
-            document.addEventListener('click', () => {
-                areaMenu.classList.remove('active');
-            });
+            document.addEventListener('click', () => { areaMenu.classList.remove('active'); });
 
             areaSearch.addEventListener('input', (e) => {
                 const q = e.target.value.toLowerCase();
                 areaList.querySelectorAll('.dropdown-item').forEach(item => {
-                    const text = item.textContent.toLowerCase();
-                    item.style.display = text.includes(q) ? 'block' : 'none';
+                    item.style.display = item.textContent.toLowerCase().includes(q) ? 'block' : 'none';
                 });
             });
 
@@ -609,27 +613,25 @@
             };
 
             function triggerFilter() {
-                let targetLat = lat, targetLng = lng;
+                let targetLat = _lat, targetLng = _lng;
                 let radius = 25000;
-
                 if (currentArea !== 'all') {
                     const coords = JSON.parse(currentArea);
                     targetLat = coords.lat;
                     targetLng = coords.lng;
-                    radius = 5000; 
+                    radius = 5000;
                 }
-
                 document.getElementById('loadingSpinner').style.display = 'flex';
                 document.getElementById('hotelsGrid').innerHTML = '';
                 document.getElementById('resultsMeta').textContent = `Filtering for stays in ${areaText.textContent}...`;
-                
-                fetchHotels(targetLat, targetLng, city, radius);
+                fetchHotels(targetLat, targetLng, _city, radius);
             }
 
-            fetchCityAreas(lat, lng);
-            fetchHotels(lat, lng, city, 25000);
+            fetchCityAreas(_lat, _lng);
+            fetchHotels(_lat, _lng, _city, 25000);
         });
 
+        // ── Hotel Image Bank ──────────────────────────────────────────────────
         const hotelImageBank = {
             resort: [
                 "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80",
@@ -662,154 +664,133 @@
             return list[Math.abs(index || 0) % list.length];
         }
 
+        // ── City Hotel Generator (guaranteed 15 results) ──────────────────────
         function generateCityHotels(lat, lng, city) {
             const primaryCity = (city || 'City').split(',')[0].trim();
             const stayTemplates = [
-                { suffix: "Grand Palace & Spa", type: "resort", price: 8999, rating: 4.9, reviews: 2450, safety: 4.9, area: "Heritage Sector", essentials: ["WiFi", "AC", "Pool", "Spa", "CCTV", "Couple"] },
-                { suffix: "Royal Orchid Hotel", type: "hotel", price: 5499, rating: 4.8, reviews: 1890, safety: 4.8, area: "Business District", essentials: ["WiFi", "AC", "Parking", "Family", "CCTV"] },
-                { suffix: "Metropolitan Towers", type: "hotel", price: 4200, rating: 4.7, reviews: 1420, safety: 4.7, area: "City Center", essentials: ["WiFi", "AC", "Gym", "Breakfast", "CCTV"] },
-                { suffix: "Lakeside Luxury Resort", type: "resort", price: 11499, rating: 4.9, reviews: 3120, safety: 4.9, area: "Lakefront Promenade", essentials: ["WiFi", "AC", "Pool", "Spa", "Valet"] },
-                { suffix: "The Fern Residency", type: "hotel", price: 3799, rating: 4.6, reviews: 980, safety: 4.6, area: "Financial Park", essentials: ["WiFi", "AC", "Parking", "CCTV"] },
-                { suffix: "Lemon Tree Premier", type: "hotel", price: 4899, rating: 4.8, reviews: 2150, safety: 4.8, area: "Airport Expressway", essentials: ["WiFi", "AC", "Pool", "Shuttle"] },
-                { suffix: "Boutique Heritage Mansion", type: "guest_house", price: 2999, rating: 4.7, reviews: 760, safety: 4.7, area: "Old Fort Colony", essentials: ["WiFi", "AC", "Family", "Garden"] },
-                { suffix: "Skyline Executive Suites", type: "apartment", price: 3499, rating: 4.6, reviews: 620, safety: 4.6, area: "Tech Corridor", essentials: ["WiFi", "AC", "Kitchen", "CCTV"] },
-                { suffix: "Zostel & Backpacker Hub", type: "hostel", price: 999, rating: 4.5, reviews: 1850, safety: 4.5, area: "Artist Village", essentials: ["WiFi", "Dorm", "Couple", "Cafe"] },
-                { suffix: "Ginger Smart Stay", type: "hotel", price: 2499, rating: 4.4, reviews: 1100, safety: 4.5, area: "Station Road", essentials: ["WiFi", "AC", "CCTV", "Breakfast"] },
-                { suffix: "Radisson Blu Resort", type: "resort", price: 9800, rating: 4.9, reviews: 2890, safety: 4.9, area: "Green Valley", essentials: ["WiFi", "AC", "Pool", "Spa", "Couple"] },
-                { suffix: "Treebo Trend Oasis", type: "hotel", price: 1999, rating: 4.4, reviews: 540, safety: 4.4, area: "Metropolitan Square", essentials: ["WiFi", "AC", "Parking"] },
-                { suffix: "FabHotel Prime Stay", type: "hotel", price: 1799, rating: 4.3, reviews: 430, safety: 4.4, area: "Commercial Plaza", essentials: ["WiFi", "AC", "Breakfast"] },
-                { suffix: "ITC Luxury Collection", type: "resort", price: 12999, rating: 4.9, reviews: 4120, safety: 4.9, area: "Embassy Enclave", essentials: ["WiFi", "AC", "Pool", "Spa", "Butler"] },
-                { suffix: "Hyatt Regency Suites", type: "hotel", price: 7899, rating: 4.8, reviews: 2310, safety: 4.8, area: "Downtown Boulevard", essentials: ["WiFi", "AC", "Pool", "Gym", "Bar"] }
+                { suffix: "Grand Palace & Spa",       type: "resort",      price: 8999,  rating: 4.9, reviews: 2450, safety: 4.9, area: "Heritage Sector",     essentials: ["WiFi","AC","Pool","Spa","CCTV","Couple"] },
+                { suffix: "Royal Orchid Hotel",        type: "hotel",       price: 5499,  rating: 4.8, reviews: 1890, safety: 4.8, area: "Business District",    essentials: ["WiFi","AC","Parking","Family","CCTV"] },
+                { suffix: "Metropolitan Towers",       type: "hotel",       price: 4200,  rating: 4.7, reviews: 1420, safety: 4.7, area: "City Center",          essentials: ["WiFi","AC","Gym","Breakfast","CCTV"] },
+                { suffix: "Lakeside Luxury Resort",    type: "resort",      price: 11499, rating: 4.9, reviews: 3120, safety: 4.9, area: "Lakefront Promenade",  essentials: ["WiFi","AC","Pool","Spa","Valet"] },
+                { suffix: "The Fern Residency",        type: "hotel",       price: 3799,  rating: 4.6, reviews: 980,  safety: 4.6, area: "Financial Park",       essentials: ["WiFi","AC","Parking","CCTV"] },
+                { suffix: "Lemon Tree Premier",        type: "hotel",       price: 4899,  rating: 4.8, reviews: 2150, safety: 4.8, area: "Airport Expressway",   essentials: ["WiFi","AC","Pool","Shuttle"] },
+                { suffix: "Boutique Heritage Mansion", type: "guest_house", price: 2999,  rating: 4.7, reviews: 760,  safety: 4.7, area: "Old Fort Colony",      essentials: ["WiFi","AC","Family","Garden"] },
+                { suffix: "Skyline Executive Suites",  type: "apartment",   price: 3499,  rating: 4.6, reviews: 620,  safety: 4.6, area: "Tech Corridor",        essentials: ["WiFi","AC","Kitchen","CCTV"] },
+                { suffix: "Zostel & Backpacker Hub",   type: "hostel",      price: 999,   rating: 4.5, reviews: 1850, safety: 4.5, area: "Artist Village",       essentials: ["WiFi","Dorm","Couple","Cafe"] },
+                { suffix: "Ginger Smart Stay",         type: "hotel",       price: 2499,  rating: 4.4, reviews: 1100, safety: 4.5, area: "Station Road",         essentials: ["WiFi","AC","CCTV","Breakfast"] },
+                { suffix: "Radisson Blu Resort",       type: "resort",      price: 9800,  rating: 4.9, reviews: 2890, safety: 4.9, area: "Green Valley",         essentials: ["WiFi","AC","Pool","Spa","Couple"] },
+                { suffix: "Treebo Trend Oasis",        type: "hotel",       price: 1999,  rating: 4.4, reviews: 540,  safety: 4.4, area: "Metropolitan Square",  essentials: ["WiFi","AC","Parking"] },
+                { suffix: "FabHotel Prime Stay",       type: "hotel",       price: 1799,  rating: 4.3, reviews: 430,  safety: 4.4, area: "Commercial Plaza",     essentials: ["WiFi","AC","Breakfast"] },
+                { suffix: "ITC Luxury Collection",     type: "resort",      price: 12999, rating: 4.9, reviews: 4120, safety: 4.9, area: "Embassy Enclave",      essentials: ["WiFi","AC","Pool","Spa","Butler"] },
+                { suffix: "Hyatt Regency Suites",      type: "hotel",       price: 7899,  rating: 4.8, reviews: 2310, safety: 4.8, area: "Downtown Boulevard",   essentials: ["WiFi","AC","Pool","Gym","Bar"] }
             ];
 
             return stayTemplates.map((tpl, i) => {
-                const offsetLat = (Math.sin(i * 1.5) * 0.02);
-                const offsetLng = (Math.cos(i * 1.5) * 0.02);
-                const hotelLat = lat + offsetLat;
-                const hotelLng = lng + offsetLng;
+                const offsetLat = Math.sin(i * 1.5) * 0.02;
+                const offsetLng = Math.cos(i * 1.5) * 0.02;
+                const hLat = lat + offsetLat;
+                const hLng = lng + offsetLng;
                 const name = `${primaryCity} ${tpl.suffix}`;
-                const imageUrl = getHotelImage(tpl.type, i);
-                
                 return {
                     id: `h_gen_${i}_${primaryCity.toLowerCase().replace(/\s+/g,'')}`,
                     name,
-                    lat: hotelLat,
-                    lng: hotelLng,
-                    rating: tpl.rating,
-                    reviews: tpl.reviews,
-                    price: tpl.price,
-                    safety: tpl.safety,
+                    lat: hLat, lng: hLng,
+                    rating: tpl.rating, reviews: tpl.reviews,
+                    price: tpl.price, safety: tpl.safety,
                     area: `${tpl.area}, ${primaryCity}`,
-                    type: tpl.type,
-                    essentials: tpl.essentials,
-                    imageUrl,
-                    distance: getDist(lat, lng, hotelLat, hotelLng),
+                    type: tpl.type, essentials: tpl.essentials,
+                    imageUrl: getHotelImage(tpl.type, i),
+                    distance: getDist(lat, lng, hLat, hLng),
                     source: 'Verified Hospitality Network'
                 };
             });
         }
 
+        // ── Fetch Hotels (bulletproof 2-path system) ──────────────────────────
         async function fetchHotels(lat, lng, city, radius = 25000) {
-            const cacheKey = `kyc_hotels_${city.toLowerCase().replace(/\s+/g, '_')}_${radius}`;
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-                try {
-                    const { timestamp, data } = JSON.parse(cached);
-                    if (Date.now() - timestamp < 3600000 && data && data.length > 0) {
-                        allHotels = data;
-                        applyFilters();
-                        document.getElementById('loadingSpinner').style.display = 'none';
-                        return;
-                    }
-                } catch(e) { localStorage.removeItem(cacheKey); }
-            }
+            // Show spinner immediately
+            const spinner = document.getElementById('loadingSpinner');
+            const grid    = document.getElementById('hotelsGrid');
+            const meta    = document.getElementById('resultsMeta');
+            spinner.style.display = 'flex';
+            grid.innerHTML = '';
+            meta.textContent = `Finding highest rated stays in ${city}...`;
 
-            const loadingText = document.getElementById('loadingText');
-            const messages = [
+            // Rotating messages
+            const msgs = [
                 "Scanning top-rated hospitality networks...",
                 "Ranking highest rating hotels & stays...",
-                "Indexing security scores & live pricing...",
+                "Indexing safety scores & live pricing...",
                 "Preparing verified stay options..."
             ];
             let msgIdx = 0;
-            const msgInterval = setInterval(() => {
-                const spinner = document.getElementById('loadingSpinner');
-                if (spinner && spinner.style.display !== 'none') {
-                    loadingText.textContent = messages[msgIdx % messages.length];
-                    msgIdx++;
-                } else { clearInterval(msgInterval); }
+            const msgEl = document.querySelector('#loadingSpinner p, #loadingSpinner .loading-text, #loadingSpinner span:not(.spinner)');
+            const msgTimer = setInterval(() => {
+                if (msgEl) msgEl.textContent = msgs[msgIdx++ % msgs.length];
             }, 1200);
 
-            document.getElementById('loadingSpinner').style.display = 'flex';
-            document.getElementById('resultsMeta').textContent = `Finding highest rated stays in ${city}...`;
+            let results = null;
 
-            // Fast Parallel Fetch Timeout (Max 4.5s)
-            const fetchPromise = (async () => {
-                const primaryCity = city.split(',')[0].trim();
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4500);
-
-                try {
-                    const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=hotels+in+${encodeURIComponent(primaryCity)}&limit=30&extratags=1`, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-
-                    if (nomRes.ok) {
-                        const nomData = await nomRes.json();
-                        if (Array.isArray(nomData) && nomData.length > 0) {
-                            return nomData.map((place, idx) => {
-                                const pLat = parseFloat(place.lat);
-                                const pLng = parseFloat(place.lon);
-                                const name = place.display_name.split(',')[0] || "Verified Stay";
-                                const type = place.type || 'hotel';
-                                const rating = Math.min(4.9, 4.3 + ((Math.abs(place.osm_id || idx) % 7) / 10));
-                                return {
-                                    id: place.osm_id || `nom_${idx}`,
-                                    name,
-                                    lat: pLat,
-                                    lng: pLng,
-                                    rating,
-                                    reviews: 120 + (Math.abs(place.osm_id || idx) % 1800),
-                                    price: 1800 + (Math.abs(place.osm_id || idx) % 4500),
-                                    safety: 4.4 + ((Math.abs(place.osm_id || idx) % 5) / 10),
-                                    area: place.display_name.split(',')[1]?.trim() || primaryCity,
-                                    type,
-                                    essentials: ["WiFi", "AC", "CCTV", "Parking", "Couple"],
-                                    imageUrl: getHotelImage(type, idx),
-                                    distance: getDist(lat, lng, pLat, pLng),
-                                    source: 'Nominatim Live'
-                                };
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.warn("[Hotels] Live network fetch timed out or restricted:", e);
-                }
-
-                // Fallback to high-rating city generator
-                return generateCityHotels(lat, lng, city);
-            })();
-
+            // PATH 1 — Try Nominatim with strict 3s timeout
             try {
-                const results = await fetchPromise;
-                finishFetch(results, cacheKey, msgInterval);
-            } catch (err) {
-                console.warn("[Hotels] Fallback generation triggered");
-                const results = generateCityHotels(lat, lng, city);
-                finishFetch(results, cacheKey, msgInterval);
+                const primaryCity = city.split(',')[0].trim();
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), 3000);
+                const nomRes = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=hotel+${encodeURIComponent(primaryCity)}&limit=25&extratags=1`,
+                    { signal: ctrl.signal }
+                );
+                clearTimeout(tid);
+                if (nomRes.ok) {
+                    const nomData = await nomRes.json();
+                    if (Array.isArray(nomData) && nomData.length >= 5) {
+                        results = nomData.map((place, idx) => {
+                            const pLat = parseFloat(place.lat);
+                            const pLng = parseFloat(place.lon);
+                            const name = place.display_name.split(',')[0] || 'Verified Stay';
+                            const type = place.type || 'hotel';
+                            const seed = Math.abs(parseInt(place.osm_id) || idx * 7);
+                            return {
+                                id: place.osm_id || `nom_${idx}`,
+                                name, lat: pLat, lng: pLng,
+                                rating:  Math.min(4.9, 4.3 + ((seed % 7) / 10)),
+                                reviews: 120 + (seed % 1800),
+                                price:   1800 + (seed % 4500),
+                                safety:  +(4.4 + ((seed % 5) / 10)).toFixed(1),
+                                area:    place.display_name.split(',')[1]?.trim() || primaryCity,
+                                type,
+                                essentials: ["WiFi","AC","CCTV","Parking","Couple"],
+                                imageUrl: getHotelImage(type, idx),
+                                distance: getDist(lat, lng, pLat, pLng),
+                                source: 'Nominatim Live'
+                            };
+                        });
+                    }
+                }
+            } catch (_) { /* timeout or CORS — fall through */ }
+
+            // PATH 2 — Guaranteed local generator (always runs if PATH 1 yielded < 5)
+            if (!results || results.length < 5) {
+                results = generateCityHotels(lat, lng, city);
             }
+
+            // Render
+            clearInterval(msgTimer);
+            allHotels = results;
+            applyFilters();
+            spinner.style.display = 'none';
         }
 
         function finishFetch(results, cacheKey, interval) {
             clearInterval(interval);
             if (!results || results.length === 0) {
-                results = generateCityHotels(lat, lng, city);
+                results = generateCityHotels(_lat, _lng, _city);
             }
             allHotels = results;
-            localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: allHotels }));
             applyFilters();
             document.getElementById('loadingSpinner').style.display = 'none';
-            if (window.safetyTimeout) clearTimeout(window.safetyTimeout);
         }
+
 
         async function fetchCityAreas(cLat, cLng) {
             const query = `[out:json][timeout:25];(nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${cLat},${cLng}););out center;`;
