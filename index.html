@@ -1536,8 +1536,6 @@
       function openDiningModal() {
         event.preventDefault();
         event.stopPropagation();
-        const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
-        if (!isLoggedIn) { document.getElementById('authModal')?.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
         const modal = document.getElementById('diningChoiceModal');
         // Some standard styles just in case generic modal styles are missing
         modal.style.position = 'fixed';
@@ -1564,8 +1562,6 @@
       function openChoiceModal() {
         event.preventDefault();
         event.stopPropagation();
-        const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
-        if (!isLoggedIn) { document.getElementById('authModal')?.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
         document.getElementById('choiceModal').classList.add('active');
       }
       document.getElementById('choiceModal')?.addEventListener('click', function (e) {
@@ -3159,12 +3155,6 @@
   <script>
     function openFeaturePage(page) {
       event.preventDefault();
-      const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
-      if (!isLoggedIn) {
-        document.getElementById('authModal')?.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        return;
-      }
       const globalLat = localStorage.getItem('kyc_userLat') || '19.0760';
       const globalLng = localStorage.getItem('kyc_userLng') || '72.8777';
       const city = localStorage.getItem('kyc_userCity') || 'Your Area';
@@ -3554,7 +3544,6 @@
   <script>
     // Trigger fact popup ONCE after location is set successfully
     (function checkFactTrigger() {
-      if (localStorage.getItem('kyc_isLoggedIn') !== 'true') return;
       const factCity = sessionStorage.getItem('kyc_showFact');
       if (factCity) {
         sessionStorage.removeItem('kyc_showFact');

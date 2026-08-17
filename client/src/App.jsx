@@ -48,10 +48,6 @@ function App() {
   // Trigger HTML5 Geolocation
   const handleExploreClick = (e) => {
     e.preventDefault();
-    if (!isLoggedIn) {
-      setIsAuthOpen(true);
-      return;
-    }
 
     setLoadingLocation(true);
     if (navigator.geolocation) {

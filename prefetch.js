@@ -243,9 +243,8 @@
     const lat = localStorage.getItem('kyc_userLat');
     const lng = localStorage.getItem('kyc_userLng');
     const city = localStorage.getItem('kyc_userCity');
-    const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
 
-    if (lat && lng && city && isLoggedIn) {
+    if (lat && lng && city) {
       // Check if any feature data is missing before prefetching
       const anyMissing = FEATURES.some(f => {
         const key = f.cacheKey(parseFloat(lat), parseFloat(lng));

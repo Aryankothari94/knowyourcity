@@ -580,27 +580,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (loginNav) loginNav.style.display = 'block';
       if (mobileLoginNav) mobileLoginNav.style.display = 'block';
 
-      if (premiumContent) premiumContent.style.display = 'none';
+      if (premiumContent) premiumContent.style.display = 'block';
       if (heroBtn) {
-        heroBtn.innerHTML = 'Login to Explore <span>→</span>';
-        heroBtn.href = "#";
-        heroBtn.setAttribute('onclick', 'event.preventDefault(); document.getElementById("authModal").classList.add("active"); document.body.style.overflow="hidden";');
+        heroBtn.innerHTML = 'Explore Safe Areas <span>→</span>';
+        heroBtn.href = "#safety-map";
+        heroBtn.removeAttribute('onclick');
       }
-      if (heroSecBtn) heroSecBtn.style.display = 'inline-flex'; // Keep visible for UI preview
+      if (heroSecBtn) heroSecBtn.style.display = 'inline-flex';
       if (locationBadge) locationBadge.style.display = 'flex';
       if (mobileLocationBadge) mobileLocationBadge.style.display = 'block';
       if (weatherBadge) weatherBadge.style.display = 'flex';
       if (mobileWeatherBadge) mobileWeatherBadge.style.display = 'block';
 
-      // Allow users to see the UI clearly without any blur
       const appContent = document.getElementById('mainAppContent');
       if (appContent) appContent.style.filter = 'none';
       const heroSec = document.getElementById('hero');
       if (heroSec) heroSec.style.filter = 'none';
       const navBar = document.getElementById('navbar');
       if (navBar) navBar.style.filter = 'none';
-
-      // No automatic modal popup on load — allow users to explore first
     }
   };
 
@@ -1124,84 +1121,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
 
-  // ===== FEATURE GATING (RESTRICT ACCESS) =====
-  const gateFeature = (e) => {
-    // Force re-check from state and localStorage to prevent stale variable issues
-    const checkLoggedIn = isLoggedIn || localStorage.getItem('kyc_isLoggedIn') === 'true';
-    if (!checkLoggedIn) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      const target = e.currentTarget || e.target;
-      target.classList.add('restricted-shake');
-      setTimeout(() => target.classList.remove('restricted-shake'), 400);
-
-      openAuthModal();
-      return false;
-    }
-    return true;
-  };
-
-  // Select elements to restrict — comprehensive list
-  const restrictedSelectors = [
-    '.feature-card',
-    '.area-card',
-    '.step-card',
-    'a.floating-card',
-    '.safety-map-section',
-    '.safety-explorer',
-    '.hiw-step',
-    '.feedback-section',
-    '.testimonials',
-  ];
-
-  restrictedSelectors.forEach(selector => {
-    document.querySelectorAll(selector).forEach(el => {
-      el.addEventListener('click', gateFeature, true); // Use capture to intercept
-    });
-  });
-
-  // Gate hero CTA buttons (Analyze City / Login to Explore)
-  document.querySelectorAll('#heroCtaPrimary, #heroCtaSecondary').forEach(el => {
-    el.addEventListener('click', gateFeature, true);
-  });
-
-  // Gate nav links EXCEPT: Login button, Contact Us CTA, and Features
-  document.querySelectorAll('.nav-links a').forEach(link => {
-    // Skip the login button, Contact Us CTA, and the Features nav
-    if (link.classList.contains('nav-login') ||
-      link.classList.contains('nav-cta') ||
-      link.id === 'navFeatures') return;
-    link.addEventListener('click', gateFeature, true);
-  });
-
-  // Gate footer links to feature pages (resources, explore sections)
-  document.querySelectorAll('.footer-col a, .footer-links a').forEach(link => {
-    const href = link.getAttribute('href') || '';
-    // Allow contact.html, terms.html, privacy.html — gate everything else
-    if (href.includes('contact.html') || href.includes('terms.html') || href.includes('privacy.html') || href.includes('about.html')) return;
-    link.addEventListener('click', gateFeature, true);
-  });
-
-  // Gate social links
-  document.querySelectorAll('.social-link').forEach(link => {
-    link.addEventListener('click', gateFeature, true);
-  });
-
-  // Delegated handler for dynamically generated clickable elements
+  // ===== PROTECTED ACTIONS HANDLER (GUEST-FIRST AUTH) =====
+  // Only gate user-specific protected actions (e.g. Save/Favourite, Dashboard, Saved Items)
   document.addEventListener('click', (e) => {
-    const checkLoggedIn = isLoggedIn || localStorage.getItem('kyc_isLoggedIn') === 'true';
-    if (checkLoggedIn) return; // Already logged in, allow everything
-
-    // Check if click target is within a gated section
-    const gatedAncestor = e.target.closest('.feature-card, .area-card, a.floating-card, .step-card, .safety-map-section a, .safety-explorer .btn-primary');
-    if (gatedAncestor) {
-      e.preventDefault();
-      e.stopPropagation();
-      gatedAncestor.classList.add('restricted-shake');
-      setTimeout(() => gatedAncestor.classList.remove('restricted-shake'), 400);
-      openAuthModal();
+    const protectedTarget = e.target.closest('.action-save, .btn-save, [data-requires-auth="true"]');
+    if (protectedTarget) {
+      const checkLoggedIn = isLoggedIn || localStorage.getItem('kyc_isLoggedIn') === 'true';
+      if (!checkLoggedIn) {
+        e.preventDefault();
+        e.stopPropagation();
+        openAuthModal('login');
+      }
     }
   }, true);
 
@@ -1778,40 +1708,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial Sync
   syncPageState();
 
-  // ===== GLOBAL LOGIN WALL =====
-  // If user is not logged in, any click on the website (outside the auth modal/login triggers) will prompt login.
-  document.addEventListener('click', (e) => {
-    const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
-    if (isLoggedIn) return;
-
-    // Allowed areas that DON'T trigger the login wall (Strict Authentication UI)
-    const isAuthModal = e.target.closest('#authModal') || e.target.closest('.auth-modal');
-    const isLogoutModal = e.target.closest('#logoutConfirmModal');
-    const isLoginBtn = e.target.closest('#loginBtn') || e.target.closest('.nav-login') || e.target.closest('#mobileLoginNav') || e.target.closest('.auth-trigger');
-    const isHamburger = e.target.closest('#hamburger') || e.target.closest('.mobile-nav-toggle');
-    const isCloseBtn = e.target.closest('.modal-close') || e.target.closest('#closeModal') || e.target.closest('.chatbot-close-btn');
-    
-    // Explicitly allow interaction with the mobile hamburger menu AND login buttons inside it
-    const isMobileMenu = e.target.closest('#mobileMenu') || e.target.closest('.mobile-nav-wrapper');
-
-    // If clicking on anything else, show login modal
-    if (!isAuthModal && !isLogoutModal && !isLoginBtn && !isHamburger && !isCloseBtn && !isMobileMenu) {
-      const authModal = document.getElementById('authModal');
-      if (authModal && !authModal.classList.contains('active')) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Use the internal openAuthModal logic
-        if (typeof openAuthModal === 'function') {
-          openAuthModal('login');
-        } else {
-          authModal.classList.add('active');
-          document.body.style.overflow = 'hidden';
-          if (typeof generateCaptcha === 'function') generateCaptcha();
-        }
-      }
-    }
-  }, true); // Capture phase is critical to intercept all clicks
+  // ===== GUEST-FIRST AUTH (No Global Click Wall) ===== // Capture phase is critical to intercept all clicks
   
   // Check for post-reload location toast
   const postReloadCity = sessionStorage.getItem('kyc_showLocationToast');
@@ -2024,7 +1921,6 @@ class CityScout {
 
 // ===== LOCATION AUTO-DETECTION (Global Helper) =====
 window.initKYCLocation = function() {
-  if (localStorage.getItem('kyc_isLoggedIn') !== 'true') return;
   const savedCity = localStorage.getItem('kyc_userCity');
   const cityEl = document.getElementById('userCityName');
   const currentDisplay = document.getElementById('currentCityDisplay');
