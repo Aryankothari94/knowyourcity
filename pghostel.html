@@ -374,8 +374,47 @@
         } catch(e) {}
       }
 
+      const CACHE_KEY = `kyc_cache_pghostel_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       fetchCityAreas(lat, lng);
-      fetchHostels(lat, lng);
+
+      // Instant cache check
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0].name && data[0].type) {
+              renderHostels(data, city);
+            } else {
+              const hostels = data.map(el => {
+                const elLat = el.lat || el.center?.lat;
+                const elLng = el.lon || el.center?.lon;
+                const hType = el.tags?.tourism === 'hostel' ? 'Hostel' :
+                              el.tags?.tourism === 'guest_house' ? 'Guest House' : 'Dormitory';
+                return {
+                  name: el.tags?.name || el.tags?.['name:en'] || '',
+                  type: hType,
+                  phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+                  website: el.tags?.website || el.tags?.['contact:website'] || '',
+                  email: el.tags?.email || el.tags?.['contact:email'] || '',
+                  operator: el.tags?.operator || '',
+                  stars: el.tags?.stars || '',
+                  rooms: el.tags?.rooms || '',
+                  beds: el.tags?.beds || '',
+                  address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
+                  wheelchair: el.tags?.wheelchair || '',
+                  lat: elLat, lng: elLng,
+                  distance: getDistance(lat, lng, elLat, elLng)
+                };
+              }).filter(h => h.name).sort((a, b) => a.distance - b.distance);
+              renderHostels(hostels, city);
+            }
+          } else { fetchHostels(lat, lng); }
+        } else { fetchHostels(lat, lng); }
+      } catch (e) { fetchHostels(lat, lng); }
 
       async function fetchHostels(targetLat, targetLng, radius = 10000) {
         const query = `

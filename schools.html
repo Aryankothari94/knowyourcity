@@ -427,8 +427,49 @@
         } catch(e) {}
       }
 
+      const CACHE_KEY = `kyc_cache_schools_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       fetchCityAreas(lat, lng);
-      fetchSchools(lat, lng);
+
+      // Instant cache check
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0].name && data[0].type) {
+              renderSchools(data, city);
+            } else {
+              const schools = data.map(el => {
+                const elLat = el.lat || el.center?.lat;
+                const elLng = el.lon || el.center?.lon;
+                const { rating, reviews, safety } = generatePremiumRating(el.id || Math.random());
+                return {
+                  name: el.tags?.name || el.tags?.['name:en'] || 'Unnamed Institution',
+                  address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
+                  operator: el.tags?.operator || '',
+                  website: el.tags?.website || el.tags?.['contact:website'] || '',
+                  phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+                  email: el.tags?.email || el.tags?.['contact:email'] || '',
+                  type: el.tags?.amenity === 'college' ? 'College' : (el.tags?.['school:type'] || el.tags?.['isced:level'] || 'School'),
+                  wikipedia: el.tags?.wikipedia || '',
+                  wikidata: el.tags?.wikidata || '',
+                  opening: el.tags?.opening_hours || '',
+                  capacity: el.tags?.capacity || '',
+                  wheelchair: el.tags?.wheelchair || '',
+                  denomination: el.tags?.denomination || el.tags?.religion || '',
+                  lat: elLat, lng: elLng,
+                  distance: getDistance(lat, lng, elLat, elLng),
+                  rating, reviews, safety
+                };
+              }).filter(s => s.name !== 'Unnamed Institution').sort((a, b) => a.distance - b.distance);
+              renderSchools(schools, city);
+            }
+          } else { fetchSchools(lat, lng); }
+        } else { fetchSchools(lat, lng); }
+      } catch (e) { fetchSchools(lat, lng); }
 
       async function fetchSchools(targetLat, targetLng, radius = 25000, category = 'all') {
         const categoryFilter = category === 'school' ? 'node["amenity"="school"]' : 

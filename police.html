@@ -405,8 +405,49 @@
         } catch(e) {}
       }
 
+      const CACHE_KEY = `kyc_cache_police_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       fetchCityAreas(lat, lng);
-      fetchPolice(lat, lng);
+
+      // Instant cache check
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0].name && data[0].rating) {
+              renderStations(data, city);
+            } else {
+              const stations = data.map(el => {
+                const elLat = el.lat || el.center?.lat;
+                const elLng = el.lon || el.center?.lon;
+                const { rating, reviews, safety } = generatePremiumRating(el.id || Math.random());
+                return {
+                  name: el.tags?.name || el.tags?.['name:en'] || '',
+                  phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+                  website: el.tags?.website || el.tags?.['contact:website'] || '',
+                  operator: el.tags?.operator || '',
+                  jurisdiction: el.tags?.jurisdiction || '',
+                  opening: el.tags?.opening_hours || '',
+                  address: [el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean).join(', ') || '',
+                  wheelchair: el.tags?.wheelchair || '',
+                  description: el.tags?.description || '',
+                  wikipedia: el.tags?.wikipedia || '',
+                  wikidata: el.tags?.wikidata || '',
+                  lat: elLat, lng: elLng,
+                  distance: getDistance(lat, lng, elLat, elLng),
+                  rating, reviews, safety
+                };
+              }).filter(s => s.name).sort((a, b) => b.rating - a.rating);
+              const seen = new Set();
+              const unique = stations.filter(s => { if (seen.has(s.name)) return false; seen.add(s.name); return true; });
+              renderStations(unique, city);
+            }
+          } else { fetchPolice(lat, lng); }
+        } else { fetchPolice(lat, lng); }
+      } catch (e) { fetchPolice(lat, lng); }
 
       async function fetchPolice(targetLat, targetLng, radius = 15000) {
         const query = `

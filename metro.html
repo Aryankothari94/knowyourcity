@@ -386,8 +386,51 @@
         } catch(e) {}
       }
 
+      const CACHE_KEY = `kyc_cache_metro_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       fetchCityAreas(lat, lng);
-      fetchTransit(lat, lng);
+
+      // Instant cache check
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0].name && data[0].type) {
+              renderStations(data, city);
+            } else {
+              const stations = data.map(el => {
+                const elLat = el.lat || el.center?.lat;
+                const elLng = el.lon || el.center?.lon;
+                const sType = el.tags?.station==='subway' ? 'Metro' :
+                              el.tags?.station==='light_rail' ? 'Light Rail' :
+                              el.tags?.railway==='station' ? 'Railway Station' :
+                              el.tags?.railway==='halt' ? 'Rail Halt' :
+                              el.tags?.amenity==='bus_station' ? 'Bus Station' :
+                              el.tags?.highway==='bus_stop' ? 'Bus Stop' : 'Transit';
+                const icon = sType==='Metro' ? '🚇' : sType==='Light Rail' ? '🚈' :
+                             sType.includes('Railway') ? '🚆' : sType==='Rail Halt' ? '🛤️' :
+                             sType==='Bus Station' ? '🚌' : sType==='Bus Stop' ? '🚏' : '🚉';
+                return {
+                  name: el.tags?.name || el.tags?.['name:en'] || '',
+                  type: sType, icon,
+                  network: el.tags?.network || '',
+                  operator: el.tags?.operator || '',
+                  line: el.tags?.line || el.tags?.ref || el.tags?.route_ref || '',
+                  platforms: el.tags?.platforms || '',
+                  wheelchair: el.tags?.wheelchair || '',
+                  shelter: el.tags?.shelter || '',
+                  lat: elLat, lng: elLng,
+                  distance: getDistance(lat, lng, elLat, elLng)
+                };
+              }).filter(s => s.name).sort((a, b) => a.distance - b.distance);
+              renderStations(stations, city);
+            }
+          } else { fetchTransit(lat, lng); }
+        } else { fetchTransit(lat, lng); }
+      } catch (e) { fetchTransit(lat, lng); }
 
       async function fetchTransit(targetLat, targetLng, radius = 15000) {
         const query = `

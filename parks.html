@@ -374,8 +374,45 @@
         } catch(e) {}
       }
 
+      const CACHE_KEY = `kyc_cache_parks_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
       fetchCityAreas(lat, lng);
-      fetchParks(lat, lng);
+
+      // Instant cache check
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0].name && data[0].distance !== undefined) {
+              renderParks(data, city);
+            } else {
+              const parks = data.map(el => {
+                const elLat = el.lat || el.center?.lat;
+                const elLng = el.lon || el.center?.lon;
+                return {
+                  name: el.tags?.name || el.tags?.['name:en'] || '',
+                  type: el.tags?.leisure === 'garden' ? 'Garden' : 'Park',
+                  opening: el.tags?.opening_hours || '',
+                  access: el.tags?.access || 'public',
+                  fee: el.tags?.fee || '',
+                  dog: el.tags?.dog || '',
+                  lit: el.tags?.lit || '',
+                  operator: el.tags?.operator || '',
+                  description: el.tags?.description || el.tags?.['description:en'] || '',
+                  wikipedia: el.tags?.wikipedia || '',
+                  wikidata: el.tags?.wikidata || '',
+                  lat: elLat, lng: elLng,
+                  distance: getDistance(lat, lng, elLat, elLng)
+                };
+              }).filter(p => p.name).sort((a, b) => a.distance - b.distance);
+              renderParks(parks, city);
+            }
+          } else { fetchParks(lat, lng); }
+        } else { fetchParks(lat, lng); }
+      } catch (e) { fetchParks(lat, lng); }
 
       async function fetchParks(targetLat, targetLng, radius = 15000) {
         const query = `

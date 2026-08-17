@@ -57,6 +57,16 @@
       query: (lat, lng) => `[out:json][timeout:25];(node["amenity"~"cafe|tea_room"](around:10000,${lat},${lng});way["amenity"~"cafe|tea_room"](around:10000,${lat},${lng}););out center tags 300;`
     },
     {
+      name: 'Hotels',
+      cacheKey: (lat, lng) => `kyc_cache_hotels_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
+      query: (lat, lng) => `[out:json][timeout:25];(node["tourism"="hotel"](around:25000,${lat},${lng});way["tourism"="hotel"](around:25000,${lat},${lng}););out center tags 300;`
+    },
+    {
+      name: 'Safe Zone',
+      cacheKey: (lat, lng) => `kyc_cache_safezone_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
+      query: (lat, lng) => `[out:json][timeout:25];(node["tourism"~"attraction|museum"](around:20000,${lat},${lng});way["tourism"~"attraction|museum"](around:20000,${lat},${lng}););out center tags 300;`
+    },
+    {
       name: 'City Areas',
       cacheKey: (lat, lng) => `kyc_cache_areas_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
       query: (lat, lng) => `[out:json][timeout:25];(nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${lat},${lng}););out center;`
@@ -217,7 +227,7 @@
 
       // Small delay between batches to be gentle on the API
       if (completed < total) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 400));
       }
     }
 
@@ -257,10 +267,10 @@
       });
 
       if (anyMissing) {
-        // Wait for page to fully load before prefetching
+        // Start prefetching soon after page load
         setTimeout(() => {
           prefetchAllFeatures(parseFloat(lat), parseFloat(lng), city);
-        }, 3000);
+        }, 800);
       } else {
         console.log('⚡ [Prefetch] All feature data is already cached and fresh');
       }

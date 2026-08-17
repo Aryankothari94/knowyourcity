@@ -625,8 +625,49 @@
                 fetchHotels(targetLat, targetLng, _city, radius);
             }
 
+            const CACHE_KEY = `kyc_cache_hotels_${Math.round(_lat*100)}_${Math.round(_lng*100)}`;
+            const CACHE_TTL = 30 * 60 * 1000;
+
             fetchCityAreas(_lat, _lng);
-            fetchHotels(_lat, _lng, _city, 25000);
+
+            // Instant cache check
+            try {
+              const raw = localStorage.getItem(CACHE_KEY);
+              if (raw) {
+                const { data, timestamp } = JSON.parse(raw);
+                if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+                  document.getElementById('loadingSpinner').style.display = 'none';
+                  if (data[0].name && data[0].price) {
+                    allHotels = data;
+                    applyFilters();
+                  } else {
+                    const hotels = data.map((el, idx) => {
+                      const hLat = el.lat || el.center?.lat;
+                      const hLng = el.lon || el.center?.lon;
+                      const name = el.tags?.name || el.tags?.['name:en'] || 'Verified Stay';
+                      const type = el.tags?.tourism || 'hotel';
+                      const seed = Math.abs(parseInt(el.id) || idx * 7);
+                      return {
+                        id: el.id || `h_${idx}`,
+                        name, lat: hLat, lng: hLng,
+                        rating: Math.min(4.9, 4.3 + ((seed % 7) / 10)),
+                        reviews: 120 + (seed % 1800),
+                        price: 1800 + (seed % 4500),
+                        safety: +(4.4 + ((seed % 5) / 10)).toFixed(1),
+                        area: el.tags?.['addr:suburb'] || el.tags?.['addr:city'] || _city,
+                        type,
+                        essentials: ["WiFi","AC","CCTV","Parking","Couple"],
+                        imageUrl: getHotelImage(type, idx),
+                        distance: getDist(_lat, _lng, hLat, hLng),
+                        source: 'Verified Stay Network'
+                      };
+                    }).filter(h => h.name !== 'Verified Stay').sort((a,b) => b.rating - a.rating);
+                    allHotels = hotels;
+                    applyFilters();
+                  }
+                } else { fetchHotels(_lat, _lng, _city, 25000); }
+              } else { fetchHotels(_lat, _lng, _city, 25000); }
+            } catch (e) { fetchHotels(_lat, _lng, _city, 25000); }
         });
 
         // ── Hotel Image Bank ──────────────────────────────────────────────────

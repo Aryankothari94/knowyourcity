@@ -399,7 +399,37 @@
         }
       }, 2000);
 
-      fetchPlaces(lat, lng, isCafe, city);
+      const cacheKey = isCafe ?
+        `kyc_cache_cafes_${Math.round(lat*100)}_${Math.round(lng*100)}` :
+        `kyc_cache_restaurants_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_TTL = 30 * 60 * 1000;
+
+      // Instant cache check
+      try {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          const { data, timestamp } = JSON.parse(raw);
+          if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0].name && data[0].stars) {
+              renderPlaces(data, city);
+            } else {
+              const diningSpots = data.map((place, idx) => ({
+                id: place.id || idx,
+                name: place.tags?.name || place.tags?.['name:en'] || 'Local Spot',
+                type: isCafe ? 'Cafe' : 'Restaurant',
+                cuisine: place.tags?.cuisine || (isCafe ? 'Coffee & Bakery' : 'Local Cuisine'),
+                lat: place.lat || place.center?.lat,
+                lng: place.lon || place.center?.lon,
+                distance: getDistance(lat, lng, place.lat || place.center?.lat, place.lon || place.center?.lon),
+                stars: 4.3 + (Math.random() * 0.6),
+                count: 120 + Math.floor(Math.random() * 800)
+              })).filter(s => s.name !== 'Local Spot').sort((a,b) => a.distance - b.distance);
+              renderPlaces(diningSpots, city);
+            }
+          } else { fetchPlaces(lat, lng, isCafe, city); }
+        } else { fetchPlaces(lat, lng, isCafe, city); }
+      } catch (e) { fetchPlaces(lat, lng, isCafe, city); }
 
       async function fetchPlaces(targetLat, targetLng, isCafe, cityName, radius = 10000) {
         const normalizedCity = cityName.toLowerCase().trim();
