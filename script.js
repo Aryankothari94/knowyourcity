@@ -387,11 +387,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Navigation Guard for Feature Pages (Safe Zone, Schools, Parks, Metro)
   window.openFeaturePage = (url) => {
-    if (isLoggedIn) {
-        window.location.href = url;
-    } else {
-        openAuthModal('login');
-    }
+    const globalLat = localStorage.getItem('kyc_userLat') || '19.0760';
+    const globalLng = localStorage.getItem('kyc_userLng') || '72.8777';
+    const city = localStorage.getItem('kyc_userCity') || 'Your Area';
+    const pageUrl = url.endsWith('.html') || url.includes('?') ? url : `${url}.html`;
+    const separator = pageUrl.includes('?') ? '&' : '?';
+    window.location.href = `${pageUrl}${separator}lat=${globalLat}&lng=${globalLng}&city=${encodeURIComponent(city)}`;
   };
 
   const detectUserCity = () => {
@@ -1425,11 +1426,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navFeatures) {
     navFeatures.addEventListener('click', (e) => {
       e.preventDefault();
-      if (!isLoggedIn) {
-        openAuthModal();
-        return;
-      }
-
       const interactiveMapSection = document.getElementById('interactive-map');
       if (interactiveMapSection) {
         if (interactiveMapSection.style.display === 'none') {
