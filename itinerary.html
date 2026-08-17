@@ -44,17 +44,17 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 
     <link rel="stylesheet" href="style.css?v=102">
     <style>
         :root {
             --accent-cyan: #00e5ff;
-            --accent-gold: #ffd700;
-            --accent-green: #00e676;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
             --bg-dark: #090d16;
-            --card-bg: rgba(15, 23, 42, 0.85);
+            --card-bg: rgba(15, 23, 42, 0.88);
         }
 
         body {
@@ -104,6 +104,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            position: relative;
         }
 
         .form-group.full-width {
@@ -130,11 +131,56 @@
             transition: all 0.3s ease;
         }
 
+        /* Fix option text visibility across all browsers */
+        select option {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            padding: 10px;
+        }
+
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--accent-cyan);
             background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15);
+        }
+
+        /* ── AUTOCOMPLETE DROPDOWN STYLING ── */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 14px;
+            margin-top: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            transition: background 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(0, 229, 255, 0.15);
+            color: #00e5ff;
         }
 
         .interests-grid {
@@ -188,279 +234,199 @@
             box-shadow: 0 14px 35px rgba(0, 229, 255, 0.45);
         }
 
-        /* ── RPG GAME WORLD BOARD STYLING ── */
-        .game-hud-header {
+        /* ── MODERN DASHBOARD STYLING ── */
+        .smart-hud-card {
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
-            border: 2px solid rgba(0, 229, 255, 0.4);
+            border: 1px solid rgba(0, 229, 255, 0.3);
             border-radius: 20px;
-            padding: 20px 25px;
+            padding: 22px 28px;
             margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.15);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .game-hud-stats {
+        .dashboard-grid-meta {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             align-items: center;
         }
 
-        .hud-stat-pill {
-            background: rgba(0, 0, 0, 0.4);
+        .meta-badge-box {
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            color: #e2e8f0;
         }
 
-        .game-board-container {
-            background: rgba(15, 23, 42, 0.92);
-            border: 1px solid rgba(0, 229, 255, 0.25);
-            border-radius: 24px;
-            padding: 30px;
+        .timeline-tabs-bar {
+            display: flex;
+            gap: 12px;
             margin-bottom: 30px;
-            position: relative;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            overflow-x: auto;
+            padding-bottom: 8px;
         }
 
-        /* Animated Traveler Token Path */
-        .game-path-wrapper {
-            position: relative;
-            margin: 35px 20px 25px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-        }
-
-        .game-path-line {
-            position: absolute;
-            top: 50%;
-            left: 20px;
-            right: 20px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            transform: translateY(-50%);
-        }
-
-        .game-path-progress {
-            position: absolute;
-            top: 50%;
-            left: 20px;
-            height: 6px;
-            background: linear-gradient(90deg, #00e5ff, #00e676);
-            border-radius: 10px;
-            transform: translateY(-50%);
-            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
-        }
-
-        .traveler-avatar-token {
-            position: absolute;
-            top: 50%;
-            transform: translate(-50%, -65%);
-            font-size: 1.8rem;
-            z-index: 10;
-            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.8));
-            animation: bounceToken 1.5s infinite ease-in-out;
-        }
-
-        @keyframes bounceToken {
-            0%, 100% { transform: translate(-50%, -65%); }
-            50% { transform: translate(-50%, -85%); }
-        }
-
-        .game-nodes-row {
-            position: relative;
-            z-index: 5;
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        .game-node-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .game-node-circle {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: #1e293b;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1rem;
+        .tab-day-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #94a3b8;
-            transition: all 0.3s;
+            padding: 12px 22px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
-        .game-node-item.active .game-node-circle {
+        .tab-day-btn:hover {
+            border-color: var(--accent-cyan);
+            color: #fff;
+        }
+
+        .tab-day-btn.active {
             background: linear-gradient(135deg, #00e5ff, #00b0ff);
             color: #090d16;
             border-color: #fff;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.8);
-            transform: scale(1.25);
+            box-shadow: 0 4px 20px rgba(0, 229, 255, 0.4);
         }
 
-        .game-node-item.completed .game-node-circle {
-            background: #00e676;
-            color: #090d16;
-            border-color: #00e676;
-        }
-
-        .node-label {
-            margin-top: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-        }
-
-        .game-node-item.active .node-label {
-            color: var(--accent-cyan);
-        }
-
-        /* Compact Activity Cards */
-        .activity-card-compact {
+        /* Sleek Modern Place Card */
+        .place-card-modern {
             background: rgba(30, 41, 59, 0.7);
-            border-radius: 18px;
+            border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.08);
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
             display: grid;
-            grid-template-columns: 240px 1fr;
-            transition: all 0.3s ease;
-            animation: levelCardPop 0.4s ease forwards;
+            grid-template-columns: 260px 1fr;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.4s ease forwards;
         }
 
-        @keyframes levelCardPop {
-            from { opacity: 0; transform: translateY(15px); }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .activity-card-compact:hover {
+        .place-card-modern:hover {
             border-color: rgba(0, 229, 255, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .activity-img-box {
+        .place-photo-box {
             position: relative;
             height: 100%;
-            min-height: 160px;
+            min-height: 170px;
             background: #0f172a;
             overflow: hidden;
         }
 
-        .real-place-photo {
+        .real-place-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transition: transform 0.5s ease;
         }
 
-        .activity-card-compact:hover .real-place-photo {
+        .place-card-modern:hover .real-place-img {
             transform: scale(1.08);
         }
 
-        .photo-tag {
+        .verified-badge {
             position: absolute;
-            bottom: 8px;
-            left: 8px;
+            bottom: 10px;
+            left: 10px;
             background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
             color: #00e5ff;
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.72rem;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        .activity-details-panel {
-            padding: 20px;
+        .place-info-body {
+            padding: 22px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
-        .activity-row-header {
+        .place-top-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
         }
 
-        .activity-time-pill {
+        .time-badge {
             background: rgba(0, 229, 255, 0.12);
             color: var(--accent-cyan);
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 30px;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 700;
         }
 
-        .activity-safety-badge {
-            background: rgba(0, 230, 118, 0.15);
-            color: #00e676;
-            padding: 4px 10px;
+        .safety-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            padding: 4px 12px;
             border-radius: 30px;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 700;
         }
 
-        .activity-name-heading {
+        .place-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: #fff;
             margin-bottom: 6px;
         }
 
-        .activity-text-desc {
+        .place-desc {
             color: #94a3b8;
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             line-height: 1.5;
             margin-bottom: 12px;
         }
 
-        .activity-foot-info {
+        .place-foot-meta {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.82rem;
+            font-size: 0.84rem;
             color: #cbd5e1;
-            padding-top: 10px;
+            padding-top: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .itinerary-action-bar {
+        .action-bar-row {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 30px;
+            gap: 16px;
+            margin-top: 35px;
         }
 
-        .btn-game-action {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+        .btn-smart-action {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             color: #fff;
-            padding: 14px 24px;
+            padding: 14px 26px;
             border-radius: 14px;
             cursor: pointer;
             display: flex;
@@ -471,14 +437,14 @@
             transition: all 0.3s;
         }
 
-        .btn-game-action:hover {
+        .btn-smart-action:hover {
             background: rgba(0, 229, 255, 0.15);
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
             transform: translateY(-2px);
         }
 
-        /* ── MODALS ── */
+        /* ── MODALS & OVERLAYS ── */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -522,7 +488,7 @@
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* ── ULTRA-COMPACT 1-2 PAGE PRINT STYLESHEET ── */
+        /* ── COMPACT 1-2 PAGE PRINT STYLESHEET ── */
         @media print {
             @page {
                 size: A4;
@@ -533,7 +499,7 @@
                 color: #0f172a !important;
                 font-size: 8.5pt !important;
             }
-            .builder-header, .glass-form, .game-hud-header, .game-board-container, .itinerary-action-bar, .modal-overlay, .loading-overlay {
+            .builder-header, .glass-form, .smart-hud-card, .timeline-tabs-bar, .action-bar-row, .modal-overlay, .loading-overlay {
                 display: none !important;
             }
             .itinerary-container {
@@ -557,13 +523,6 @@
                 color: #0f172a !important;
                 margin: 0 !important;
             }
-            .print-summary-box {
-                background: #f1f5f9 !important;
-                border: 1px solid #cbd5e1 !important;
-                padding: 6px 10px !important;
-                margin-bottom: 10px !important;
-                border-radius: 6px !important;
-            }
             .print-days-grid {
                 display: grid !important;
                 grid-template-columns: repeat(2, 1fr) !important;
@@ -577,7 +536,7 @@
                 padding: 8px !important;
                 page-break-inside: avoid !important;
             }
-            .activity-card-compact {
+            .place-card-modern {
                 background: #ffffff !important;
                 border: 1px solid #e2e8f0 !important;
                 color: #0f172a !important;
@@ -586,11 +545,11 @@
                 border-radius: 6px !important;
                 page-break-inside: avoid !important;
             }
-            .activity-img-box { min-height: 70px !important; }
-            .activity-details-panel { padding: 6px 10px !important; }
-            .activity-name-heading { color: #0f172a !important; font-size: 9.5pt !important; margin-bottom: 2px !important; }
-            .activity-text-desc { color: #334155 !important; font-size: 8pt !important; margin-bottom: 4px !important; }
-            .activity-foot-info { padding-top: 4px !important; font-size: 7.5pt !important; }
+            .place-photo-box { min-height: 70px !important; }
+            .place-info-body { padding: 6px 10px !important; }
+            .place-title { color: #0f172a !important; font-size: 9.5pt !important; margin-bottom: 2px !important; }
+            .place-desc { color: #334155 !important; font-size: 8pt !important; margin-bottom: 4px !important; }
+            .place-foot-meta { padding-top: 4px !important; font-size: 7.5pt !important; }
         }
         .print-header { display: none; }
 
@@ -598,9 +557,9 @@
             .form-grid { grid-template-columns: 1fr; }
             .form-group.full-width { grid-column: auto; }
             .builder-header h1 { font-size: 2.2rem; }
-            .activity-card-compact { grid-template-columns: 1fr; }
-            .activity-img-box { height: 160px; }
-            .game-hud-header { flex-direction: column; gap: 10px; text-align: center; }
+            .place-card-modern { grid-template-columns: 1fr; }
+            .place-photo-box { height: 160px; }
+            .smart-hud-card { flex-direction: column; gap: 12px; text-align: center; }
         }
     </style>
 </head>
@@ -609,9 +568,9 @@
     <div class="itinerary-container">
 
         <div class="builder-header">
-            <div class="section-label">🎮 Interactive Game Quest</div>
+            <div class="section-label">✨ AI City Guide Engine</div>
             <h1>Smart Itinerary <span class="gradient-text">Builder</span></h1>
-            <p>AI crafts your interactive RPG-style city quest with real place photos, budget, and safety metrics.</p>
+            <p>Craft your personalized day-by-day city exploration plan with real photos, safety scores, and budget metrics.</p>
         </div>
 
         <div class="glass-form">
@@ -619,10 +578,12 @@
                 <div class="form-group">
                     <label><span class="material-symbols-outlined">location_on</span> Destination City</label>
                     <div style="position: relative;">
-                        <input type="text" id="cityInput" placeholder="Enter target city (e.g. Pune, Mumbai)" style="width: 100%;">
+                        <input type="text" id="cityInput" placeholder="Type city name (e.g. Pune, Mumbai, Delhi)" autocomplete="off" style="width: 100%;">
                         <button onclick="detectLocation()" title="Auto-detect location" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--accent-cyan); cursor: pointer;">
                             <span class="material-symbols-outlined">my_location</span>
                         </button>
+                        <!-- Autocomplete Suggestions List -->
+                        <div id="citySuggestions" class="autocomplete-dropdown"></div>
                     </div>
                 </div>
 
@@ -656,15 +617,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label><span class="material-symbols-outlined">verified_user</span> Safety Level</label>
+                    <label><span class="material-symbols-outlined">verified_user</span> Safety Filter</label>
                     <select id="safetySelect">
-                        <option value="Strict" selected>Strict (Highly safe areas only)</option>
+                        <option value="Strict" selected>Strict (Highly rated safe zones only)</option>
                         <option value="Normal">Normal (Standard local safety)</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label><span class="material-symbols-outlined">bolt</span> Quest Pace</label>
+                    <label><span class="material-symbols-outlined">bolt</span> Exploration Pace</label>
                     <select id="paceSelect">
                         <option value="Relaxed">Relaxed (Slow & easy)</option>
                         <option value="Balanced" selected>Balanced (Standard)</option>
@@ -673,7 +634,7 @@
                 </div>
 
                 <div class="form-group full-width">
-                    <label><span class="material-symbols-outlined">star</span> Quest Category Focus</label>
+                    <label><span class="material-symbols-outlined">star</span> Category Focus</label>
                     <div class="interests-grid" id="interestsContainer">
                         <div class="interest-chip active" data-val="Food">🍴 Food & Cafe</div>
                         <div class="interest-chip active" data-val="Heritage">🏛️ Heritage</div>
@@ -696,7 +657,7 @@
             </div>
 
             <button class="btn-generate" onclick="generateItinerary()">
-                <span class="material-symbols-outlined">sports_esports</span> Launch Smart Quest Journey Map
+                <span class="material-symbols-outlined">auto_awesome</span> Generate Smart Itinerary
             </button>
         </div>
 
@@ -709,63 +670,35 @@
         <!-- ── RESULT SECTION ── -->
         <div id="resultSection" class="result-section" style="display:none; margin-top:40px;">
 
-            <!-- GAME HUD HEADER -->
-            <div class="game-hud-header" id="gameHudHeader">
+            <!-- SMART HUD METRICS CARD -->
+            <div class="smart-hud-card" id="smartHudCard">
                 <div>
-                    <span style="color:var(--accent-gold); font-family:'Press Start 2P', cursive; font-size:0.7rem; letter-spacing:1px;">🏆 QUEST WORLD</span>
-                    <h2 id="hudCityTitle" style="font-family:'Outfit'; font-size:1.6rem; margin:4px 0 0; color:#fff;">City Quest</h2>
+                    <span style="color:var(--accent-cyan); font-weight:700; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px;">🏙️ SMART ITINERARY PLAN</span>
+                    <h2 id="hudCityTitle" style="font-family:'Outfit'; font-size:1.7rem; margin:4px 0 0; color:#fff;">City Itinerary</h2>
                 </div>
-                <div class="game-hud-stats">
-                    <div class="hud-stat-pill">⭐ <span id="hudXp">1,250 XP</span></div>
-                    <div class="hud-stat-pill">🛡️ <span id="hudSafety">98% Safe</span></div>
-                    <div class="hud-stat-pill">💰 <span id="hudBudget">Balanced</span></div>
-                </div>
-            </div>
-
-            <!-- GAME BOARD & ANIMATED AVATAR PATH -->
-            <div class="game-board-container" id="gameBoardContainer">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="font-size:0.82rem; font-weight:700; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:1px;">🎮 Interactive Map Route</span>
-                    <button class="btn-game-action" style="padding:6px 14px; font-size:0.8rem;" onclick="toggleViewAllMode()" id="toggleViewBtn">
-                        <span class="material-symbols-outlined" style="font-size:16px;">grid_view</span> <span id="toggleViewText">View All Days</span>
-                    </button>
-                </div>
-
-                <!-- Animated Path & Avatar Token -->
-                <div class="game-path-wrapper">
-                    <div class="game-path-line"></div>
-                    <div class="game-path-progress" id="pathProgress" style="width:0%;"></div>
-                    <!-- Moving Avatar Token -->
-                    <div class="traveler-avatar-token" id="avatarToken" style="left:0%;">🚶‍♂️✨</div>
-
-                    <!-- Stage Nodes Container -->
-                    <div class="game-nodes-row" id="nodesRow">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px;">
-                    <button class="btn-game-action" style="padding:8px 16px;" id="prevStageBtn" onclick="navigateStage(-1)">
-                        <span class="material-symbols-outlined">arrow_back</span> Prev Level
-                    </button>
-                    <span id="levelCounterText" style="font-weight:700; color:var(--accent-cyan); font-size:0.9rem;">Level 1 of 3</span>
-                    <button class="btn-game-action" style="padding:8px 16px;" id="nextStageBtn" onclick="navigateStage(1)">
-                        Next Level <span class="material-symbols-outlined">arrow_forward</span>
-                    </button>
+                <div class="dashboard-grid-meta">
+                    <div class="meta-badge-box"><span class="material-symbols-outlined" style="font-size:18px; color:#10b981;">shield</span> <span id="hudSafetyText">98% Safe Corridor</span></div>
+                    <div class="meta-badge-box"><span class="material-symbols-outlined" style="font-size:18px; color:#00e5ff;">payments</span> <span id="hudBudgetText">Balanced Plan</span></div>
+                    <div class="meta-badge-box"><span class="material-symbols-outlined" style="font-size:18px; color:#f59e0b;">map</span> <span id="hudStopsText">12 Stops</span></div>
                 </div>
             </div>
 
-            <!-- ITINERARY STAGE CONTENT -->
+            <!-- DAY TIMELINE TABS BAR -->
+            <div class="timeline-tabs-bar" id="timelineTabsBar">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- ITINERARY DISPLAY PANEL -->
             <div id="itineraryContent">
                 <!-- Injected via JS -->
             </div>
 
             <!-- ACTION BUTTONS -->
-            <div class="itinerary-action-bar">
-                <button class="btn-game-action" onclick="handleEmailRequest()">
+            <div class="action-bar-row">
+                <button class="btn-smart-action" onclick="handleEmailRequest()">
                     <span class="material-symbols-outlined">mail</span> Send to Registered Email
                 </button>
-                <button class="btn-game-action" onclick="window.print()" style="background: rgba(0, 229, 255, 0.12); border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                <button class="btn-smart-action" onclick="window.print()" style="background: rgba(0, 229, 255, 0.12); border-color: var(--accent-cyan); color: var(--accent-cyan);">
                     <span class="material-symbols-outlined">print</span> Print / Download PDF (1-2 Pages)
                 </button>
             </div>
@@ -813,8 +746,8 @@
     <!-- ── LOADING OVERLAY ── -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loader"></div>
-        <h3 style="margin-top: 20px; font-family: 'Outfit'; font-size: 1.5rem;">AI is crafting your Game Quest...</h3>
-        <p style="color: #94a3b8;">Fetching real place photos, level checkpoints, and safety ratings.</p>
+        <h3 style="margin-top: 20px; font-family: 'Outfit'; font-size: 1.5rem;">AI is crafting your Smart Itinerary...</h3>
+        <p style="color: #94a3b8;">Analyzing verified real places, route safety, and real photos.</p>
     </div>
 
     <script>
@@ -827,12 +760,70 @@
         let isViewAllMode = false;
         const realPhotoCache = {};
 
+        // Popular Indian & Global Cities Database for Autocomplete
+        const POPULAR_CITIES = [
+            "Pune, Maharashtra", "Mumbai, Maharashtra", "Delhi, NCR", "Bengaluru, Karnataka", 
+            "Hyderabad, Telangana", "Jaipur, Rajasthan", "Goa, India", "Kolkata, West Bengal", 
+            "Ahmedabad, Gujarat", "Chennai, Tamil Nadu", "Agra, Uttar Pradesh", "Varanasi, Uttar Pradesh", 
+            "Surat, Gujarat", "Lucknow, Uttar Pradesh", "Chandigarh, India", "Shimla, Himachal Pradesh", 
+            "Udaipur, Rajasthan", "Kochi, Kerala", "Amritsar, Punjab", "Mysore, Karnataka", 
+            "Nagpur, Maharashtra", "Indore, Madhya Pradesh", "Bhopal, Madhya Pradesh", "Dehradun, Uttarakhand"
+        ];
+
+        // ── CITY AUTOCOMPLETE IMPLEMENTATION ──
+        const cityInput = document.getElementById('cityInput');
+        const citySuggestions = document.getElementById('citySuggestions');
+
+        cityInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            if (query.length < 1) {
+                citySuggestions.style.display = 'none';
+                return;
+            }
+
+            // Filter local list
+            let matches = POPULAR_CITIES.filter(c => c.toLowerCase().includes(query));
+
+            // Fetch live OpenStreetMap suggestions if typed >= 3 chars
+            if (query.length >= 3) {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=4&addressdetails=1`);
+                    const osmData = await res.json();
+                    const liveMatches = osmData.map(item => item.display_name.split(',').slice(0, 2).join(','));
+                    matches = Array.from(new Set([...matches, ...liveMatches])).slice(0, 6);
+                } catch (err) {}
+            }
+
+            if (matches.length > 0) {
+                citySuggestions.innerHTML = matches.map(city => `
+                    <div class="autocomplete-item" onclick="selectCitySuggestion('${city.replace(/'/g, "\\'")}')">
+                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--accent-cyan);">location_city</span>
+                        <span>${city}</span>
+                    </div>
+                `).join('');
+                citySuggestions.style.display = 'block';
+            } else {
+                citySuggestions.style.display = 'none';
+            }
+        });
+
+        function selectCitySuggestion(cityName) {
+            cityInput.value = cityName.split(',')[0];
+            citySuggestions.style.display = 'none';
+        }
+
+        // Hide autocomplete if clicked outside
+        document.addEventListener('click', (e) => {
+            if (!cityInput.contains(e.target) && !citySuggestions.contains(e.target)) {
+                citySuggestions.style.display = 'none';
+            }
+        });
+
         // Real Wikipedia Image Fetcher
         async function getRealPlaceImage(placeName, idx) {
             if (realPhotoCache[placeName]) return realPhotoCache[placeName];
 
             try {
-                // Clean place name for Wikipedia search query
                 const cleanQuery = placeName.replace(/Day \d+/gi, '').replace(/\(.*\)/g, '').trim();
                 const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanQuery)}&prop=pageimages&pithumbsize=600&format=json&origin=*`;
                 
@@ -848,7 +839,6 @@
                 }
             } catch (e) {}
 
-            // Fallback photos curated by category
             const categoryPool = [
                 "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80",
                 "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80",
@@ -861,13 +851,12 @@
             return fallback;
         }
 
-        // Initialize stored location & registered email if available
+        // Initialize stored location & registered email
         document.addEventListener('DOMContentLoaded', () => {
             const storedCity = localStorage.getItem('kyc_userCity');
             if (storedCity && storedCity !== 'Detecting...') {
                 document.getElementById('cityInput').value = storedCity;
             }
-            
             const savedEmail = localStorage.getItem('kyc_userEmail');
             if (savedEmail) {
                 document.getElementById('targetEmail').value = savedEmail;
@@ -928,17 +917,16 @@
                     throw new Error(result.message || 'Generation error');
                 }
             } catch (e) {
-                console.warn("⚠️ API 503 fallback. Using local Smart City Engine:", e.message);
+                console.warn("⚠️ API fallback activated. Using Smart Local Engine:", e.message);
                 generatedItinerary = createClientFallbackItinerary(city, duration, budget, interests);
             } finally {
                 currentStageIndex = 0;
                 isViewAllMode = false;
-                renderGameWorld();
+                renderSmartItineraryView();
                 document.getElementById('loadingOverlay').style.display = 'none';
             }
         }
 
-        // Real City Landmark Dictionary for Client Fallback
         const LOCAL_CITY_DB = {
             pune: [
                 { name: "Shaniwar Wada Fort", desc: "Historic 18th-century fortification of the Peshwas in central Pune.", safety: 98, cost: "₹25" },
@@ -1019,45 +1007,40 @@
             };
         }
 
-        async function renderGameWorld() {
+        async function renderSmartItineraryView() {
             const data = generatedItinerary;
             if (!data || !data.days) return;
 
             // HUD Stats
-            document.getElementById('hudCityTitle').textContent = `🏆 Quest: ${data.city}`;
-            document.getElementById('hudXp').textContent = `${data.totalDays * 450} XP`;
-            document.getElementById('hudSafety').textContent = `98% Safe`;
-            document.getElementById('hudBudget').textContent = document.getElementById('budgetSelect').value;
+            document.getElementById('hudCityTitle').textContent = `${data.city} Itinerary`;
+            document.getElementById('hudBudgetText').textContent = `${document.getElementById('budgetSelect').value} Plan`;
+            document.getElementById('hudSafetyText').textContent = `98% Safety Rating`;
+            
+            let totalStops = 0;
+            data.days.forEach(d => totalStops += d.activities.length);
+            document.getElementById('hudStopsText').textContent = `${totalStops} Recommended Stops`;
 
             document.getElementById('printMeta').textContent = `${data.city} • ${data.totalDays} Days • ${data.summary}`;
 
-            // Render Nodes Row
-            const nodesContainer = document.getElementById('nodesRow');
-            let nodesHtml = '';
-            const totalNodes = data.days.length;
+            // Render Timeline Day Tabs
+            const tabsBar = document.getElementById('timelineTabsBar');
+            let tabsHtml = '';
 
             data.days.forEach((day, idx) => {
-                const isCurrent = idx === currentStageIndex;
-                const isDone = idx < currentStageIndex;
-                nodesHtml += `
-                    <div class="game-node-item ${isCurrent ? 'active' : ''} ${isDone ? 'completed' : ''}" 
-                         onclick="jumpToStage(${idx})" title="Day ${day.dayNumber}">
-                         <div class="game-node-circle">${isDone ? '✓' : day.dayNumber}</div>
-                         <div class="node-label">Level ${day.dayNumber}</div>
-                    </div>
+                const isActive = !isViewAllMode && idx === currentStageIndex;
+                tabsHtml += `
+                    <button class="tab-day-btn ${isActive ? 'active' : ''}" onclick="switchDayTab(${idx})">
+                        📅 Day ${day.dayNumber} Overview
+                    </button>
                 `;
             });
-            nodesContainer.innerHTML = nodesHtml;
 
-            // Animate Traveler Avatar Token along path
-            const percent = totalNodes > 1 ? (currentStageIndex / (totalNodes - 1)) * 100 : 0;
-            document.getElementById('pathProgress').style.width = `${percent}%`;
-            document.getElementById('avatarToken').style.left = `${percent}%`;
-
-            // Nav buttons state
-            document.getElementById('prevStageBtn').disabled = currentStageIndex === 0;
-            document.getElementById('nextStageBtn').disabled = currentStageIndex === data.days.length - 1;
-            document.getElementById('levelCounterText').textContent = `Level ${currentStageIndex + 1} of ${totalNodes}`;
+            tabsHtml += `
+                <button class="tab-day-btn ${isViewAllMode ? 'active' : ''}" onclick="toggleViewAllMode()">
+                    📋 View Full Itinerary
+                </button>
+            `;
+            tabsBar.innerHTML = tabsHtml;
 
             // Render Activity Cards
             const contentDiv = document.getElementById('itineraryContent');
@@ -1084,9 +1067,9 @@
                 <div class="print-day-column" style="margin-bottom: 25px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid rgba(0,229,255,0.25); padding-bottom:8px;">
                         <h3 style="font-family:'Outfit'; color:var(--accent-cyan); font-size:1.4rem; margin:0; display:flex; align-items:center; gap:8px;">
-                            <span>🚩 Level ${day.dayNumber} Quest</span>
+                            <span>📍 Day ${day.dayNumber} Exploration</span>
                         </h3>
-                        <span style="font-size:0.8rem; color:#94a3b8;">${day.activities.length} Stops</span>
+                        <span style="font-size:0.82rem; color:#94a3b8;">${day.activities.length} Stops</span>
                     </div>
             `;
 
@@ -1095,23 +1078,25 @@
                 const realImg = await getRealPlaceImage(act.place, idx);
 
                 dayHtml += `
-                    <div class="activity-card-compact">
-                        <div class="activity-img-box">
-                            <img src="${realImg}" alt="${act.place}" class="real-place-photo" loading="lazy">
-                            <span class="photo-tag">📍 Verified Spot</span>
+                    <div class="place-card-modern">
+                        <div class="place-photo-box">
+                            <img src="${realImg}" alt="${act.place}" class="real-place-img" loading="lazy">
+                            <span class="verified-badge">
+                                <span class="material-symbols-outlined" style="font-size:14px;">verified</span> Verified Spot
+                            </span>
                         </div>
-                        <div class="activity-details-panel">
+                        <div class="place-info-body">
                             <div>
-                                <div class="activity-row-header">
-                                    <span class="activity-time-pill">⏰ ${act.time}</span>
-                                    <span class="activity-safety-badge">🛡️ ${act.safetyScore}% Safe</span>
+                                <div class="place-top-meta">
+                                    <span class="time-badge">⏰ ${act.time}</span>
+                                    <span class="safety-badge">🛡️ ${act.safetyScore}% Safe Zone</span>
                                 </div>
-                                <div class="activity-name-heading">${act.place}</div>
-                                <div class="activity-text-desc">${act.description}</div>
+                                <div class="place-title">${act.place}</div>
+                                <div class="place-desc">${act.description}</div>
                             </div>
-                            <div class="activity-foot-info">
+                            <div class="place-foot-meta">
                                 <span>💰 Cost: <strong style="color:var(--accent-cyan);">${act.costEstimate}</strong></span>
-                                <span>⚡ Route Clear</span>
+                                <span>⚡ Optimized Route</span>
                             </div>
                         </div>
                     </div>
@@ -1122,27 +1107,15 @@
             return dayHtml;
         }
 
-        function jumpToStage(idx) {
+        function switchDayTab(idx) {
             currentStageIndex = idx;
             isViewAllMode = false;
-            document.getElementById('toggleViewText').textContent = 'View All Days';
-            renderGameWorld();
-        }
-
-        function navigateStage(delta) {
-            const newIndex = currentStageIndex + delta;
-            if (newIndex >= 0 && newIndex < generatedItinerary.days.length) {
-                currentStageIndex = newIndex;
-                isViewAllMode = false;
-                document.getElementById('toggleViewText').textContent = 'View All Days';
-                renderGameWorld();
-            }
+            renderSmartItineraryView();
         }
 
         function toggleViewAllMode() {
             isViewAllMode = !isViewAllMode;
-            document.getElementById('toggleViewText').textContent = isViewAllMode ? 'Level Mode' : 'View All Days';
-            renderGameWorld();
+            renderSmartItineraryView();
         }
 
         // ── EMAIL AUTH & REGISTER HANDLERS ──
@@ -1151,7 +1124,6 @@
             const userEmail = localStorage.getItem('kyc_userEmail');
 
             if (!isLoggedIn) {
-                // Show Registration / Login Prompt
                 document.getElementById('authNoticeBox').style.display = 'block';
                 document.getElementById('nameGroup').style.display = 'block';
                 document.getElementById('passwordGroup').style.display = 'block';
@@ -1159,7 +1131,6 @@
                 document.getElementById('modalSubtext').textContent = 'Please enter your registered details or create a new account to receive your structured itinerary PDF.';
                 document.getElementById('sendBtn').textContent = 'Register & Send Itinerary PDF 🚀';
             } else {
-                // Already Logged In
                 document.getElementById('authNoticeBox').style.display = 'none';
                 document.getElementById('nameGroup').style.display = 'none';
                 document.getElementById('passwordGroup').style.display = 'none';
@@ -1189,7 +1160,6 @@
             btn.disabled = true;
             status.innerHTML = '<span style="color:var(--accent-cyan)">Processing registration & sending PDF...</span>';
 
-            // Guest-First registration if not logged in
             if (!isLoggedIn) {
                 if (!password) {
                     btn.disabled = false;
@@ -1197,8 +1167,7 @@
                 }
 
                 try {
-                    // Quick register/login attempt
-                    const authRes = await fetch(`${API_BASE}/auth/register`, {
+                    await fetch(`${API_BASE}/auth/register`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -1209,18 +1178,14 @@
                             phone: '9999999999' 
                         })
                     });
-                    
-                    const authData = await authRes.json();
                     localStorage.setItem('kyc_isLoggedIn', 'true');
                     localStorage.setItem('kyc_userEmail', email);
                 } catch (authErr) {
-                    // Mark logged in locally as fallback
                     localStorage.setItem('kyc_isLoggedIn', 'true');
                     localStorage.setItem('kyc_userEmail', email);
                 }
             }
 
-            // Trigger Email Sending
             try {
                 const res = await fetch(`${API_BASE}/itinerary/send-email`, {
                     method: 'POST',
@@ -1233,13 +1198,13 @@
 
                 const result = await res.json();
                 if (result.status === 'success') {
-                    status.innerHTML = '<span style="color:#00e676; font-weight:700;">✅ Success! PDF Itinerary sent to your registered email.</span>';
+                    status.innerHTML = '<span style="color:#10b981; font-weight:700;">✅ Success! PDF Itinerary sent to your registered email.</span>';
                     setTimeout(closeEmailModal, 2500);
                 } else {
                     throw new Error(result.message || 'Error sending email');
                 }
             } catch (e) {
-                status.innerHTML = `<span style="color:#ff5252">❌ Email Notice: ${e.message}</span>`;
+                status.innerHTML = `<span style="color:#ef4444">❌ Email Notice: ${e.message}</span>`;
             } finally {
                 btn.disabled = false;
             }
