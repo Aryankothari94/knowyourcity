@@ -52,6 +52,7 @@
     <style>
         :root {
             --accent-cyan: #00e5ff;
+            --accent-green: #00e676;
             --bg-dark: #0f172a;
             --card-bg: rgba(30, 41, 59, 0.7);
         }
@@ -64,19 +65,19 @@
         }
 
         .itinerary-container {
-            max-width: 1000px;
+            max-width: 1050px;
             margin: 0 auto;
-            padding: 100px 20px;
+            padding: 80px 20px;
         }
 
         .builder-header {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 50px;
         }
 
         .builder-header h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 3.5rem;
+            font-size: 3.2rem;
             margin-bottom: 15px;
             background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
             -webkit-background-clip: text;
@@ -85,11 +86,11 @@
 
         .glass-form {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(0, 229, 255, 0.15);
             border-radius: 24px;
             padding: 40px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
         }
 
         .form-grid {
@@ -110,7 +111,7 @@
 
         label {
             font-size: 0.9rem;
-            font-weight: 500;
+            font-weight: 600;
             color: #94a3b8;
             display: flex;
             align-items: center;
@@ -119,12 +120,12 @@
 
         input, select, textarea {
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
             padding: 14px 16px;
             color: #fff;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 0.95rem;
             transition: all 0.3s ease;
         }
 
@@ -132,18 +133,18 @@
             outline: none;
             border-color: var(--accent-cyan);
             background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15);
         }
 
         .interests-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
             margin-top: 5px;
         }
 
         .interest-chip {
-            padding: 8px 12px;
+            padding: 10px 14px;
             border-radius: 30px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -151,23 +152,25 @@
             font-size: 0.85rem;
             text-align: center;
             transition: all 0.2s;
+            user-select: none;
         }
 
         .interest-chip.active {
             background: var(--accent-cyan);
-            color: #000;
+            color: #090d16;
             border-color: var(--accent-cyan);
-            font-weight: 600;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
         }
 
         .btn-generate {
             width: 100%;
-            margin-top: 40px;
+            margin-top: 35px;
             padding: 18px;
-            border-radius: 14px;
+            border-radius: 16px;
             background: linear-gradient(135deg, #00e5ff, #00b0ff);
-            color: #000;
-            font-weight: 700;
+            color: #090d16;
+            font-weight: 800;
             font-size: 1.1rem;
             border: none;
             cursor: pointer;
@@ -180,85 +183,224 @@
 
         .btn-generate:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 229, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.35);
         }
 
-        .btn-generate:disabled {
-            opacity: 0.6;
+        /* ── GAME JOURNEY MAP STYLING ── */
+        .game-journey-bar {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .journey-header-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stage-badge {
+            background: rgba(0, 229, 255, 0.15);
+            color: var(--accent-cyan);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .journey-map-track {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            padding: 0 10px;
+            margin-bottom: 20px;
+        }
+
+        .journey-map-track::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            right: 30px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .journey-map-track-progress {
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            height: 4px;
+            background: linear-gradient(90deg, #00e5ff, #00e676);
+            transform: translateY(-50%);
+            z-index: 2;
+            transition: width 0.4s ease;
+        }
+
+        .stage-node {
+            position: relative;
+            z-index: 3;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stage-node:hover {
+            transform: scale(1.15);
+            border-color: var(--accent-cyan);
+        }
+
+        .stage-node.active {
+            background: linear-gradient(135deg, #00e5ff, #00b0ff);
+            color: #090d16;
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+            transform: scale(1.2);
+        }
+
+        .stage-node.completed {
+            background: #00e676;
+            color: #090d16;
+            border-color: #00e676;
+        }
+
+        .stage-nav-btns {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .btn-stage {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-stage:hover:not(:disabled) {
+            background: rgba(0, 229, 255, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn-stage:disabled {
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
-        /* Result Styles */
-        .result-section {
-            margin-top: 80px;
-            display: none;
-            animation: slideUp 0.8s ease forwards;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .itinerary-card {
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 32px;
-            padding: 50px;
-            border: 1px solid rgba(0, 229, 255, 0.2);
-        }
-
-        .day-block {
-            margin-bottom: 50px;
-        }
-
-        .day-block h2 {
-            font-family: 'Outfit', sans-serif;
-            color: var(--accent-cyan);
-            font-size: 2rem;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .activity-card {
-            background: rgba(255, 255, 255, 0.03);
+        /* ── PHOTO ACTIVITY CARDS ── */
+        .activity-card-game {
+            background: rgba(30, 41, 59, 0.6);
             border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            transition: all 0.3s ease;
+        }
+
+        .activity-card-game:hover {
+            border-color: rgba(0, 229, 255, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .activity-img-wrapper {
+            position: relative;
+            height: 100%;
+            min-height: 180px;
+            overflow: hidden;
+        }
+
+        .activity-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .activity-card-game:hover .activity-img {
+            transform: scale(1.08);
+        }
+
+        .activity-img-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(15,23,42,0.8) 0%, transparent 60%);
+            display: flex;
+            align-items: flex-end;
+            padding: 12px;
+        }
+
+        .activity-content {
             padding: 25px;
-            margin-bottom: 20px;
-            border-left: 4px solid var(--accent-cyan);
-            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
-        .activity-card:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: translateX(10px);
-        }
-
-        .activity-header {
+        .activity-top-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
-        .activity-time {
-            font-weight: 700;
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        .activity-safety {
+        .activity-time-badge {
             background: rgba(0, 229, 255, 0.1);
             color: var(--accent-cyan);
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 30px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .activity-place {
+        .activity-safety-pill {
+            background: rgba(0, 230, 118, 0.15);
+            color: #00e676;
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .activity-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.25rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
             margin-bottom: 8px;
         }
 
@@ -266,6 +408,17 @@
             color: #94a3b8;
             font-size: 0.95rem;
             line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .activity-bottom-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .itinerary-actions {
@@ -275,51 +428,55 @@
             margin-top: 40px;
         }
 
-        .btn-email {
+        .btn-action {
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #fff;
-            padding: 15px 30px;
-            border-radius: 12px;
+            padding: 15px 28px;
+            border-radius: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 10px;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 0.95rem;
             transition: all 0.3s;
         }
 
-        .btn-email:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .btn-action:hover {
+            background: rgba(0, 229, 255, 0.15);
             border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            transform: translateY(-2px);
         }
 
-        /* Modal */
+        /* ── MODALS & OVERLAYS ── */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 10000;
         }
 
         .modal-content {
             background: #1e293b;
-            padding: 40px;
+            padding: 35px;
             border-radius: 24px;
             width: 90%;
-            max-width: 450px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 440px;
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
 
         .loading-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.9);
-            z-index: 2000;
+            background: rgba(15, 23, 42, 0.92);
+            z-index: 20000;
             display: none;
             flex-direction: column;
             align-items: center;
@@ -337,10 +494,52 @@
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* ── PRINT STYLESHEET FOR STRUCTURED PDF ── */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+            .builder-header, .glass-form, .game-journey-bar, .itinerary-actions, .modal-overlay, .loading-overlay {
+                display: none !important;
+            }
+            .itinerary-container {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .result-section {
+                display: block !important;
+                margin-top: 0 !important;
+            }
+            .print-header {
+                display: block !important;
+                text-align: center;
+                border-bottom: 2px solid #00e5ff;
+                padding-bottom: 15px;
+                margin-bottom: 25px;
+            }
+            .activity-card-game {
+                background: #f8fafc !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #0f172a !important;
+                grid-template-columns: 200px 1fr !important;
+                page-break-inside: avoid;
+            }
+            .activity-title { color: #0f172a !important; }
+            .activity-desc { color: #334155 !important; }
+            .day-print-block {
+                page-break-after: always;
+            }
+        }
+        .print-header { display: none; }
+
         @media (max-width: 768px) {
             .form-grid { grid-template-columns: 1fr; }
             .form-group.full-width { grid-column: auto; }
-            .builder-header h1 { font-size: 2.5rem; }
+            .builder-header h1 { font-size: 2.2rem; }
+            .activity-card-game { grid-template-columns: 1fr; }
+            .activity-img-wrapper { height: 180px; }
         }
     </style>
 </head>
@@ -349,18 +548,18 @@
     <div class="itinerary-container">
 
         <div class="builder-header">
-            <div class="section-label">Tailored for You</div>
+            <div class="section-label">AI-Powered Exploration</div>
             <h1>Smart Itinerary <span class="gradient-text">Builder</span></h1>
-            <p>Our AI analyzes safety, budget, and local vibes to craft your perfect city guide.</p>
+            <p>Our AI analyzes safety, budget, and local vibes to craft your interactive game-style city guide.</p>
         </div>
 
         <div class="glass-form">
             <div class="form-grid">
                 <div class="form-group">
-                    <label><span class="material-symbols-outlined">location_on</span> City / Current Location</label>
+                    <label><span class="material-symbols-outlined">location_on</span> City / Target Location</label>
                     <div style="position: relative;">
-                        <input type="text" id="cityInput" placeholder="Where are you heading?" style="width: 100%;">
-                        <button onclick="detectLocation()" title="Auto-detect" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--accent-cyan); cursor: pointer;">
+                        <input type="text" id="cityInput" placeholder="Where are you heading? (e.g. Pune, Mumbai)" style="width: 100%;">
+                        <button onclick="detectLocation()" title="Auto-detect location" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--accent-cyan); cursor: pointer;">
                             <span class="material-symbols-outlined">my_location</span>
                         </button>
                     </div>
@@ -369,11 +568,11 @@
                 <div class="form-group">
                     <label><span class="material-symbols-outlined">schedule</span> Duration</label>
                     <select id="durationSelect">
-                        <option value="1">1 Day</option>
-                        <option value="2">2 Days</option>
-                        <option value="3" selected>3 Days</option>
-                        <option value="5">5 Days</option>
-                        <option value="7">7 Days</option>
+                        <option value="1">1 Day Exploration</option>
+                        <option value="2">2 Days Trip</option>
+                        <option value="3" selected>3 Days Smart Tour</option>
+                        <option value="5">5 Days Vacation</option>
+                        <option value="7">7 Days Deep Dive</option>
                     </select>
                 </div>
 
@@ -389,22 +588,22 @@
                 <div class="form-group">
                     <label><span class="material-symbols-outlined">commute</span> Travel Mode</label>
                     <select id="travelModeSelect">
-                        <option value="Walking">Walking</option>
+                        <option value="Walking">Walking / Stroll</option>
                         <option value="Public Transport" selected>Public Transport (Metro/Bus)</option>
                         <option value="Cab/Auto">Cab / Auto-Rickshaw</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label><span class="material-symbols-outlined">verified_user</span> Safety Preference</label>
+                    <label><span class="material-symbols-outlined">verified_user</span> Safety Filter</label>
                     <select id="safetySelect">
-                        <option value="Strict" selected>Strict (Highly safe areas only)</option>
-                        <option value="Normal">Balanced (Standard local safety)</option>
+                        <option value="Strict" selected>Strict (Highly rated safe zones only)</option>
+                        <option value="Normal">Normal (Standard local safety)</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label><span class="material-symbols-outlined">bolt</span> Pace</label>
+                    <label><span class="material-symbols-outlined">bolt</span> Exploration Pace</label>
                     <select id="paceSelect">
                         <option value="Relaxed">Relaxed (Slow & easy)</option>
                         <option value="Balanced" selected>Balanced (Standard)</option>
@@ -413,10 +612,10 @@
                 </div>
 
                 <div class="form-group full-width">
-                    <label><span class="material-symbols-outlined">star</span> Your Interests</label>
+                    <label><span class="material-symbols-outlined">star</span> Select Your Interests</label>
                     <div class="interests-grid" id="interestsContainer">
-                        <div class="interest-chip" data-val="Food">🍴 Food & Cafe</div>
-                        <div class="interest-chip" data-val="Heritage">🏛️ Heritage</div>
+                        <div class="interest-chip active" data-val="Food">🍴 Food & Cafe</div>
+                        <div class="interest-chip active" data-val="Heritage">🏛️ Heritage</div>
                         <div class="interest-chip active" data-val="Nature">🌳 Nature</div>
                         <div class="interest-chip" data-val="Work">💻 Coworking</div>
                         <div class="interest-chip" data-val="Nightlife">💃 Nightlife</div>
@@ -426,62 +625,110 @@
                 </div>
 
                 <div class="form-group full-width">
-                    <label><span class="material-symbols-outlined">timer</span> Availability</label>
+                    <label><span class="material-symbols-outlined">timer</span> Daily Time Window</label>
                     <select id="availabilitySelect">
-                        <option value="Full Day" selected>Full Day (Sunrise to Sunset)</option>
-                        <option value="Morning">Morning only</option>
-                        <option value="Evening">Evening only</option>
+                        <option value="Full Day" selected>Full Day (Morning to Night)</option>
+                        <option value="Morning">Morning Window</option>
+                        <option value="Evening">Evening & Night Window</option>
                     </select>
                 </div>
             </div>
 
             <button class="btn-generate" onclick="generateItinerary()">
-                <span class="material-symbols-outlined">magic_button</span> Generate Intelligent Itinerary
+                <span class="material-symbols-outlined">sports_esports</span> Generate Smart Journey Map
             </button>
         </div>
 
+        <!-- ── PRINT HEADER ── -->
+        <div class="print-header" id="printHeader">
+            <h1 style="color:#0f172a; margin:0; font-size:24pt;">🏙️ Know Your City — Smart Itinerary</h1>
+            <p id="printMeta" style="color:#475569; margin:5px 0; font-size:12pt;"></p>
+        </div>
+
+        <!-- ── RESULT SECTION ── -->
         <div id="resultSection" class="result-section">
-            <div class="itinerary-card" id="itineraryContent">
+            <!-- GAME JOURNEY BAR -->
+            <div class="game-journey-bar" id="gameJourneyBar">
+                <div class="journey-header-title">
+                    <div>
+                        <span class="stage-badge">🎮 Journey Progression</span>
+                        <h2 id="journeyCityTitle" style="font-family:'Outfit'; font-size:1.8rem; margin:6px 0 0;">Interactive Day-by-Day Journey</h2>
+                    </div>
+                    <button class="btn-stage" onclick="toggleViewAllDays()" id="toggleAllBtn">
+                        <span class="material-symbols-outlined">grid_view</span> <span id="toggleAllText">View All Days</span>
+                    </button>
+                </div>
+
+                <div class="journey-map-track" id="journeyTrack">
+                    <div class="journey-map-track-progress" id="trackProgress" style="width:0%;"></div>
+                    <!-- Nodes injected via JS -->
+                </div>
+
+                <div class="stage-nav-btns">
+                    <button class="btn-stage" id="prevStageBtn" onclick="navigateStage(-1)">
+                        <span class="material-symbols-outlined">arrow_back</span> Prev Stage
+                    </button>
+                    <span id="stageProgressText" style="font-weight:700; color:var(--accent-cyan); font-size:0.9rem;">Stage 1 of 3</span>
+                    <button class="btn-stage" id="nextStageBtn" onclick="navigateStage(1)">
+                        Next Stage <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ITINERARY CONTENT DISPLAY -->
+            <div id="itineraryContent">
                 <!-- Injected via JS -->
             </div>
 
             <div class="itinerary-actions">
-                <button class="btn-email" onclick="openEmailModal()">
+                <button class="btn-action" onclick="handleEmailRequest()">
                     <span class="material-symbols-outlined">mail</span> Send to Email (HTML + PDF)
                 </button>
-                <button class="btn-email" onclick="window.print()" style="background: rgba(0, 229, 255, 0.1); border-color: var(--accent-cyan); color: var(--accent-cyan);">
-                    <span class="material-symbols-outlined">print</span> Print Guide
+                <button class="btn-action" onclick="window.print()" style="background: rgba(0, 229, 255, 0.1); border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                    <span class="material-symbols-outlined">print</span> Print / Download PDF
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Email Modal -->
+    <!-- ── AUTH & EMAIL MODAL ── -->
     <div id="emailModal" class="modal-overlay">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0;">Receive Itinerary</h3>
+                <h3 id="modalHeading" style="margin: 0; font-family:'Outfit'; font-size:1.4rem;">Receive Itinerary PDF</h3>
                 <button onclick="closeEmailModal()" style="background: none; border: none; color: #fff; cursor: pointer;"><span class="material-symbols-outlined">close</span></button>
             </div>
-            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">We'll send a formatted copy to your inbox instantly.</p>
             
-            <div class="form-group" style="margin-bottom: 20px;">
+            <p id="modalSubtext" style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                Enter your account email to receive your complete structured PDF itinerary.
+            </p>
+
+            <div id="authNoticeBox" style="display:none; background: rgba(0, 229, 255, 0.1); border: 1px solid var(--accent-cyan); padding: 12px; border-radius: 12px; font-size: 0.85rem; color: var(--accent-cyan); margin-bottom: 18px;">
+                🔐 <strong>Login Required:</strong> Please enter your registered credentials to send this itinerary to your email.
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
                 <label>Email Address</label>
-                <input type="email" id="targetEmail" placeholder="yourname@example.com">
+                <input type="email" id="targetEmail" placeholder="you@example.com">
+            </div>
+
+            <div class="form-group" id="passwordGroup" style="display:none; margin-bottom: 20px;">
+                <label>Account Password</label>
+                <input type="password" id="targetPassword" placeholder="Enter your password">
             </div>
             
-            <button class="btn-generate" id="sendBtn" onclick="sendToEmail()">
-                Send Now 🚀
+            <button class="btn-generate" id="sendBtn" onclick="submitEmailOrAuth()">
+                Send to My Email 🚀
             </button>
             <div id="emailStatus" style="margin-top: 15px; font-size: 0.85rem; text-align: center;"></div>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
+    <!-- ── LOADING OVERLAY ── -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loader"></div>
-        <h3 style="margin-top: 20px; font-family: 'Outfit';">AI is crafting your plan...</h3>
-        <p style="color: #94a3b8;">Analyzing city spots, safety data, and local routes.</p>
+        <h3 style="margin-top: 20px; font-family: 'Outfit'; font-size: 1.5rem;">AI is crafting your game itinerary...</h3>
+        <p style="color: #94a3b8;">Building day-by-day quest stages, place photos, and safety metrics.</p>
     </div>
 
     <script>
@@ -490,8 +737,61 @@
             : 'https://knowyourcity.onrender.com/api';
             
         let generatedItinerary = null;
+        let currentStageIndex = 0;
+        let isViewAllMode = false;
 
-        // Interest selection logic
+        // Dynamic Place Photo Bank
+        const CATEGORY_IMAGES = {
+            food: [
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80",
+                "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80"
+            ],
+            heritage: [
+                "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80",
+                "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=600&q=80"
+            ],
+            nature: [
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+                "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80"
+            ],
+            work: [
+                "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80"
+            ],
+            shopping: [
+                "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80"
+            ],
+            default: [
+                "https://images.unsplash.com/photo-1477959858617-67f30ac4ce78?auto=format&fit=crop&w=600&q=80"
+            ]
+        };
+
+        function getPlacePhoto(act, idx) {
+            const desc = (act.place + ' ' + act.description).toLowerCase();
+            let key = 'default';
+            if (desc.includes('fort') || desc.includes('temple') || desc.includes('palace') || desc.includes('museum') || desc.includes('heritage')) key = 'heritage';
+            else if (desc.includes('cafe') || desc.includes('restaurant') || desc.includes('food') || desc.includes('street') || desc.includes('dine')) key = 'food';
+            else if (desc.includes('park') || desc.includes('lake') || desc.includes('garden') || desc.includes('hill') || desc.includes('nature')) key = 'nature';
+            else if (desc.includes('mall') || desc.includes('market') || desc.includes('shop')) key = 'shopping';
+
+            const pool = CATEGORY_IMAGES[key] || CATEGORY_IMAGES.default;
+            return pool[idx % pool.length];
+        }
+
+        // Initialize stored location if available
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedCity = localStorage.getItem('kyc_userCity');
+            if (storedCity && storedCity !== 'Detecting...') {
+                document.getElementById('cityInput').value = storedCity;
+            }
+            
+            // Check logged in user email
+            const savedEmail = localStorage.getItem('kyc_userEmail');
+            if (savedEmail) {
+                document.getElementById('targetEmail').value = savedEmail;
+            }
+        });
+
+        // Interest selection chips
         document.querySelectorAll('.interest-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 chip.classList.toggle('active');
@@ -499,8 +799,6 @@
         });
 
         function detectLocation() {
-            const btn = event.currentTarget;
-            btn.style.opacity = '0.5';
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     try {
@@ -511,10 +809,8 @@
                     } catch (e) {
                         alert("Could not detect city name automatically.");
                     }
-                    btn.style.opacity = '1';
                 }, () => {
                     alert("Location access denied.");
-                    btn.style.opacity = '1';
                 });
             }
         }
@@ -549,57 +845,160 @@
                 const result = await res.json();
                 if (result.status === 'success') {
                     generatedItinerary = result.data;
-                    renderResult();
+                    currentStageIndex = 0;
+                    isViewAllMode = false;
+                    renderGameStageResult();
                 } else {
                     throw new Error(result.message);
                 }
             } catch (e) {
-                alert("Error: " + e.message);
+                alert("Error generating itinerary: " + e.message);
             } finally {
                 document.getElementById('loadingOverlay').style.display = 'none';
             }
         }
 
-        function renderResult() {
-            const container = document.getElementById('itineraryContent');
+        function renderGameStageResult() {
             const data = generatedItinerary;
+            if (!data || !data.days) return;
 
-            let html = `
-                <div style="text-align:center; margin-bottom: 40px;">
-                    <div style="font-size:0.9rem; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:2px; font-weight:700;">Complete Plan</div>
-                    <h1 style="font-family:'Outfit'; font-size:3rem; margin:10px 0;">${data.city}</h1>
-                    <p style="color:#94a3b8; font-size:1.1rem; max-width:700px; margin:0 auto;">${data.summary}</p>
-                </div>
-            `;
+            document.getElementById('journeyCityTitle').textContent = `🎮 ${data.city} Journey — Stage ${currentStageIndex + 1}`;
+            document.getElementById('printMeta').textContent = `${data.city} • ${data.totalDays} Days • ${data.summary}`;
 
-            data.days.forEach(day => {
-                html += `<div class="day-block">
-                    <h2><span class="material-symbols-outlined">event</span> Day ${day.dayNumber}</h2>`;
-                
-                day.activities.forEach(act => {
-                    html += `
-                        <div class="activity-card">
-                            <div class="activity-header">
-                                <div class="activity-time">${act.time}</div>
-                                <div class="activity-safety">🛡️ Safety: ${act.safetyScore}%</div>
-                            </div>
-                            <div class="activity-place">${act.place}</div>
-                            <div class="activity-desc">${act.description}</div>
-                            <div style="margin-top:10px; font-size:0.8rem; color:var(--accent-cyan);">
-                                💰 Estimated Cost: ${act.costEstimate}
-                            </div>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
+            // Render Track Nodes
+            const trackContainer = document.getElementById('journeyTrack');
+            let trackHtml = `<div class="journey-map-track-progress" id="trackProgress" style="width:${(currentStageIndex / Math.max(1, data.days.length - 1)) * 100}%;"></div>`;
+            
+            data.days.forEach((day, idx) => {
+                const isCurrent = idx === currentStageIndex;
+                const isDone = idx < currentStageIndex;
+                trackHtml += `
+                    <div class="stage-node ${isCurrent ? 'active' : ''} ${isDone ? 'completed' : ''}" 
+                         onclick="jumpToStage(${idx})" title="Day ${day.dayNumber}">
+                         ${isDone ? '✓' : day.dayNumber}
+                    </div>
+                `;
             });
+            trackContainer.innerHTML = trackHtml;
 
-            container.innerHTML = html;
+            // Nav buttons state
+            document.getElementById('prevStageBtn').disabled = currentStageIndex === 0;
+            document.getElementById('nextStageBtn').disabled = currentStageIndex === data.days.length - 1;
+            document.getElementById('stageProgressText').textContent = `Stage ${currentStageIndex + 1} of ${data.days.length}`;
+
+            // Render Content
+            const contentDiv = document.getElementById('itineraryContent');
+            let html = '';
+
+            if (isViewAllMode) {
+                // View all days simultaneously
+                data.days.forEach(day => {
+                    html += renderDayBlock(day);
+                });
+            } else {
+                // Render current active stage day
+                const currentDay = data.days[currentStageIndex];
+                html += renderDayBlock(currentDay);
+            }
+
+            contentDiv.innerHTML = html;
             document.getElementById('resultSection').style.display = 'block';
             document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function openEmailModal() {
+        function renderDayBlock(day) {
+            let dayHtml = `
+                <div class="day-print-block" style="margin-bottom: 40px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(0,229,255,0.2); padding-bottom:12px;">
+                        <h2 style="font-family:'Outfit'; color:var(--accent-cyan); font-size:1.8rem; margin:0; display:flex; align-items:center; gap:10px;">
+                            <span class="material-symbols-outlined">flag</span> Day ${day.dayNumber} — Quest Stage
+                        </h2>
+                        <span style="font-size:0.85rem; color:#94a3b8;">${day.activities.length} Recommended Stops</span>
+                    </div>
+            `;
+
+            day.activities.forEach((act, idx) => {
+                const imgUrl = getPlacePhoto(act, idx);
+                dayHtml += `
+                    <div class="activity-card-game">
+                        <div class="activity-img-wrapper">
+                            <img src="${imgUrl}" alt="${act.place}" class="activity-img" loading="lazy">
+                            <div class="activity-img-overlay">
+                                <span style="font-size:0.75rem; color:#fff; font-weight:700; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:20px;">📍 ${act.place}</span>
+                            </div>
+                        </div>
+                        <div class="activity-content">
+                            <div>
+                                <div class="activity-top-row">
+                                    <span class="activity-time-badge">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">schedule</span> ${act.time}
+                                    </span>
+                                    <span class="activity-safety-pill">
+                                        🛡️ ${act.safetyScore}% Safe Zone
+                                    </span>
+                                </div>
+                                <div class="activity-title">${act.place}</div>
+                                <div class="activity-desc">${act.description}</div>
+                            </div>
+                            <div class="activity-bottom-meta">
+                                <span>💰 Cost: <strong style="color:var(--accent-cyan);">${act.costEstimate}</strong></span>
+                                <span>•</span>
+                                <span>⚡ Optimized Route</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            dayHtml += `</div>`;
+            return dayHtml;
+        }
+
+        function jumpToStage(idx) {
+            currentStageIndex = idx;
+            isViewAllMode = false;
+            document.getElementById('toggleAllText').textContent = 'View All Days';
+            renderGameStageResult();
+        }
+
+        function navigateStage(delta) {
+            const newIndex = currentStageIndex + delta;
+            if (newIndex >= 0 && newIndex < generatedItinerary.days.length) {
+                currentStageIndex = newIndex;
+                isViewAllMode = false;
+                document.getElementById('toggleAllText').textContent = 'View All Days';
+                renderGameStageResult();
+            }
+        }
+
+        function toggleViewAllDays() {
+            isViewAllMode = !isViewAllMode;
+            document.getElementById('toggleAllText').textContent = isViewAllMode ? 'Game Stage Mode' : 'View All Days';
+            renderGameStageResult();
+        }
+
+        // ── EMAIL AUTH & SEND HANDLERS ──
+        function handleEmailRequest() {
+            const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
+            const userEmail = localStorage.getItem('kyc_userEmail');
+
+            if (!isLoggedIn) {
+                // Show Auth Prompt
+                document.getElementById('authNoticeBox').style.display = 'block';
+                document.getElementById('passwordGroup').style.display = 'block';
+                document.getElementById('modalHeading').textContent = '🔐 Sign In to Email Itinerary';
+                document.getElementById('modalSubtext').textContent = 'Login or create an account to receive this itinerary at your email address.';
+                document.getElementById('sendBtn').textContent = 'Sign In & Send Itinerary 🚀';
+            } else {
+                // Already Logged In
+                document.getElementById('authNoticeBox').style.display = 'none';
+                document.getElementById('passwordGroup').style.display = 'none';
+                document.getElementById('modalHeading').textContent = '📩 Receive Itinerary';
+                document.getElementById('modalSubtext').textContent = 'We will send a formatted HTML + PDF copy to your account email.';
+                if (userEmail) document.getElementById('targetEmail').value = userEmail;
+                document.getElementById('sendBtn').textContent = 'Send Now 🚀';
+            }
+
             document.getElementById('emailModal').style.display = 'flex';
         }
 
@@ -607,17 +1006,48 @@
             document.getElementById('emailModal').style.display = 'none';
         }
 
-        async function sendToEmail() {
-            const email = document.getElementById('targetEmail').value;
-            if (!email) return alert("Enter email.");
-
+        async function submitEmailOrAuth() {
+            const email = document.getElementById('targetEmail').value.trim();
+            const password = document.getElementById('targetPassword').value.trim();
+            const isLoggedIn = localStorage.getItem('kyc_isLoggedIn') === 'true';
             const btn = document.getElementById('sendBtn');
             const status = document.getElementById('emailStatus');
-            
-            btn.disabled = true;
-            btn.innerText = 'Sending...';
-            status.innerText = '';
 
+            if (!email) return alert("Please enter your email address.");
+
+            btn.disabled = true;
+            status.innerHTML = '<span style="color:var(--accent-cyan)">Processing...</span>';
+
+            // Guest-First login if not logged in
+            if (!isLoggedIn) {
+                if (!password) {
+                    btn.disabled = false;
+                    return alert("Please enter your password to sign in.");
+                }
+
+                try {
+                    // Try login / register backend
+                    const authRes = await fetch(`${API_BASE}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const authData = await authRes.json();
+
+                    if (authData.token || authRes.ok) {
+                        localStorage.setItem('kyc_isLoggedIn', 'true');
+                        localStorage.setItem('kyc_userEmail', email);
+                    } else {
+                        throw new Error(authData.message || "Invalid credentials. Please check your email/password.");
+                    }
+                } catch (authErr) {
+                    btn.disabled = false;
+                    status.innerHTML = `<span style="color:#ff5252">❌ Auth Error: ${authErr.message}</span>`;
+                    return;
+                }
+            }
+
+            // Trigger Email Sending
             try {
                 const res = await fetch(`${API_BASE}/itinerary/send-email`, {
                     method: 'POST',
@@ -630,16 +1060,15 @@
 
                 const result = await res.json();
                 if (result.status === 'success') {
-                    status.innerHTML = '<span style="color:#00e676">✅ Sent! Check your inbox.</span>';
-                    setTimeout(closeEmailModal, 2000);
+                    status.innerHTML = '<span style="color:#00e676; font-weight:700;">✅ Success! PDF & Itinerary sent to your email.</span>';
+                    setTimeout(closeEmailModal, 2500);
                 } else {
                     throw new Error(result.message);
                 }
             } catch (e) {
-                status.innerHTML = `<span style="color:#ff5252">❌ Error: ${e.message}</span>`;
+                status.innerHTML = `<span style="color:#ff5252">❌ Email Error: ${e.message}</span>`;
             } finally {
                 btn.disabled = false;
-                btn.innerText = 'Send Now 🚀';
             }
         }
     </script>
