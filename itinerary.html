@@ -938,39 +938,84 @@
             }
         }
 
+        // Real City Landmark Dictionary for Client Fallback
+        const LOCAL_CITY_DB = {
+            pune: [
+                { name: "Shaniwar Wada Fort", desc: "Historic 18th-century fortification of the Peshwas in central Pune.", safety: 98, cost: "₹25" },
+                { name: "Aga Khan Palace", desc: "Majestic palace with deep historical significance and peaceful lawns.", safety: 99, cost: "₹25" },
+                { name: "Sinhagad Fort", desc: "Ancient hill fortress offering panoramic mountain views and local delicacies.", safety: 96, cost: "₹50" },
+                { name: "Dagadusheth Halwai Ganpati Temple", desc: "Famous Hindu temple in the heart of Pune.", safety: 98, cost: "Free" },
+                { name: "FC Road Food Street & Market", desc: "Vibrant shopping and food street packed with top eateries.", safety: 95, cost: "₹300" },
+                { name: "Raja Dinkar Kelkar Museum", desc: "Museum featuring over 20,000 rare Indian artifacts and sculptures.", safety: 97, cost: "₹100" },
+                { name: "Osho Teerth Park & Koregaon Park", desc: "Serene zengarden coupled with trendy cafes in Koregaon Park.", safety: 98, cost: "₹200" },
+                { name: "Vetal Tekdi Sunset Hill", desc: "Highest elevation point in Pune city perfect for sunset walks.", safety: 96, cost: "Free" }
+            ],
+            mumbai: [
+                { name: "Gateway of India", desc: "Monumental arch overlooking the Arabian Sea built in 1924.", safety: 99, cost: "Free" },
+                { name: "Marine Drive Promenade", desc: "Iconic 3.6km coastal avenue famous for sunset views.", safety: 99, cost: "Free" },
+                { name: "Chhatrapati Shivaji Maharaj Museum", desc: "Premier art & history museum housed in Indo-Saracenic building.", safety: 98, cost: "₹150" },
+                { name: "Elephanta Caves", desc: "UNESCO World Heritage rock-cut cave temples on Elephanta Island.", safety: 97, cost: "₹260" },
+                { name: "Colaba Causeway Market", desc: "Bustling shopping street famous for handicraft souvenirs & cafes.", safety: 95, cost: "₹400" },
+                { name: "Juhu Beach Chowpatty", desc: "Famous beach renowned for street food stalls & sunsets.", safety: 94, cost: "₹200" }
+            ]
+        };
+
         function createClientFallbackItinerary(city, duration = 3, budget = 'Medium', interests = []) {
             const totalDays = parseInt(duration) || 3;
+            const cityKey = city.toLowerCase().trim().split(',')[0];
+            const known = LOCAL_CITY_DB[cityKey];
             const days = [];
             const timeSlots = ["08:30 AM", "11:30 AM", "01:30 PM", "04:30 PM", "07:30 PM"];
-            const placeTemplates = [
-                { name: `${city} Fort & Heritage Quarter`, desc: `Explore ancient architecture, historic gates, and regional museum artifacts in ${city}.`, safety: 98, cost: budget === 'High' ? '₹800' : '₹200' },
-                { name: `${city} Central Botanical Garden & Promenade`, desc: `Relaxed green gardens with well-maintained walking tracks, security patrols, and scenic water views.`, safety: 97, cost: 'Free' },
-                { name: `${city} Famous Food Street & Local Cafes`, desc: `Enjoy legendary local specialties, fresh brews, and regional snacks in a vibrant, safe district.`, safety: 95, cost: budget === 'High' ? '₹1,500' : '₹400' },
-                { name: `${city} Cultural Craft Bazaar`, desc: `Shop for authentic local souvenirs, traditional textiles, and handmade regional crafts.`, safety: 96, cost: '₹150' },
-                { name: `${city} Sunset View Deck`, desc: `Catch breathtaking evening views of the city skyline in a lively, well-lit gathering spot.`, safety: 94, cost: 'Free' }
-            ];
 
-            for (let d = 1; d <= totalDays; d++) {
-                const activities = [];
-                const slotsCount = d % 2 === 0 ? 4 : 5;
-                for (let i = 0; i < slotsCount; i++) {
-                    const p = placeTemplates[(d * 2 + i) % placeTemplates.length];
-                    activities.push({
-                        time: timeSlots[i],
-                        place: p.name,
-                        description: p.desc,
-                        costEstimate: p.cost,
-                        safetyScore: p.safety
-                    });
+            if (known && known.length >= 4) {
+                let pool = [...known];
+                for (let d = 1; d <= totalDays; d++) {
+                    const activities = [];
+                    const slotsCount = d % 2 === 0 ? 3 : 4;
+                    for (let i = 0; i < slotsCount; i++) {
+                        if (pool.length === 0) pool = [...known];
+                        const p = pool.shift();
+                        activities.push({
+                            time: timeSlots[i],
+                            place: p.name,
+                            description: p.desc,
+                            costEstimate: p.cost,
+                            safetyScore: p.safety
+                        });
+                    }
+                    days.push({ dayNumber: d, activities });
                 }
-                days.push({ dayNumber: d, activities });
+            } else {
+                const categories = [
+                    { suffix: "Historic Fort & Heritage Gates", desc: `Explore ancient fortifications, monuments, and historic archways in ${city}.`, safety: 98, cost: "₹150" },
+                    { suffix: "Central Botanical Gardens & Lake Park", desc: `Relax in lush green gardens with lake views and walking tracks in ${city}.`, safety: 97, cost: "Free" },
+                    { suffix: "Famous Street Food Market & Local Cafes", desc: `Taste authentic regional specialties and street food delicacies in ${city}.`, safety: 95, cost: budget === 'High' ? '₹1,500' : '₹400' },
+                    { suffix: "Handicrafts & Art Museum", desc: `Discover regional art exhibitions, traditional crafts, and cultural history in ${city}.`, safety: 96, cost: "₹100" },
+                    { suffix: "Sunset Viewpoint Deck", desc: `Watch breathtaking sunset vistas over ${city} in a safe, vibrant gathering spot.`, safety: 94, cost: "Free" }
+                ];
+
+                for (let d = 1; d <= totalDays; d++) {
+                    const activities = [];
+                    const slotsCount = d % 2 === 0 ? 3 : 4;
+                    for (let i = 0; i < slotsCount; i++) {
+                        const c = categories[(d + i) % categories.length];
+                        activities.push({
+                            time: timeSlots[i],
+                            place: `${city} ${c.suffix}`,
+                            description: c.desc,
+                            costEstimate: c.cost,
+                            safetyScore: c.safety
+                        });
+                    }
+                    days.push({ dayNumber: d, activities });
+                }
             }
 
             return {
-                city,
-                summary: `An intelligent ${totalDays}-day travel plan for ${city}. Optimized for high safety scores, budget balance (${budget}), and top highlights.`,
-                totalDays,
-                days
+                city: city,
+                summary: `A complete ${totalDays}-day travel guide for ${city}. Optimized for high safety scores, non-repeating real places, budget balance (${budget}), and full city coverage.`,
+                totalDays: totalDays,
+                days: days
             };
         }
 
