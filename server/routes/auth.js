@@ -7,22 +7,23 @@ const User = require('../models/User');
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client("808171982330-2hrbreabki0uj3aluob8vhbsecnu00ob.apps.googleusercontent.com");
 
-// Setup the Transporter with high-speed optimization
+// Setup the Transporter with port 587 STARTTLS (more reliable on cloud hosts like Render)
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,       // STARTTLS — upgrades after initial connection
     pool: true,
-    family: 4,    // STRICT IPv4 only to avoid ENETUNREACH IPv6 timeout
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
     },
-    connectionTimeout: 40000, 
-    greetingTimeout: 40000
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000
 });
 
 // Verify connection configuration on startup (Logs to Render console)

@@ -1,31 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 const Contact = require('../models/Contact');
 require('dotenv').config();
 
-// ── Email Transporter Optimization ───────────────────────────────────
+// Force Node.js DNS to prefer IPv4 globally (prevents ENETUNREACH on Render)
+dns.setDefaultResultOrder('ipv4first');
+
+// ── Email Transporter ─────────────────────────────────────────────────
+// Using port 587 (STARTTLS) — more reliable on cloud platforms like Render.
+// Port 465 (SSL) often fails due to IPv6 routing issues in cloud environments.
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,       // STARTTLS — upgrades connection after initial handshake
     pool: true,
-    family: 4,    // STRICT IPv4 only to avoid ENETUNREACH IPv6 timeout
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
     },
-    connectionTimeout: 40000, 
-    greetingTimeout: 40000
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000
 });
 
 // Startup verification
 transporter.verify(function (error, success) {
     if (error) console.error('❌ Contact SMTP Error:', error.message);
-    else console.log('✅ Contact SMTP Optimized');
+    else console.log('✅ Contact SMTP Ready (port 587 STARTTLS)');
 });
 
 // ── Smart Auto-Reply Generator ───────────────────────────────────────
