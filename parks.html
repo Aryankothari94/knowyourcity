@@ -252,6 +252,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
 
@@ -410,8 +412,20 @@
               }).filter(p => p.name).sort((a, b) => a.distance - b.distance);
               renderParks(parks, city);
             }
-          } else { fetchParks(lat, lng); }
-        } else { fetchParks(lat, lng); }
+          } else {
+            waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+              document.getElementById('loadingSpinner').style.display = 'none';
+              if (data[0] && data[0].name && data[0].distance !== undefined) { renderParks(data, city); }
+              else { fetchParks(lat, lng); }
+            }, function() { fetchParks(lat, lng); });
+          }
+        } else {
+          waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0] && data[0].name && data[0].distance !== undefined) { renderParks(data, city); }
+            else { fetchParks(lat, lng); }
+          }, function() { fetchParks(lat, lng); });
+        }
       } catch (e) { fetchParks(lat, lng); }
 
       async function fetchParks(targetLat, targetLng, radius = 15000) {

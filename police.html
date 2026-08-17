@@ -283,6 +283,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
 
@@ -445,8 +447,22 @@
               const unique = stations.filter(s => { if (seen.has(s.name)) return false; seen.add(s.name); return true; });
               renderStations(unique, city);
             }
-          } else { fetchPolice(lat, lng); }
-        } else { fetchPolice(lat, lng); }
+          } else {
+            // Cache expired — wait for prefetch to refresh it
+            waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+              document.getElementById('loadingSpinner').style.display = 'none';
+              if (data[0] && data[0].name && data[0].rating) { renderStations(data, city); }
+              else { fetchPolice(lat, lng); }
+            }, function() { fetchPolice(lat, lng); });
+          }
+        } else {
+          // No cache — wait for prefetch to populate it
+          waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0] && data[0].name && data[0].rating) { renderStations(data, city); }
+            else { fetchPolice(lat, lng); }
+          }, function() { fetchPolice(lat, lng); });
+        }
       } catch (e) { fetchPolice(lat, lng); }
 
       async function fetchPolice(targetLat, targetLng, radius = 15000) {

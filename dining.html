@@ -263,6 +263,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
 
@@ -427,8 +429,20 @@
               })).filter(s => s.name !== 'Local Spot').sort((a,b) => a.distance - b.distance);
               renderPlaces(diningSpots, city);
             }
-          } else { fetchPlaces(lat, lng, isCafe, city); }
-        } else { fetchPlaces(lat, lng, isCafe, city); }
+          } else {
+            waitForCacheOrFetch(cacheKey, CACHE_TTL, function(data) {
+              document.getElementById('loadingSpinner').style.display = 'none';
+              if (data[0] && data[0].name && data[0].stars) { renderPlaces(data, city); }
+              else { fetchPlaces(lat, lng, isCafe, city); }
+            }, function() { fetchPlaces(lat, lng, isCafe, city); });
+          }
+        } else {
+          waitForCacheOrFetch(cacheKey, CACHE_TTL, function(data) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0] && data[0].name && data[0].stars) { renderPlaces(data, city); }
+            else { fetchPlaces(lat, lng, isCafe, city); }
+          }, function() { fetchPlaces(lat, lng, isCafe, city); });
+        }
       } catch (e) { fetchPlaces(lat, lng, isCafe, city); }
 
       async function fetchPlaces(targetLat, targetLng, isCafe, cityName, radius = 10000) {

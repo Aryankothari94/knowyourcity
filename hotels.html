@@ -553,6 +553,8 @@
         <span>Show Map View</span>
     </button>
 
+    <script src="prefetch.js"></script>
+    <script src="cache-helper.js"></script>
     <script src="script.js?v=88"></script>
     <script>
         // ── Module-level state (accessible by ALL functions) ──────────────────
@@ -665,8 +667,21 @@
                     allHotels = hotels;
                     applyFilters();
                   }
-                } else { fetchHotels(_lat, _lng, _city, 25000); }
-              } else { fetchHotels(_lat, _lng, _city, 25000); }
+                  }
+                } else {
+                  waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    if (data[0] && data[0].name && data[0].price) { allHotels = data; applyFilters(); }
+                    else { fetchHotels(_lat, _lng, _city, 25000); }
+                  }, function() { fetchHotels(_lat, _lng, _city, 25000); });
+                }
+              } else {
+                waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+                  document.getElementById('loadingSpinner').style.display = 'none';
+                  if (data[0] && data[0].name && data[0].price) { allHotels = data; applyFilters(); }
+                  else { fetchHotels(_lat, _lng, _city, 25000); }
+                }, function() { fetchHotels(_lat, _lng, _city, 25000); });
+              }
             } catch (e) { fetchHotels(_lat, _lng, _city, 25000); }
         });
 

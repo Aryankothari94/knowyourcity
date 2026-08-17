@@ -264,6 +264,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
 
@@ -428,8 +430,20 @@
               }).filter(s => s.name).sort((a, b) => a.distance - b.distance);
               renderStations(stations, city);
             }
-          } else { fetchTransit(lat, lng); }
-        } else { fetchTransit(lat, lng); }
+          } else {
+            waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+              document.getElementById('loadingSpinner').style.display = 'none';
+              if (data[0] && data[0].name && data[0].type) { renderStations(data, city); }
+              else { fetchTransit(lat, lng); }
+            }, function() { fetchTransit(lat, lng); });
+          }
+        } else {
+          waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0] && data[0].name && data[0].type) { renderStations(data, city); }
+            else { fetchTransit(lat, lng); }
+          }, function() { fetchTransit(lat, lng); });
+        }
       } catch (e) { fetchTransit(lat, lng); }
 
       async function fetchTransit(targetLat, targetLng, radius = 15000) {

@@ -123,6 +123,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -160,20 +162,13 @@
       document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
       detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
 
-      // Check cache first
-      try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (raw) {
-          const { data, timestamp } = JSON.parse(raw);
-          if (Date.now() - timestamp < CACHE_TTL) {
-            document.getElementById('loadingSpinner').style.display = 'none';
-            renderHospitals(data, city);
-            return;
-          } else { localStorage.removeItem(CACHE_KEY); }
-        }
-      } catch {}
-
-      fetchHospitals(lat, lng);
+      // Check cache first or wait for prefetch
+      waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        renderHospitals(data, city);
+      }, function() {
+        fetchHospitals(lat, lng);
+      });
 
       async function fetchHospitals(lat, lng) {
         const query = `

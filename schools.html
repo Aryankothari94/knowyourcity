@@ -274,6 +274,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
 
@@ -467,8 +469,20 @@
               }).filter(s => s.name !== 'Unnamed Institution').sort((a, b) => a.distance - b.distance);
               renderSchools(schools, city);
             }
-          } else { fetchSchools(lat, lng); }
-        } else { fetchSchools(lat, lng); }
+          } else {
+            waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+              document.getElementById('loadingSpinner').style.display = 'none';
+              if (data[0] && data[0].name && data[0].type) { renderSchools(data, city); }
+              else { fetchSchools(lat, lng); }
+            }, function() { fetchSchools(lat, lng); });
+          }
+        } else {
+          waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0] && data[0].name && data[0].type) { renderSchools(data, city); }
+            else { fetchSchools(lat, lng); }
+          }, function() { fetchSchools(lat, lng); });
+        }
       } catch (e) { fetchSchools(lat, lng); }
 
       async function fetchSchools(targetLat, targetLng, radius = 25000, category = 'all') {

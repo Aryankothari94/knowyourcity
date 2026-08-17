@@ -252,6 +252,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
 
@@ -412,8 +414,20 @@
               }).filter(h => h.name).sort((a, b) => a.distance - b.distance);
               renderHostels(hostels, city);
             }
-          } else { fetchHostels(lat, lng); }
-        } else { fetchHostels(lat, lng); }
+          } else {
+            waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+              document.getElementById('loadingSpinner').style.display = 'none';
+              if (data[0] && data[0].name && data[0].type) { renderHostels(data, city); }
+              else { fetchHostels(lat, lng); }
+            }, function() { fetchHostels(lat, lng); });
+          }
+        } else {
+          waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data[0] && data[0].name && data[0].type) { renderHostels(data, city); }
+            else { fetchHostels(lat, lng); }
+          }, function() { fetchHostels(lat, lng); });
+        }
       } catch (e) { fetchHostels(lat, lng); }
 
       async function fetchHostels(targetLat, targetLng, radius = 10000) {

@@ -283,6 +283,8 @@
     </div>
   </div>
 
+  <script src="prefetch.js"></script>
+  <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
@@ -519,18 +521,13 @@
       }
 
       const CACHE_KEY = `kyc_cache_safezone_${Math.round(lat*100)}_${Math.round(lng*100)}`;
-      const cached = getCachedData(CACHE_KEY);
-      if (cached && Array.isArray(cached) && cached.length > 0) {
+      waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(cached) {
         document.getElementById('loadingSpinner').style.display = 'none';
-        if (cached[0].name && cached[0].category) {
+        if (cached[0] && cached[0].name && cached[0].category) {
           allAttractionsData = cached;
           applyCategoryFilters();
-        } else {
-          fetchAllAttractions(lat, lng, city);
-        }
-      } else {
-        fetchAllAttractions(lat, lng, city);
-      }
+        } else { fetchAllAttractions(lat, lng, city); }
+      }, function() { fetchAllAttractions(lat, lng, city); });
 
       async function fetchAllAttractions(lat, lng, city, radius = 30000, categoryFilter = null) {
         const cityName = city.split(',')[0].trim();

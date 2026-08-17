@@ -4,6 +4,9 @@
    Results stored in localStorage for instant feature page loads.
    ============================================ */
 
+// Expose KYCPrefetch globally so feature pages can call it
+window.KYCPrefetch = window.KYCPrefetch || { _running: false };
+
 (function () {
   'use strict';
 
@@ -129,6 +132,8 @@
           data: data.elements,
           timestamp: Date.now()
         }));
+        // Notify any waiting feature pages that this cache key is ready
+        window.dispatchEvent(new CustomEvent('kyc_prefetch_ready', { detail: { cacheKey } }));
         console.log(`✅ [Prefetch] ${feature.name} — ${data.elements.length} items cached`);
         return { name: feature.name, status: 'fetched', count: data.elements.length };
       } else {
@@ -215,6 +220,7 @@
     const total = FEATURES.length;
     const results = [];
 
+    window.KYCPrefetch._running = true;
     for (const batch of batches) {
       const batchResults = await Promise.allSettled(
         batch.map(feature => prefetchFeature(feature, lat, lng))
@@ -235,7 +241,11 @@
     const cached = results.filter(r => r.status === 'cached').length;
     console.log(`🏁 [Prefetch] Complete — ${fetched} fetched, ${cached} already cached`);
     showPrefetchStatus(`${city} data ready — ${fetched + cached} features loaded`, true);
+    window.KYCPrefetch._running = false;
   }
+
+  // Expose to global
+  window.KYCPrefetch = { run: prefetchAllFeatures, _running: false };
 
   // ─── Listen for location changes ───
   window.addEventListener('kyc_locationUpdated', (e) => {
