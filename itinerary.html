@@ -762,12 +762,15 @@
 
         // Popular Indian & Global Cities Database for Autocomplete
         const POPULAR_CITIES = [
-            "Pune, Maharashtra", "Mumbai, Maharashtra", "Delhi, NCR", "Bengaluru, Karnataka", 
-            "Hyderabad, Telangana", "Jaipur, Rajasthan", "Goa, India", "Kolkata, West Bengal", 
-            "Ahmedabad, Gujarat", "Chennai, Tamil Nadu", "Agra, Uttar Pradesh", "Varanasi, Uttar Pradesh", 
-            "Surat, Gujarat", "Lucknow, Uttar Pradesh", "Chandigarh, India", "Shimla, Himachal Pradesh", 
-            "Udaipur, Rajasthan", "Kochi, Kerala", "Amritsar, Punjab", "Mysore, Karnataka", 
-            "Nagpur, Maharashtra", "Indore, Madhya Pradesh", "Bhopal, Madhya Pradesh", "Dehradun, Uttarakhand"
+            "Pune, Maharashtra", "Mumbai, Maharashtra", "Delhi, NCR", "Bengaluru, Karnataka",
+            "Hyderabad, Telangana", "Jaipur, Rajasthan", "Goa, India", "Kolkata, West Bengal",
+            "Ahmedabad, Gujarat", "Chennai, Tamil Nadu", "Agra, Uttar Pradesh", "Varanasi, Uttar Pradesh",
+            "Surat, Gujarat", "Lucknow, Uttar Pradesh", "Chandigarh, India", "Shimla, Himachal Pradesh",
+            "Udaipur, Rajasthan", "Kochi, Kerala", "Amritsar, Punjab", "Mysore, Karnataka",
+            "Nagpur, Maharashtra", "Indore, Madhya Pradesh", "Bhopal, Madhya Pradesh", "Dehradun, Uttarakhand",
+            "Matheran, Maharashtra", "Lonavala, Maharashtra", "Mahabaleshwar, Maharashtra",
+            "Ooty, Tamil Nadu", "Coorg, Karnataka", "Manali, Himachal Pradesh", "Rishikesh, Uttarakhand",
+            "Munnar, Kerala", "Darjeeling, West Bengal", "Kodaikanal, Tamil Nadu"
         ];
 
         // ── CITY AUTOCOMPLETE IMPLEMENTATION ──
@@ -819,36 +822,22 @@
             }
         });
 
-        // Real Wikipedia Image Fetcher
-        async function getRealPlaceImage(placeName, idx) {
+        // ── SMART PLACE IMAGE FETCHER ──
+        // Uses imgTag (specific place keyword) to fetch accurate real photos from Unsplash
+        async function getRealPlaceImage(placeName, idx, imgTag) {
             if (realPhotoCache[placeName]) return realPhotoCache[placeName];
 
-            try {
-                const cleanQuery = placeName.replace(/Day \d+/gi, '').replace(/\(.*\)/g, '').trim();
-                const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanQuery)}&prop=pageimages&pithumbsize=600&format=json&origin=*`;
-                
-                const res = await fetch(wikiUrl);
-                const data = await res.json();
-                const pages = data.query?.pages || {};
-                const pageId = Object.keys(pages)[0];
+            // Use imgTag if provided, else derive from place name
+            const searchTerm = imgTag || placeName.replace(/Day \d+/gi, '').replace(/[&]/g, '').trim();
+            const encoded = encodeURIComponent(searchTerm);
 
-                if (pageId && pageId !== '-1' && pages[pageId]?.thumbnail?.source) {
-                    const src = pages[pageId].thumbnail.source;
-                    realPhotoCache[placeName] = src;
-                    return src;
-                }
-            } catch (e) {}
+            // Unsplash Source — returns a real photo matching the search term (no API key needed)
+            // Using a seed based on placeName for stable, consistent images per place
+            const seed = placeName.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const src = `https://source.unsplash.com/600x400/?${encoded}&sig=${seed}`;
 
-            const categoryPool = [
-                "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80",
-                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80",
-                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-                "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80",
-                "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80"
-            ];
-            const fallback = categoryPool[idx % categoryPool.length];
-            realPhotoCache[placeName] = fallback;
-            return fallback;
+            realPhotoCache[placeName] = src;
+            return src;
         }
 
         // Initialize stored location & registered email
@@ -927,39 +916,145 @@
             }
         }
 
+        // ── COMPREHENSIVE LOCAL CITY DATABASE (Client-Side) ──
         const LOCAL_CITY_DB = {
             pune: [
-                { name: "Shaniwar Wada Fort", desc: "Historic 18th-century fortification of the Peshwas in central Pune.", safety: 98, cost: "₹25" },
-                { name: "Aga Khan Palace", desc: "Majestic palace with deep historical significance and peaceful lawns.", safety: 99, cost: "₹25" },
-                { name: "Sinhagad Fort", desc: "Ancient hill fortress offering panoramic mountain views and local delicacies.", safety: 96, cost: "₹50" },
-                { name: "Dagadusheth Halwai Ganpati Temple", desc: "Famous Hindu temple in the heart of Pune.", safety: 98, cost: "Free" },
-                { name: "FC Road Food Street & Market", desc: "Vibrant shopping and food street packed with top eateries.", safety: 95, cost: "₹300" },
-                { name: "Raja Dinkar Kelkar Museum", desc: "Museum featuring over 20,000 rare Indian artifacts and sculptures.", safety: 97, cost: "₹100" },
-                { name: "Osho Teerth Park & Koregaon Park", desc: "Serene zengarden coupled with trendy cafes in Koregaon Park.", safety: 98, cost: "₹200" },
-                { name: "Vetal Tekdi Sunset Hill", desc: "Highest elevation point in Pune city perfect for sunset walks.", safety: 96, cost: "Free" }
+                { name: "Shaniwar Wada Fort", desc: "Historic 18th-century fortification of the Peshwas. Stunning light & sound show at night.", safety: 98, cost: "₹25", imgTag: "shaniwar wada fort pune" },
+                { name: "Aga Khan Palace", desc: "Majestic palace with deep historical significance and serene gardens. Gandhi memorial inside.", safety: 99, cost: "₹25", imgTag: "aga khan palace pune" },
+                { name: "Sinhagad Fort", desc: "Ancient hill fortress offering breathtaking mountain views and famous local pitla bhakri.", safety: 96, cost: "₹50", imgTag: "sinhagad fort pune trekking" },
+                { name: "Dagadusheth Halwai Ganpati Temple", desc: "Iconic Hindu temple visited by thousands of devotees daily in central Pune.", safety: 98, cost: "Free", imgTag: "dagadusheth ganpati temple pune" },
+                { name: "Raja Dinkar Kelkar Museum", desc: "Unique museum showcasing over 20,000 rare Indian artifacts and instruments.", safety: 97, cost: "₹100", imgTag: "kelkar museum pune artifacts" },
+                { name: "Osho Teerth Park", desc: "Lush zen garden perfect for morning walks, adjacent to the famous Osho Ashram.", safety: 98, cost: "₹200", imgTag: "osho teerth park pune garden" },
+                { name: "Pataleshwar Cave Temple", desc: "8th-century rock-cut cave temple dedicated to Lord Shiva in the heart of Pune.", safety: 97, cost: "Free", imgTag: "pataleshwar cave temple pune rock" },
+                { name: "FC Road Food Street", desc: "Vibrant avenue lined with popular cafes, street food joints, and apparel stores.", safety: 95, cost: "₹300", imgTag: "FC road pune food street" },
+                { name: "Parvati Hill Temple", desc: "18th century Peshwa-era temple complex offering panoramic views of Pune city.", safety: 97, cost: "Free", imgTag: "parvati hill temple pune" },
+                { name: "National War Museum Pune", desc: "Military museum displaying fighter jets, tanks, and Indian Army war artifacts.", safety: 99, cost: "₹20", imgTag: "national war museum pune" }
             ],
             mumbai: [
-                { name: "Gateway of India", desc: "Monumental arch overlooking the Arabian Sea built in 1924.", safety: 99, cost: "Free" },
-                { name: "Marine Drive Promenade", desc: "Iconic 3.6km coastal avenue famous for sunset views.", safety: 99, cost: "Free" },
-                { name: "Chhatrapati Shivaji Maharaj Museum", desc: "Premier art & history museum housed in Indo-Saracenic building.", safety: 98, cost: "₹150" },
-                { name: "Elephanta Caves", desc: "UNESCO World Heritage rock-cut cave temples on Elephanta Island.", safety: 97, cost: "₹260" },
-                { name: "Colaba Causeway Market", desc: "Bustling shopping street famous for handicraft souvenirs & cafes.", safety: 95, cost: "₹400" },
-                { name: "Juhu Beach Chowpatty", desc: "Famous beach renowned for street food stalls & sunsets.", safety: 94, cost: "₹200" }
+                { name: "Gateway of India", desc: "Monumental arch overlooking the Arabian Sea built during the British Raj in 1924.", safety: 99, cost: "Free", imgTag: "gateway of india mumbai" },
+                { name: "Marine Drive Promenade", desc: "Iconic 3.6 km Queen's Necklace coastal promenade, stunning at dusk and night.", safety: 99, cost: "Free", imgTag: "marine drive mumbai night" },
+                { name: "Chhatrapati Shivaji Maharaj Museum", desc: "Mumbai's premier art and history museum in stunning Indo-Saracenic architecture.", safety: 98, cost: "₹150", imgTag: "chhatrapati shivaji museum mumbai" },
+                { name: "Elephanta Caves", desc: "UNESCO World Heritage rock-cut cave temples dedicated to Shiva on Elephanta Island.", safety: 97, cost: "₹260", imgTag: "elephanta caves mumbai" },
+                { name: "Colaba Causeway Market", desc: "Bustling market street famous for antiques, fashion, souvenirs and heritage cafes.", safety: 95, cost: "₹500", imgTag: "colaba causeway mumbai market" },
+                { name: "Juhu Beach", desc: "Mumbai's famous sunset beach known for street food, pav bhaji and sea breeze.", safety: 94, cost: "₹200", imgTag: "juhu beach mumbai sunset" },
+                { name: "Bandra Fort & Bandstand", desc: "Portuguese fort ruins offering scenic views of the Bandra-Worli Sea Link.", safety: 96, cost: "Free", imgTag: "bandra fort mumbai sea link" },
+                { name: "Siddhivinayak Temple", desc: "Revered 18th-century temple dedicated to Lord Ganesha in Prabhadevi.", safety: 99, cost: "Free", imgTag: "siddhivinayak temple mumbai" },
+                { name: "Haji Ali Dargah", desc: "Iconic 15th-century mosque built on a tidal islet in the Arabian Sea.", safety: 97, cost: "Free", imgTag: "haji ali dargah mumbai sea" }
+            ],
+            delhi: [
+                { name: "Red Fort (Lal Qila)", desc: "Historic Mughal fortress built with red sandstone in Old Delhi — a UNESCO World Heritage Site.", safety: 97, cost: "₹50", imgTag: "red fort delhi" },
+                { name: "Qutub Minar", desc: "UNESCO World Heritage site featuring the world's tallest brick minaret.", safety: 98, cost: "₹50", imgTag: "qutub minar delhi" },
+                { name: "Humayun's Tomb", desc: "Garden tomb of Mughal Emperor Humayun, architectural precursor to the Taj Mahal.", safety: 98, cost: "₹50", imgTag: "humayun tomb delhi garden" },
+                { name: "India Gate", desc: "War memorial archway honoring 70,000 soldiers, surrounded by vast green lawns.", safety: 99, cost: "Free", imgTag: "india gate delhi" },
+                { name: "Chandni Chowk", desc: "Historic bustling market famous for street food delicacies, spices and heritage havelis.", safety: 93, cost: "₹300", imgTag: "chandni chowk delhi market street" },
+                { name: "Lotus Temple", desc: "Famous lotus-shaped marble Baha'i temple for silent meditation and peace.", safety: 99, cost: "Free", imgTag: "lotus temple delhi" },
+                { name: "Akshardham Temple", desc: "Sprawling Hindu temple complex with traditional Indian art, culture and boat ride.", safety: 99, cost: "₹250", imgTag: "akshardham temple delhi" },
+                { name: "Lodhi Garden", desc: "Lush 90-acre city park containing 15th-century Sayyid and Lodi dynasty tombs.", safety: 98, cost: "Free", imgTag: "lodhi garden delhi tombs" }
+            ],
+            matheran: [
+                { name: "Echo Point Matheran", desc: "Spectacular viewpoint with a natural echo effect and panoramic valleys below. Best in the morning.", safety: 96, cost: "Free", imgTag: "echo point matheran valley view" },
+                { name: "Panorama Point (Sunset Point)", desc: "Most popular sunset viewpoint in Matheran offering a 360° view of the Sahyadri mountains.", safety: 97, cost: "Free", imgTag: "panorama point matheran sunset hills" },
+                { name: "Charlotte Lake Matheran", desc: "Serene picturesque lake inside the forest, the primary water source of Matheran.", safety: 96, cost: "Free", imgTag: "charlotte lake matheran forest" },
+                { name: "Toy Train Neral-Matheran", desc: "UNESCO-listed heritage narrow gauge toy train journey through scenic Sahyadri forests.", safety: 99, cost: "₹250", imgTag: "neral matheran toy train heritage" },
+                { name: "Louisa Point", desc: "Dramatic cliff-edge viewpoint offering spectacular views of the Prabal Fort and plains below.", safety: 94, cost: "Free", imgTag: "louisa point matheran cliff view" },
+                { name: "Alexander Point", desc: "Popular sunrise viewpoint on the edge of a forested cliff overlooking Neral and the plains.", safety: 95, cost: "Free", imgTag: "alexander point matheran sunrise" },
+                { name: "Porcupine Point (Marjorie Point)", desc: "Western-facing viewpoint perfect for spotting distant plains, villages and Prabal Fort.", safety: 94, cost: "Free", imgTag: "porcupine point matheran sahyadri" },
+                { name: "One Tree Hill Point", desc: "Peaceful hilltop with a lone tree offering beautiful valley vistas and cool breeze.", safety: 95, cost: "Free", imgTag: "one tree hill matheran viewpoint" },
+                { name: "Hart Point", desc: "Secluded and scenic viewpoint with lush green forest surroundings and breezy atmosphere.", safety: 95, cost: "Free", imgTag: "hart point matheran forest hill" },
+                { name: "Matheran Local Market (Chowk)", desc: "Central market offering local street food, chikki, chocolate, and Matheran's famous red soil souvenirs.", safety: 97, cost: "₹200", imgTag: "matheran market chikki red soil" }
+            ],
+            lonavala: [
+                { name: "Bhushi Dam", desc: "Popular dam with cascading waterfalls during monsoon. Perfect for families and nature lovers.", safety: 92, cost: "Free", imgTag: "bhushi dam lonavala waterfall" },
+                { name: "Tiger's Leap (Waghdari)", desc: "Dramatic cliff viewpoint shaped like a leaping tiger overlooking the stunning valley.", safety: 94, cost: "Free", imgTag: "tigers leap lonavala cliff" },
+                { name: "Lonavala Lake", desc: "Tranquil lake ideal for evening strolls, photography, and picnics.", safety: 97, cost: "Free", imgTag: "lonavala lake tranquil" },
+                { name: "Karla Caves", desc: "Ancient Buddhist rock-cut caves dating to the 2nd century BC with stunning architecture.", safety: 97, cost: "₹25", imgTag: "karla caves buddhist lonavala" },
+                { name: "Lohagad Fort", desc: "Water fort with sweeping views of Pawna Lake, famous for its vinchugad bastion.", safety: 95, cost: "₹25", imgTag: "lohagad fort pune lonavala" },
+                { name: "Rajmachi Fort Trek", desc: "Historic twin-peaked Shrivardhan and Manaranjan forts, popular monsoon trekking destination.", safety: 93, cost: "₹50", imgTag: "rajmachi fort trek lonavala" }
+            ],
+            shimla: [
+                { name: "The Ridge Shimla", desc: "Open space in the heart of Shimla offering spectacular views of snow-capped mountains.", safety: 99, cost: "Free", imgTag: "the ridge shimla mall road" },
+                { name: "Mall Road Shimla", desc: "Vibrant promenade lined with shops, cafes, and colonial-era buildings.", safety: 99, cost: "₹300", imgTag: "mall road shimla colonial" },
+                { name: "Jakhu Temple & Ropeway", desc: "Ancient Hanuman temple atop Jakhu Hill at 2455m with panoramic Himalayan views.", safety: 97, cost: "₹150", imgTag: "jakhu temple shimla himalayan view" },
+                { name: "Christ Church Shimla", desc: "Second oldest church in North India, neo-Gothic architecture landmark on The Ridge.", safety: 99, cost: "Free", imgTag: "christ church shimla colonial" },
+                { name: "Kufri Hill Station", desc: "Scenic hill resort 16km from Shimla famous for skiing, horse riding and Himalayan views.", safety: 97, cost: "₹400", imgTag: "kufri hills shimla skiing" },
+                { name: "Kalka-Shimla Toy Train", desc: "UNESCO Heritage narrow gauge railway offering stunning mountain valley views.", safety: 99, cost: "₹350", imgTag: "kalka shimla toy train mountain" }
+            ],
+            jaipur: [
+                { name: "Amber Fort", desc: "Magnificent Rajput fort in amber sandstone with stunning palaces, halls, and mirror chambers.", safety: 98, cost: "₹200", imgTag: "amber fort jaipur rajasthan" },
+                { name: "City Palace Jaipur", desc: "A complex of palaces, gardens and courtyards in the heart of Jaipur's old city.", safety: 98, cost: "₹200", imgTag: "city palace jaipur" },
+                { name: "Hawa Mahal", desc: "Iconic Palace of Winds with 953 windows built for royal women to observe street life.", safety: 97, cost: "₹50", imgTag: "hawa mahal jaipur pink city" },
+                { name: "Jal Mahal Water Palace", desc: "Stunning palace floating in the middle of Man Sagar Lake — a photographer's dream.", safety: 98, cost: "Free (view)", imgTag: "jal mahal jaipur lake palace" },
+                { name: "Nahargarh Fort", desc: "Hilltop fort offering breathtaking night views of Jaipur city.", safety: 97, cost: "₹50", imgTag: "nahargarh fort jaipur hilltop" },
+                { name: "Jantar Mantar Observatory", desc: "UNESCO World Heritage astronomical observatory with the world's largest stone sundial.", safety: 98, cost: "₹50", imgTag: "jantar mantar jaipur observatory" },
+                { name: "Johari Bazaar", desc: "Vibrant gem market famous for precious stones, Rajasthani jewelry and traditional attire.", safety: 95, cost: "₹500", imgTag: "johari bazaar jaipur jewelry market" }
+            ],
+            goa: [
+                { name: "Calangute Beach", desc: "Goa's largest and most famous beach known for water sports, shacks and vibrant nightlife.", safety: 93, cost: "Free", imgTag: "calangute beach goa sunset" },
+                { name: "Basilica of Bom Jesus", desc: "UNESCO World Heritage church housing the mortal remains of St. Francis Xavier.", safety: 99, cost: "Free", imgTag: "basilica bom jesus goa church" },
+                { name: "Fort Aguada", desc: "Well-preserved Portuguese fort and lighthouse built in 1612 overlooking the Arabian Sea.", safety: 97, cost: "₹50", imgTag: "fort aguada goa lighthouse" },
+                { name: "Dudhsagar Waterfalls", desc: "One of India's tallest waterfalls cascading 310 meters through dense forest.", safety: 90, cost: "₹400", imgTag: "dudhsagar waterfall goa" },
+                { name: "Anjuna Flea Market", desc: "Famous Wednesday flea market offering hippie culture, antiques, clothes and handicrafts.", safety: 94, cost: "₹200", imgTag: "anjuna flea market goa" },
+                { name: "Palolem Beach", desc: "Serene crescent-shaped beach in South Goa with calm blue waters and wooden shacks.", safety: 96, cost: "Free", imgTag: "palolem beach south goa" }
+            ],
+            agra: [
+                { name: "Taj Mahal", desc: "The world's most iconic monument — a UNESCO World Heritage white marble mausoleum by Shah Jahan.", safety: 97, cost: "₹1,100", imgTag: "taj mahal agra sunrise" },
+                { name: "Agra Fort", desc: "Mighty UNESCO-listed red sandstone Mughal fort with palaces, mosques and Diwan-i-Khas.", safety: 97, cost: "₹50", imgTag: "agra fort red sandstone mughal" },
+                { name: "Fatehpur Sikri", desc: "Abandoned Mughal capital city 40km from Agra with stunning Panch Mahal and Buland Darwaza.", safety: 96, cost: "₹50", imgTag: "fatehpur sikri abandoned city mughal" },
+                { name: "Itimad-ud-Daulah (Baby Taj)", desc: "First Mughal building fully built in marble — considered the draft for the Taj Mahal.", safety: 97, cost: "₹50", imgTag: "itimad ud daulah baby taj agra" },
+                { name: "Mehtab Bagh", desc: "Garden across the Yamuna offering the best full-moon reflection view of the Taj Mahal.", safety: 96, cost: "₹25", imgTag: "mehtab bagh garden agra taj view" }
+            ],
+            varanasi: [
+                { name: "Dashashwamedh Ghat Aarti", desc: "Most sacred ghat in Varanasi, famous for the spectacular Ganga Aarti ceremony at dusk.", safety: 95, cost: "Free", imgTag: "dashashwamedh ghat varanasi aarti" },
+                { name: "Kashi Vishwanath Temple", desc: "One of the twelve Jyotirlingas — most sacred Hindu temple dedicated to Lord Shiva.", safety: 94, cost: "Free", imgTag: "kashi vishwanath temple varanasi" },
+                { name: "Sarnath Buddhist Stupa", desc: "Buddhist pilgrimage site where Gautam Buddha delivered his first sermon after enlightenment.", safety: 97, cost: "₹25", imgTag: "sarnath stupa varanasi buddhist" },
+                { name: "Sunrise Boat Ride on Ganga", desc: "Serene sunrise boat ride on the holy Ganges past dozens of ancient ghats and temples.", safety: 96, cost: "₹200", imgTag: "ganga river varanasi boat sunrise" },
+                { name: "Ramnagar Fort Museum", desc: "18th-century sandstone fort of Banaras kings converted into museum with royal artifacts.", safety: 96, cost: "₹25", imgTag: "ramnagar fort varanasi museum" }
+            ],
+            udaipur: [
+                { name: "City Palace Udaipur", desc: "Largest palace in Rajasthan built over 400 years with stunning lake and mountain backdrop.", safety: 98, cost: "₹300", imgTag: "city palace udaipur rajasthan lake" },
+                { name: "Lake Pichola Boat Ride", desc: "Romantic boat ride on the gorgeous lake with views of palaces and the Aravalli hills.", safety: 97, cost: "₹400", imgTag: "lake pichola udaipur boat ride" },
+                { name: "Jag Mandir Island Palace", desc: "Stunning island palace in Lake Pichola — used as inspiration for the Taj Mahal.", safety: 98, cost: "₹400", imgTag: "jag mandir island palace udaipur" },
+                { name: "Jagdish Temple", desc: "17th-century Hindu temple to Lord Vishnu with beautiful carved pillars.", safety: 97, cost: "Free", imgTag: "jagdish temple udaipur carved" },
+                { name: "Saheliyon-ki-Bari", desc: "Garden of the Maidens — beautiful fountain gardens built for the royal ladies of Udaipur.", safety: 98, cost: "₹50", imgTag: "saheliyon ki bari garden udaipur" },
+                { name: "Vintage Car Museum", desc: "Stunning collection of vintage Rolls Royces and royal automobiles of Mewar kings.", safety: 99, cost: "₹250", imgTag: "vintage car museum udaipur rolls royce" }
+            ],
+            kochi: [
+                { name: "Chinese Fishing Nets Fort Kochi", desc: "Iconic large cantilevered Chinese fishing nets at sunset — a symbol of Kerala's heritage.", safety: 97, cost: "Free", imgTag: "chinese fishing nets fort kochi sunset" },
+                { name: "Mattancherry Dutch Palace", desc: "Portuguese-built palace with stunning Kerala murals depicting Ramayana scenes.", safety: 97, cost: "₹5", imgTag: "mattancherry palace kochi kerala" },
+                { name: "Kathakali Performance", desc: "Traditional Kerala classical dance performance with elaborate face paint and costumes.", safety: 99, cost: "₹300", imgTag: "kathakali performance kerala dance" },
+                { name: "Cherai Beach", desc: "Pristine beach 25km from Kochi where backwaters meet the sea, great for dolphin spotting.", safety: 96, cost: "Free", imgTag: "cherai beach kochi backwaters" },
+                { name: "Kerala Folklore Museum", desc: "Seven-storey heritage museum showcasing 5000 rare artifacts from different eras of Kerala.", safety: 99, cost: "₹150", imgTag: "kerala folklore museum kochi" }
+            ],
+            mahabaleshwar: [
+                { name: "Arthur's Seat Viewpoint", desc: "Spectacular cliff-edge viewpoint offering a breathtaking view of the Konkan coast below.", safety: 95, cost: "Free", imgTag: "arthurs seat mahabaleshwar cliff view" },
+                { name: "Venna Lake Boating", desc: "Scenic artificial lake offering boat rides, horse rides and strawberry picking nearby.", safety: 97, cost: "₹150", imgTag: "venna lake mahabaleshwar boating" },
+                { name: "Mapro Garden Strawberry Farm", desc: "Famous strawberry farm with fresh strawberry picking, jams and food products.", safety: 98, cost: "₹200", imgTag: "mapro garden strawberry mahabaleshwar" },
+                { name: "Elephant's Head Point", desc: "Viewpoint resembling an elephant's trunk and head, offering deep valley views.", safety: 94, cost: "Free", imgTag: "elephants head point mahabaleshwar" },
+                { name: "Panchgani Table Land", desc: "Second-highest plateau in Asia offering horse riding, views, and local street food.", safety: 96, cost: "₹100", imgTag: "panchgani tableland plateau viewpoint" },
+                { name: "Panchganga Temple", desc: "Ancient temple complex where five rivers originate in the Sahyadris.", safety: 98, cost: "Free", imgTag: "panchganga temple mahabaleshwar ancient" }
+            ],
+            bengaluru: [
+                { name: "Bengaluru Palace", desc: "Tudor-style royal residence with intricate wood carvings and lush palace grounds.", safety: 98, cost: "₹250", imgTag: "bengaluru palace tudor" },
+                { name: "Cubbon Park", desc: "300-acre green lung of Bangalore filled with bamboo groves and heritage buildings.", safety: 98, cost: "Free", imgTag: "cubbon park bangalore greenery" },
+                { name: "Lalbagh Botanical Garden", desc: "Historic 240-acre garden home to 1,000+ flora species and famous flower shows.", safety: 98, cost: "₹30", imgTag: "lalbagh botanical garden bangalore flowers" },
+                { name: "Tipu Sultan's Summer Palace", desc: "Teakwood palace showcasing Indo-Islamic architecture in Chamarajpet.", safety: 96, cost: "₹20", imgTag: "tipu sultan palace bangalore" },
+                { name: "ISKCON Temple Bangalore", desc: "Magnificent spiritual complex with stunning architecture and serene atmosphere.", safety: 99, cost: "Free", imgTag: "iskcon temple bangalore" },
+                { name: "Nandi Hills Sunrise", desc: "Ancient hill fortress 60km outside Bangalore offering magical sunrise above the clouds.", safety: 95, cost: "₹50", imgTag: "nandi hills bangalore sunrise" }
             ]
         };
 
         function createClientFallbackItinerary(city, duration = 3, budget = 'Medium', interests = []) {
             const totalDays = parseInt(duration) || 3;
-            const cityKey = city.toLowerCase().trim().split(',')[0];
+            const cityKey = city.toLowerCase().trim().split(',')[0].trim();
             const known = LOCAL_CITY_DB[cityKey];
             const days = [];
-            const timeSlots = ["08:30 AM", "11:30 AM", "01:30 PM", "04:30 PM", "07:30 PM"];
+            const timeSlots = ["08:30 AM", "10:30 AM", "12:30 PM", "02:30 PM", "04:30 PM", "07:00 PM"];
 
             if (known && known.length >= 4) {
                 let pool = [...known];
                 for (let d = 1; d <= totalDays; d++) {
                     const activities = [];
-                    const slotsCount = d % 2 === 0 ? 3 : 4;
+                    const slotsCount = Math.min(totalDays <= 2 ? 5 : 4, pool.length);
                     for (let i = 0; i < slotsCount; i++) {
                         if (pool.length === 0) pool = [...known];
                         const p = pool.shift();
@@ -968,31 +1063,33 @@
                             place: p.name,
                             description: p.desc,
                             costEstimate: p.cost,
-                            safetyScore: p.safety
+                            safetyScore: p.safety,
+                            imgTag: p.imgTag
                         });
                     }
                     days.push({ dayNumber: d, activities });
                 }
             } else {
                 const categories = [
-                    { suffix: "Historic Fort & Heritage Gates", desc: `Explore ancient fortifications, monuments, and historic archways in ${city}.`, safety: 98, cost: "₹150" },
-                    { suffix: "Central Botanical Gardens & Lake Park", desc: `Relax in lush green gardens with lake views and walking tracks in ${city}.`, safety: 97, cost: "Free" },
-                    { suffix: "Famous Street Food Market & Local Cafes", desc: `Taste authentic regional specialties and street food delicacies in ${city}.`, safety: 95, cost: budget === 'High' ? '₹1,500' : '₹400' },
-                    { suffix: "Handicrafts & Art Museum", desc: `Discover regional art exhibitions, traditional crafts, and cultural history in ${city}.`, safety: 96, cost: "₹100" },
-                    { suffix: "Sunset Viewpoint Deck", desc: `Watch breathtaking sunset vistas over ${city} in a safe, vibrant gathering spot.`, safety: 94, cost: "Free" }
+                    { suffix: "Famous Hilltop Viewpoint", desc: `Catch breathtaking panoramic views of ${city} and surrounding landscapes from the hilltop.`, safety: 96, cost: "Free", imgTag: `${city} hilltop viewpoint` },
+                    { suffix: "Historic Fort & Monument", desc: `Explore the ancient fortifications, heritage structures, and rich historical legacy of ${city}.`, safety: 98, cost: "₹100", imgTag: `${city} historic fort heritage` },
+                    { suffix: "Nature Trail & Forest Walk", desc: `Trek through scenic forest trails and natural reserves in the beautiful landscapes of ${city}.`, safety: 95, cost: "Free", imgTag: `${city} nature trail forest` },
+                    { suffix: "Local Cuisine & Street Food", desc: `Taste authentic local dishes, regional snacks, and famous street food of ${city}.`, safety: 95, cost: budget === 'High' ? '₹1,500' : '₹300', imgTag: `${city} street food market` },
+                    { suffix: "Sacred Temple & Spiritual Site", desc: `Visit renowned temples and spiritual sites that hold cultural importance in ${city}.`, safety: 97, cost: "Free", imgTag: `${city} temple spiritual` },
+                    { suffix: "Scenic Lake or Waterfall", desc: `Relax by a beautiful lake or waterfall in the natural surroundings of ${city}.`, safety: 94, cost: "₹50", imgTag: `${city} lake waterfall scenic` }
                 ];
 
                 for (let d = 1; d <= totalDays; d++) {
                     const activities = [];
-                    const slotsCount = d % 2 === 0 ? 3 : 4;
-                    for (let i = 0; i < slotsCount; i++) {
-                        const c = categories[(d + i) % categories.length];
+                    for (let i = 0; i < 4; i++) {
+                        const c = categories[(d - 1 + i) % categories.length];
                         activities.push({
                             time: timeSlots[i],
                             place: `${city} ${c.suffix}`,
                             description: c.desc,
                             costEstimate: c.cost,
-                            safetyScore: c.safety
+                            safetyScore: c.safety,
+                            imgTag: c.imgTag
                         });
                     }
                     days.push({ dayNumber: d, activities });
@@ -1001,7 +1098,7 @@
 
             return {
                 city: city,
-                summary: `A complete ${totalDays}-day travel guide for ${city}. Optimized for high safety scores, non-repeating real places, budget balance (${budget}), and full city coverage.`,
+                summary: `A complete ${totalDays}-day travel guide for ${city}. Covers all major attractions, viewpoints, heritage sites, and local cuisine with optimized routes and high safety ratings.`,
                 totalDays: totalDays,
                 days: days
             };
@@ -1075,7 +1172,7 @@
 
             for (let idx = 0; idx < day.activities.length; idx++) {
                 const act = day.activities[idx];
-                const realImg = await getRealPlaceImage(act.place, idx);
+                const realImg = await getRealPlaceImage(act.place, idx, act.imgTag || act.place);
 
                 dayHtml += `
                     <div class="place-card-modern">
