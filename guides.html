@@ -4,49 +4,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>City Guides — Know Your City</title>
-  <meta name="description" content="Explore comprehensive city guides to help you navigate and settle into new urban environments safely." />
+  <title>Comprehensive City Safety Guides — Know Your City</title>
+  <meta name="description" content="In-depth neighborhood safety, transit infrastructure, and relocation guides for 100+ cities across India." />
 
   <!-- SEO & Primary Meta Tags -->
-  <meta name="keywords" content="safe neighborhoods India, guides, city relocation guide, local area safety" />
+  <meta name="keywords" content="safe neighborhoods India, city guides, mumbai safety, bangalore safety, pune safety, delhi relocation guide, chennai safe areas" />
   <meta name="author" content="Know Your City" />
   <link rel="canonical" href="https://knowyourcitys.in/guides.html" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://knowyourcitys.in/guides.html" />
-  <meta property="og:title" content="City Guides — Know Your City" />
-  <meta property="og:description" content="Explore comprehensive city guides to help you navigate and settle into new urban environments safely." />
+  <meta property="og:title" content="Comprehensive City Safety Guides — Know Your City" />
+  <meta property="og:description" content="In-depth neighborhood safety, transit infrastructure, and relocation guides for 100+ cities across India." />
   <meta property="og:image" content="https://knowyourcitys.in/logo.png" />
   <meta property="og:site_name" content="Know Your City" />
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://knowyourcitys.in/guides.html" />
-  <meta property="twitter:title" content="City Guides — Know Your City" />
-  <meta property="twitter:description" content="Explore comprehensive city guides to help you navigate and settle into new urban environments safely." />
+  <meta property="twitter:title" content="Comprehensive City Safety Guides — Know Your City" />
+  <meta property="twitter:description" content="In-depth neighborhood safety, transit infrastructure, and relocation guides across India." />
   <meta property="twitter:image" content="https://knowyourcitys.in/logo.png" />
-  
-  <!-- Schema.org JSON-LD -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": "City Guides — Know Your City",
-    "url": "https://knowyourcitys.in/guides.html",
-    "description": "Explore comprehensive city guides to help you navigate and settle into new urban environments safely.",
-    "publisher": {
-      "@type": "Organization",
-      "name": "Know Your City",
-      "logo": "https://knowyourcitys.in/logo.png"
-    }
-  }
-  </script>
+
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
   <link rel="icon" href="logo.png" type="image/png" />
+  
   <style>
     :root {
       --bg-primary: #0a0b1a;
@@ -69,7 +58,6 @@
       min-height: 100vh;
     }
 
-    /* Background orbs */
     .bg-orbs {
       position: fixed;
       inset: 0;
@@ -87,46 +75,57 @@
     .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
     .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-    /* Back button */
-    .back-nav {
+    .site-nav {
       position: fixed;
-      top: 24px;
-      left: 24px;
+      top: 0;
+      left: 0;
+      width: 100%;
       z-index: 1000;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(10, 11, 26, 0.85);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50px;
-      color: var(--text-primary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       text-decoration: none;
-      font-weight: 600;
+      color: #fff;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    .brand-link img { width: 32px; height: 32px; border-radius: 8px; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
       font-size: 0.9rem;
-      transition: all 0.3s ease;
+      font-weight: 500;
+      transition: color 0.3s;
     }
-    .back-nav:hover {
-      background: var(--accent-cyan);
-      color: #0a0b1a;
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
-      transform: translateY(-1px);
-    }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent-cyan); }
 
-    /* Main content */
     .guides-container {
       position: relative;
       z-index: 1;
-      max-width: 1100px;
+      max-width: 1150px;
       margin: 0 auto;
-      padding: 100px 24px 80px;
+      padding: 120px 24px 80px;
     }
 
     .guides-header {
       text-align: center;
-      margin-bottom: 60px;
+      margin-bottom: 50px;
       animation: fadeInUp 0.6s ease;
     }
     .guides-header h1 {
@@ -144,114 +143,179 @@
     }
     .guides-header p {
       color: var(--text-secondary);
-      max-width: 700px;
+      max-width: 720px;
       margin: 0 auto;
       font-size: 1.1rem;
     }
 
-    /* Featured Cities */
+    .kyc-ad-container {
+      margin: 30px auto;
+      text-align: center;
+      min-height: 90px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
     .city-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 30px;
+      gap: 24px;
       margin-bottom: 60px;
-      animation: fadeInUp 0.7s ease;
     }
     .city-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 24px;
-      padding: 30px;
+      border-radius: 20px;
+      padding: 28px;
       backdrop-filter: blur(10px);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      position: relative;
-      overflow: hidden;
-    }
-    .city-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 4px;
-      background: var(--accent-gradient);
-      opacity: 0;
-      transition: opacity 0.3s;
+      gap: 14px;
     }
     .city-card:hover {
-      border-color: rgba(0, 229, 255, 0.3);
+      border-color: rgba(0, 229, 255, 0.25);
       background: rgba(255, 255, 255, 0.06);
-      transform: translateY(-8px);
+      transform: translateY(-5px);
     }
-    .city-card:hover::before { opacity: 1; }
-
+    .city-card .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     .city-card h3 {
       font-family: var(--font-heading);
-      font-size: 1.5rem;
-      color: var(--text-primary);
+      font-size: 1.4rem;
+      color: #fff;
     }
-    .city-card .tag {
-      display: inline-flex;
-      padding: 4px 12px;
-      background: rgba(0, 229, 255, 0.1);
-      border-radius: 50px;
-      color: var(--accent-cyan);
+    .city-badge {
       font-size: 0.75rem;
       font-weight: 700;
-      text-transform: uppercase;
-      width: fit-content;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--accent-cyan);
     }
     .city-card p {
       color: var(--text-secondary);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       line-height: 1.6;
     }
-    .city-card .meta {
+    .city-stats {
       display: flex;
       justify-content: space-between;
-      margin-top: auto;
-      padding-top: 15px;
-      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 12px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
       font-size: 0.85rem;
-      color: var(--text-secondary);
+    }
+    .city-stats span { color: var(--text-secondary); }
+    .city-stats strong { color: var(--accent-green); }
+
+    .view-guide-btn {
+      margin-top: auto;
+      padding: 10px 18px;
+      background: rgba(0, 229, 255, 0.08);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 50px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    .view-guide-btn:hover {
+      background: var(--accent-cyan);
+      color: #0a0b1a;
     }
 
-    /* Info Section */
-    .guides-info {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Modal for Detailed City Guide */
+    .guide-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      overflow-y: auto;
+      padding: 40px 20px;
+    }
+    .guide-modal.active { display: flex; justify-content: center; align-items: flex-start; }
+    .guide-content {
+      background: #101226;
+      border: 1px solid rgba(0, 229, 255, 0.25);
       border-radius: 24px;
+      max-width: 850px;
+      width: 100%;
       padding: 40px;
-      text-align: center;
-      animation: fadeInUp 0.8s ease;
+      position: relative;
+      margin: auto;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     }
-    .guides-info h2 {
+    .modal-close {
+      position: absolute;
+      top: 20px; right: 20px;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+    .modal-close:hover { background: rgba(255, 82, 82, 0.8); }
+    .guide-body h2 { font-family: var(--font-heading); color: var(--accent-cyan); margin: 24px 0 12px; font-size: 1.4rem; }
+    .guide-body p { color: var(--text-secondary); margin-bottom: 14px; font-size: 0.98rem; line-height: 1.7; }
+    .guide-body ul { margin: 12px 0 18px 24px; color: var(--text-secondary); }
+    .guide-body li { margin-bottom: 8px; }
+
+    /* Educational Static Section */
+    .edu-section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      padding: 35px;
+      margin-top: 50px;
+    }
+    .edu-section h2 {
       font-family: var(--font-heading);
-      margin-bottom: 20px;
-      color: var(--text-primary);
+      font-size: 1.8rem;
+      color: #fff;
+      margin-bottom: 16px;
     }
-    .guides-steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      margin-top: 30px;
-    }
-    .step-item {
-      padding: 20px;
-    }
-    .step-item .icon {
-      font-size: 2.5rem;
-      margin-bottom: 15px;
-      display: block;
-    }
-    .step-item h4 {
-      font-size: 1rem;
-      margin-bottom: 8px;
-    }
-    .step-item p {
-      font-size: 0.85rem;
+
+    .footer-nav {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
       color: var(--text-secondary);
+      font-size: 0.9rem;
     }
+    .footer-links-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .footer-links-row a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .footer-links-row a:hover { color: var(--accent-cyan); }
 
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
@@ -259,13 +323,14 @@
     }
 
     @media (max-width: 900px) {
-      .city-grid { grid-template-columns: 1fr 1fr; }
-      .guides-steps { grid-template-columns: 1fr 1fr; }
+      .city-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 600px) {
+      .site-nav { padding: 12px 16px; }
+      .nav-links { display: none; }
       .city-grid { grid-template-columns: 1fr; }
-      .guides-steps { grid-template-columns: 1fr; }
-      .guides-header h1 { font-size: 2.4rem; }
+      .guides-container { padding: 90px 16px 60px; }
+      .guides-header h1 { font-size: 2.2rem; }
     }
   </style>
 </head>
@@ -277,103 +342,275 @@
     <div class="orb orb-3"></div>
   </div>
 
-
+  <nav class="site-nav">
+    <a href="index.html" class="brand-link">
+      <img src="logo.png" alt="KnowYourCity Logo" />
+      <span>Know<span style="color:var(--accent-cyan);">Your</span>City</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="guides.html" class="active">Guides</a></li>
+      <li><a href="reports.html">Reports</a></li>
+      <li><a href="blog.html">Blog</a></li>
+      <li><a href="forum.html">Community</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
 
   <div class="guides-container">
     <div class="guides-header">
-      <h1>City <span class="gradient-text">Guides</span></h1>
-      <p>Your ultimate companion for discovering safe, comfortable, and vibrant living spaces in 100+ cities across India.</p>
+      <h1>City <span class="gradient-text">Safety Guides</span></h1>
+      <p>Data-driven neighborhood safety breakdowns, safest residential corridors, and transit analysis for major metropolitan centers in India.</p>
+    </div>
+
+    <!-- AdSense Placement -->
+    <div class="kyc-ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-1078761578330689"
+           data-ad-slot="9947362184"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
     </div>
 
     <div class="city-grid">
+      <!-- Mumbai -->
       <div class="city-card">
-        <span class="tag">Most Safe</span>
-        <h3>Mumbai</h3>
-        <p>The city that never sleeps offers surprisingly safe sub-zones. Explore Navi Mumbai and BKC insights.</p>
-        <div class="meta">
-          <span>🛡️ 9.2 Score</span>
-          <span>📍 45 Areas Mapped</span>
+        <div class="header-row">
+          <h3>Mumbai</h3>
+          <span class="city-badge">Safety: 9.2/10</span>
         </div>
-      </div>
-      <div class="city-card">
-        <span class="tag">Top Planned</span>
-        <h3>Chandigarh</h3>
-        <p>Consistent infrastructure and grid-based planning make it a top choice for newcomers and families.</p>
-        <div class="meta">
-          <span>🛡️ 9.5 Score</span>
-          <span>📍 60 Sectors Mapped</span>
+        <p>India's financial capital with exceptional round-the-clock public transit, active local trains, and strong neighborhood policing.</p>
+        <div class="city-stats">
+          <span>Top Localities:</span>
+          <strong>Bandra W, Powai, Navi Mumbai</strong>
         </div>
+        <button class="view-guide-btn" onclick="openGuide('mumbai')">Explore Mumbai Guide →</button>
       </div>
+
+      <!-- Bengaluru -->
       <div class="city-card">
-        <span class="tag">Tech Hub</span>
-        <h3>Bengaluru</h3>
-        <p>Dynamic and diverse. Navigate the tech zones with details on hospital proximity and dark spot alerts.</p>
-        <div class="meta">
-          <span>🛡️ 8.8 Score</span>
-          <span>📍 120 Areas Mapped</span>
+        <div class="header-row">
+          <h3>Bengaluru</h3>
+          <span class="city-badge">Safety: 8.8/10</span>
         </div>
-      </div>
-      <div class="city-card">
-        <span class="tag">Historical</span>
-        <h3>Jaipur</h3>
-        <p>Tradition meets urban growth. Discover heritage zones with high density of emergency services.</p>
-        <div class="meta">
-          <span>🛡️ 8.5 Score</span>
-          <span>📍 35 Areas Mapped</span>
+        <p>Tech powerhouse with premier gated communities, active tech parks, thriving café culture, and modern Namma Metro corridors.</p>
+        <div class="city-stats">
+          <span>Top Localities:</span>
+          <strong>Indiranagar, Koramangala, HSR</strong>
         </div>
+        <button class="view-guide-btn" onclick="openGuide('bengaluru')">Explore Bengaluru Guide →</button>
       </div>
+
+      <!-- Pune -->
       <div class="city-card">
-        <span class="tag">Commercial</span>
-        <h3>Gurugram</h3>
-        <p>High-growth zones with varying safety metrics. Focus on gated community density insights.</p>
-        <div class="meta">
-          <span>🛡️ 8.2 Score</span>
-          <span>📍 50 Areas Mapped</span>
+        <div class="header-row">
+          <h3>Pune</h3>
+          <span class="city-badge">Safety: 9.0/10</span>
         </div>
+        <p>Cultural and educational capital of Maharashtra, featuring high student vitality, pleasant weather, and secure residential IT corridors.</p>
+        <div class="city-stats">
+          <span>Top Localities:</span>
+          <strong>Viman Nagar, Baner, Kothrud</strong>
+        </div>
+        <button class="view-guide-btn" onclick="openGuide('pune')">Explore Pune Guide →</button>
       </div>
+
+      <!-- Delhi NCR -->
       <div class="city-card">
-        <span class="tag">Cultural</span>
-        <h3>Pune</h3>
-        <p>Educational and IT hub. Balanced safety scores across Viman Nagar and Baner.</p>
-        <div class="meta">
-          <span>🛡️ 9.0 Score</span>
-          <span>📍 40 Areas Mapped</span>
+        <div class="header-row">
+          <h3>Delhi NCR</h3>
+          <span class="city-badge">Safety: 8.3/10</span>
+        </div>
+        <p>Massive metropolitan expanse served by the world-class Delhi Metro network, with high security in south and central gated sectors.</p>
+        <div class="city-stats">
+          <span>Top Localities:</span>
+          <strong>Hauz Khas, Dwarka, Noida Sec 62</strong>
+        </div>
+        <button class="view-guide-btn" onclick="openGuide('delhi')">Explore Delhi NCR Guide →</button>
+      </div>
+
+      <!-- Hyderabad -->
+      <div class="city-card">
+        <div class="header-row">
+          <h3>Hyderabad</h3>
+          <span class="city-badge">Safety: 8.9/10</span>
+        </div>
+        <p>Rapidly growing IT and biotechnology center with extensive CCTV coverage, wide arterial roads, and safe residential suburbs.</p>
+        <div class="city-stats">
+          <span>Top Localities:</span>
+          <strong>Gachibowli, Madhapur, Jubilee Hills</strong>
+        </div>
+        <button class="view-guide-btn" onclick="openGuide('hyderabad')">Explore Hyderabad Guide →</button>
+      </div>
+
+      <!-- Chandigarh -->
+      <div class="city-card">
+        <div class="header-row">
+          <h3>Chandigarh</h3>
+          <span class="city-badge">Safety: 9.5/10</span>
+        </div>
+        <p>India's foremost planned city. Excellent sector layout, abundant greenery, strict traffic management, and rapid police beat response.</p>
+        <div class="city-stats">
+          <span>Top Localities:</span>
+          <strong>Sector 8, Sector 15, Mohali Phase 7</strong>
+        </div>
+        <button class="view-guide-btn" onclick="openGuide('chandigarh')">Explore Chandigarh Guide →</button>
+      </div>
+    </div>
+
+    <!-- Educational Guide Explanation -->
+    <div class="edu-section">
+      <h2>How to Evaluate a City's Neighborhood Safety Profile</h2>
+      <p>When moving to a new urban center in India, evaluating safety requires analyzing multiple layers of civic infrastructure rather than relying on hearsay:</p>
+      <ul>
+        <li><strong>Active Commercial Density:</strong> Localities with pharmacies, supermarkets, and restaurants that stay open past 10 PM offer superior passive surveillance.</li>
+        <li><strong>Jurisdictional Emergency Hubs:</strong> Verify that a Police Chowki and multispecialty emergency room are within a 3-kilometer radius.</li>
+        <li><strong>Transit Gate Corridors:</strong> Metro stations and bus terminals connected to wide, illuminated main roads provide secure last-mile transit for daily commuters.</li>
+      </ul>
+    </div>
+
+    <!-- City Guide Modal Viewer -->
+    <div id="guideModal" class="guide-modal" onclick="closeGuide(event)">
+      <div class="guide-content" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeGuideDirect()">✕</button>
+        <div id="guideModalBody" class="guide-body">
+          <!-- Populated dynamically -->
         </div>
       </div>
     </div>
 
-    <div class="guides-info">
-      <h2>How We Create Our Guides</h2>
-      <p>Data meets community. Our guides are built on four pillars of authenticity.</p>
-      <div class="guides-steps">
-        <div class="step-item">
-          <span class="icon">🛰️</span>
-          <h4>Sat-Data</h4>
-          <p>Realtime mapping of infrastructure density.</p>
-        </div>
-        <div class="step-item">
-          <span class="icon">🚓</span>
-          <h4>Public Safety</h4>
-          <p>Police and emergency hub distance analysis.</p>
-        </div>
-        <div class="step-item">
-          <span class="icon">💡</span>
-          <h4>Light Index</h4>
-          <p>Analysis of night-time street lighting coverage.</p>
-        </div>
-        <div class="step-item">
-          <span class="icon">👥</span>
-          <h4>Local Input</h4>
-          <p>Verified feedback from current residents.</p>
-        </div>
+    <div class="footer-nav">
+      <div class="footer-links-row">
+        <a href="index.html">Home</a>
+        <a href="reports.html">Safety Reports</a>
+        <a href="blog.html">Blog</a>
+        <a href="forum.html">Community Forum</a>
+        <a href="about.html">About Us</a>
+        <a href="contact.html">Contact Us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="cookie-policy.html">Cookie Policy</a>
+        <a href="disclaimer.html">Disclaimer</a>
+        <a href="terms.html">Terms & Conditions</a>
       </div>
-    </div>
-
-    <div style="text-align: center; margin-top: 60px;">
-      <p style="color: var(--text-secondary); margin-bottom: 20px;">Can't find your city?</p>
-      <a href="contact.html" style="color: var(--accent-cyan); text-decoration: none; font-weight: 700; border: 1px solid var(--accent-cyan); padding: 12px 24px; border-radius: 50px; transition: all 0.3s;" onmouseover="this.style.background='var(--accent-cyan)'; this.style.color='#0a0b1a'" onmouseout="this.style.background='transparent'; this.style.color='var(--accent-cyan)'">Request a City Mapping</a>
+      <p>© 2026 KnowYourCity. All rights reserved.</p>
     </div>
   </div>
+
+  <script>
+    const cityGuidesData = {
+      'mumbai': {
+        name: "Mumbai City Safety & Relocation Compendium",
+        rating: "9.2/10 Overall Safety Score",
+        content: `
+          <p>Mumbai is widely recognized as one of India's safest urban environments for women and solo professionals, largely due to its round-the-clock public activity, suburban rail network, and visible police presence.</p>
+          <h2>Recommended Neighborhoods for Newcomers</h2>
+          <ul>
+            <li><strong>Bandra West & Khar:</strong> Vibrant coastal suburb with high CCTV density, excellent hospitals (Lilavati), and bustling commercial streets.</li>
+            <li><strong>Powai & Hiranandani:</strong> Self-contained planned township with private security patrols, pedestrian zones, and high emergency response density.</li>
+            <li><strong>Navi Mumbai (Vashi, Nerul):</strong> Broad grid-planned roads, organized railway stations, and high density of family parks and schools.</li>
+          </ul>
+          <h2>Transit & Night Safety Highlights</h2>
+          <p>Local trains run until 1:30 AM with dedicated women's compartments guarded by RPF personnel. BEST buses and shared auto-rickshaws operate on metered fares.</p>
+        `
+      },
+      'bengaluru': {
+        name: "Bengaluru Neighborhood Safety & Living Guide",
+        rating: "8.8/10 Overall Safety Score",
+        content: `
+          <p>Bengaluru offers pleasant weather and rich career opportunities in the technology sector. Safety is exceptionally high in planned layouts and gated communities.</p>
+          <h2>Recommended Neighborhoods</h2>
+          <ul>
+            <li><strong>Indiranagar & Koramangala:</strong> Central social hubs with high street activity, well-lit corridors, and top healthcare hubs.</li>
+            <li><strong>HSR Layout:</strong> Broad residential sectors popular among startup professionals, offering numerous verified PGs and gated societies.</li>
+            <li><strong>Malleshwaram & Jayanagar:</strong> Traditional heritage neighborhoods known for leafy parks, low crime statistics, and strong community policing.</li>
+          </ul>
+        `
+      },
+      'pune': {
+        name: "Pune Urban Relocation & Safety Guide",
+        rating: "9.0/10 Overall Safety Score",
+        content: `
+          <p>Known as the 'Oxford of the East', Pune combines academic institutions with a booming IT corridor. The city is peaceful, safe, and culturally welcoming to newcomers.</p>
+          <h2>Recommended Neighborhoods</h2>
+          <ul>
+            <li><strong>Viman Nagar:</strong> Close to airport and tech parks; high density of students and working professionals, active cafes, and safe walking avenues.</li>
+            <li><strong>Baner & Balewadi:</strong> Modern IT residential corridor with gated high-rises and rapid access to the Mumbai-Pune Expressway.</li>
+            <li><strong>Kothrud & Aundh:</strong> Established, family-friendly localities with low crime rates, prominent schools, and multispecialty clinics.</li>
+          </ul>
+        `
+      },
+      'delhi': {
+        name: "Delhi NCR Safety & Sector Relocation Guide",
+        rating: "8.3/10 Overall Safety Score",
+        content: `
+          <p>Delhi NCR provides premier infrastructure and connectivity via the Delhi Metro. Choosing the right neighborhood with active security checkpoints is key.</p>
+          <h2>Recommended Neighborhoods</h2>
+          <ul>
+            <li><strong>South Delhi (Hauz Khas, Saket, Greater Kailash):</strong> Gated residential colonies with private guard booths and CCTV monitoring.</li>
+            <li><strong>Dwarka:</strong> Sectoral planning with integrated police stations, metro stations, and wide arterial roads.</li>
+            <li><strong>Noida Sector 62 & 137:</strong> Modern high-rise societies with 24/7 internal security, clubhouses, and direct metro access.</li>
+          </ul>
+        `
+      },
+      'hyderabad': {
+        name: "Hyderabad Living & Safety Guide",
+        rating: "8.9/10 Overall Safety Score",
+        content: `
+          <p>Hyderabad is recognized for affordable living, exceptional biryani culture, and the state-of-the-art HITEC City technology zone.</p>
+          <h2>Recommended Neighborhoods</h2>
+          <ul>
+            <li><strong>Gachibowli & Madhapur:</strong> Modern IT corridors with high density of gated apartments, broad multi-lane roads, and She Team patrols.</li>
+            <li><strong>Jubilee Hills & Banjara Hills:</strong> Upscale central districts with low crime, lush greenery, and premier hospitals (Apollo, Care).</li>
+            <li><strong>Kondapur:</strong> Convenient residential hub offering great PG accommodations and proximity to tech campuses.</li>
+          </ul>
+        `
+      },
+      'chandigarh': {
+        name: "Chandigarh Master-Planned Safety Guide",
+        rating: "9.5/10 Overall Safety Score",
+        content: `
+          <p>Designed by Le Corbusier, Chandigarh represents India's highest standard of municipal planning and public safety.</p>
+          <h2>Key Safety Highlights</h2>
+          <ul>
+            <li><strong>Strict Grid Structure:</strong> Every sector contains its own green market, healthcare dispensary, and internal park.</li>
+            <li><strong>Police Response Time:</strong> Average emergency police beat response is under 6 minutes across the union territory.</li>
+            <li><strong>Pedestrian Infrastructure:</strong> Well-lit segregated cycle tracks and pedestrian sidewalks make night transit stress-free.</li>
+          </ul>
+        `
+      }
+    };
+
+    function openGuide(cityKey) {
+      const guide = cityGuidesData[cityKey];
+      if (!guide) return;
+      const modal = document.getElementById('guideModal');
+      const body = document.getElementById('guideModalBody');
+      body.innerHTML = `
+        <h1 style="font-family: var(--font-heading); font-size: 2rem; color: #fff; margin-bottom: 6px;">\${guide.name}</h1>
+        <p style="color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">\${guide.rating}</p>
+        \${guide.content}
+      `;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeGuide(e) {
+      if (e.target.id === 'guideModal') {
+        closeGuideDirect();
+      }
+    }
+
+    function closeGuideDirect() {
+      const modal = document.getElementById('guideModal');
+      modal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    }
+  </script>
 </body>
 
 </html>

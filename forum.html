@@ -4,49 +4,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Community Forum — Know Your City</title>
-  <meta name="description" content="Connect with other newcomers, share safety tips, and learn from local stories on the Know Your City community forum." />
+  <title>Community Safety Forum & Q&A — Know Your City</title>
+  <meta name="description" content="Ask questions about neighborhood safety, share relocation experiences, and get advice from verified local residents across India." />
 
   <!-- SEO & Primary Meta Tags -->
-  <meta name="keywords" content="safe neighborhoods India, forum, city relocation guide, local area safety" />
+  <meta name="keywords" content="safe neighborhoods India, community safety forum, local neighborhood Q&A, relocation questions, resident advice" />
   <meta name="author" content="Know Your City" />
   <link rel="canonical" href="https://knowyourcitys.in/forum.html" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://knowyourcitys.in/forum.html" />
-  <meta property="og:title" content="Community Forum — Know Your City" />
-  <meta property="og:description" content="Connect with other newcomers, share safety tips, and learn from local stories on the Know Your City community forum." />
+  <meta property="og:title" content="Community Safety Forum & Q&A — Know Your City" />
+  <meta property="og:description" content="Ask questions about neighborhood safety, share relocation experiences, and get advice from verified local residents." />
   <meta property="og:image" content="https://knowyourcitys.in/logo.png" />
   <meta property="og:site_name" content="Know Your City" />
 
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://knowyourcitys.in/forum.html" />
-  <meta property="twitter:title" content="Community Forum — Know Your City" />
-  <meta property="twitter:description" content="Connect with other newcomers, share safety tips, and learn from local stories on the Know Your City community forum." />
-  <meta property="twitter:image" content="https://knowyourcitys.in/logo.png" />
-  
-  <!-- Schema.org JSON-LD -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": "Community Forum — Know Your City",
-    "url": "https://knowyourcitys.in/forum.html",
-    "description": "Connect with other newcomers, share safety tips, and learn from local stories on the Know Your City community forum.",
-    "publisher": {
-      "@type": "Organization",
-      "name": "Know Your City",
-      "logo": "https://knowyourcitys.in/logo.png"
-    }
-  }
-  </script>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1078761578330689" crossorigin="anonymous"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
   <link rel="icon" href="logo.png" type="image/png" />
+  
   <style>
     :root {
       --bg-primary: #0a0b1a;
@@ -69,7 +51,6 @@
       min-height: 100vh;
     }
 
-    /* Background orbs */
     .bg-orbs {
       position: fixed;
       inset: 0;
@@ -87,54 +68,65 @@
     .orb-2 { width: 400px; height: 400px; background: #7c4dff; bottom: -50px; right: -80px; }
     .orb-3 { width: 300px; height: 300px; background: #00e676; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-    /* Back button */
-    .back-nav {
+    .site-nav {
       position: fixed;
-      top: 24px;
-      left: 24px;
+      top: 0;
+      left: 0;
+      width: 100%;
       z-index: 1000;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(10, 11, 26, 0.85);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50px;
-      color: var(--text-primary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       text-decoration: none;
-      font-weight: 600;
+      color: #fff;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    .brand-link img { width: 32px; height: 32px; border-radius: 8px; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
       font-size: 0.9rem;
-      transition: all 0.3s ease;
+      font-weight: 500;
+      transition: color 0.3s;
     }
-    .back-nav:hover {
-      background: var(--accent-cyan);
-      color: #0a0b1a;
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
-      transform: translateY(-1px);
-    }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent-cyan); }
 
-    /* Main content */
     .forum-container {
       position: relative;
       z-index: 1;
-      max-width: 900px;
+      max-width: 1050px;
       margin: 0 auto;
       padding: 120px 24px 80px;
-      text-align: center;
     }
 
     .forum-header {
-      margin-bottom: 60px;
+      text-align: center;
+      margin-bottom: 40px;
       animation: fadeInUp 0.6s ease;
     }
     .forum-header h1 {
       font-family: var(--font-heading);
-      font-size: 3.5rem;
+      font-size: 3rem;
       font-weight: 700;
-      line-height: 1;
-      margin-bottom: 20px;
+      line-height: 1.1;
+      margin-bottom: 14px;
     }
     .gradient-text {
       background: linear-gradient(135deg, #00e5ff, #00e676);
@@ -142,85 +134,194 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .forum-header p {
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto;
-      font-size: 1.2rem;
+
+    .kyc-ad-container {
+      margin: 25px auto;
+      text-align: center;
+      min-height: 90px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 10px;
     }
 
-    /* Portal Card */
-    .forum-portal {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 32px;
-      padding: 60px 40px;
-      backdrop-filter: blur(15px);
-      animation: fadeInUp 0.7s ease;
+    .forum-actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 250px;
       position: relative;
-      overflow: hidden;
     }
-    .forum-portal::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at top right, rgba(0, 229, 255, 0.05), transparent 70%);
-      pointer-events: none;
-    }
-
-    .coming-soon-badge {
-      display: inline-block;
-      padding: 6px 16px;
+    .search-box input {
+      width: 100%;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 50px;
-      color: var(--accent-cyan);
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 30px;
+      padding: 12px 20px 12px 44px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .search-box input:focus { border-color: var(--accent-cyan); }
+    .search-box .icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 1.2rem;
     }
 
-    .forum-content h2 {
-      font-family: var(--font-heading);
-      font-size: 2rem;
-      margin-bottom: 24px;
-    }
-    .forum-features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      margin: 40px 0;
-    }
-    .feature-item {
-      padding: 24px;
-      background: rgba(255,255,255,0.02);
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.04);
-      transition: all 0.3s;
-    }
-    .feature-item:hover {
-      transform: translateY(-5px);
-      border-color: rgba(0, 229, 255, 0.15);
-    }
-    .feature-item .icon { font-size: 2.2rem; display: block; margin-bottom: 12px; }
-    .feature-item h4 { font-size: 1rem; margin-bottom: 8px; }
-    .feature-item p { font-size: 0.85rem; color: var(--text-secondary); }
-
-    .btn-notify {
+    .btn-ask {
       background: linear-gradient(135deg, #00e5ff, #00e676);
       color: #0a0b1a;
-      padding: 16px 40px;
+      border: none;
       border-radius: 50px;
+      padding: 12px 28px;
       font-weight: 700;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 20px;
-      box-shadow: 0 10px 30px rgba(0, 229, 255, 0.2);
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       transition: all 0.3s;
+      font-family: inherit;
     }
-    .btn-notify:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0, 229, 255, 0.3); }
+    .btn-ask:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 229, 255, 0.3);
+    }
+
+    .topic-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 24px 28px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .topic-card:hover {
+      border-color: rgba(0, 229, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .topic-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .topic-city {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--accent-cyan);
+    }
+    .topic-author { font-size: 0.85rem; color: var(--text-secondary); }
+    .topic-card h3 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .topic-card p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .topic-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .replies-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+    /* Ask Question Modal */
+    .ask-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      overflow-y: auto;
+      padding: 40px 20px;
+    }
+    .ask-modal.active { display: flex; justify-content: center; align-items: center; }
+    .ask-modal-content {
+      background: #101226;
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: 24px;
+      max-width: 600px;
+      width: 100%;
+      padding: 35px;
+      position: relative;
+    }
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .footer-nav {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    .footer-links-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .footer-links-row a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .footer-links-row a:hover { color: var(--accent-cyan); }
 
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
@@ -228,9 +329,10 @@
     }
 
     @media (max-width: 768px) {
-      .forum-header h1 { font-size: 2.5rem; }
-      .forum-features { grid-template-columns: 1fr; }
-      .forum-portal { padding: 40px 20px; }
+      .site-nav { padding: 12px 16px; }
+      .nav-links { display: none; }
+      .forum-container { padding: 90px 16px 60px; }
+      .forum-header h1 { font-size: 2.2rem; }
     }
   </style>
 </head>
@@ -242,47 +344,225 @@
     <div class="orb orb-3"></div>
   </div>
 
-
+  <nav class="site-nav">
+    <a href="index.html" class="brand-link">
+      <img src="logo.png" alt="KnowYourCity Logo" />
+      <span>Know<span style="color:var(--accent-cyan);">Your</span>City</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="guides.html">Guides</a></li>
+      <li><a href="reports.html">Reports</a></li>
+      <li><a href="blog.html">Blog</a></li>
+      <li><a href="forum.html" class="active">Community</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
 
   <div class="forum-container">
     <div class="forum-header">
-      <div class="coming-soon-badge">Launching Summer 2026</div>
-      <h1>The <span class="gradient-text">Community</span> Hub</h1>
-      <p>Building India's largest collaborative network for urban safety and relocation experiences.</p>
+      <h1>Community <span class="gradient-text">Safety Q&A</span></h1>
+      <p style="color:var(--text-secondary); font-size:1.1rem; max-width:650px; margin:0 auto;">Connect with local residents, ask specific neighborhood questions, and verify street safety before moving.</p>
     </div>
 
-    <div class="forum-portal">
-      <div class="forum-content">
-        <h2>Connect. Shared. Secure.</h2>
-        <p style="color: var(--text-secondary);">We are crafting a dedicated space for newcomers to exchange verified tips, ask neighborhood-specific questions, and build local safety networks.</p>
-        
-        <div class="forum-features">
-          <div class="feature-item">
-            <span class="icon">💬</span>
-            <h4>Live Q&A</h4>
-            <p>Ask locals about specific streets, schools, or night safety.</p>
-          </div>
-          <div class="feature-item">
-            <span class="icon">🏘️</span>
-            <h4>Area Circles</h4>
-            <p>Join private groups for your specific ward or sector.</p>
-          </div>
-          <div class="feature-item">
-            <span class="icon">🛡️</span>
-            <h4>Verify Data</h4>
-            <p>Upvote or flag infrastructure nodes in realtime.</p>
-          </div>
-        </div>
+    <!-- AdSense Placement -->
+    <div class="kyc-ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-1078761578330689"
+           data-ad-slot="9947362184"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
 
-        <p style="margin-bottom: 25px;">Be the first to join the conversation.</p>
-        <a href="contact.html" class="btn-notify">Get Early Access 🚀</a>
+    <div class="forum-actions-bar">
+      <div class="search-box">
+        <span class="icon material-symbols-outlined">search</span>
+        <input type="text" id="forumSearch" placeholder="Search questions by city or locality..." onkeyup="searchTopics()">
+      </div>
+      <button class="btn-ask" onclick="openAskModal()">
+        <span class="material-symbols-outlined">add_comment</span>
+        Ask a Question
+      </button>
+    </div>
+
+    <div id="topicsList">
+      <!-- Thread 1 -->
+      <div class="topic-card" data-search="bengaluru hsr layout pg safety solo women">
+        <div class="topic-header">
+          <span class="topic-city">Bengaluru • HSR Layout</span>
+          <span class="topic-author">Posted by Priya M. • 2 days ago</span>
+        </div>
+        <h3>How safe is Sector 2, HSR Layout for female solo tenants returning after 10 PM?</h3>
+        <p>I am starting a new role near Silk Board and looking at PGs in Sector 2. Are the interior cross roads well lit? How is auto availability late at night?</p>
+        <div class="topic-footer">
+          <span class="replies-count">✓ 6 Verified Resident Answers</span>
+          <span>Last reply by Karthik R. (Resident 4 yrs)</span>
+        </div>
+      </div>
+
+      <!-- Thread 2 -->
+      <div class="topic-card" data-search="pune viman nagar family rent security hospital">
+        <div class="topic-header">
+          <span class="topic-city">Pune • Viman Nagar</span>
+          <span class="topic-author">Posted by Rohan S. • 4 days ago</span>
+        </div>
+        <h3>Relocating with family to Viman Nagar: Recommended societies with 24/7 security?</h3>
+        <p>Looking for a 2BHK rental near Symbiosis. Prioritizing gated societies with power backup, CCTV, and easy access to Apollo Clinic.</p>
+        <div class="topic-footer">
+          <span class="replies-count">✓ 9 Verified Resident Answers</span>
+          <span>Last reply by Ananya D. (Local Resident)</span>
+        </div>
+      </div>
+
+      <!-- Thread 3 -->
+      <div class="topic-card" data-search="mumbai powai bkc commute metro connectivity">
+        <div class="topic-header">
+          <span class="topic-city">Mumbai • Powai</span>
+          <span class="topic-author">Posted by Siddharth V. • 1 week ago</span>
+        </div>
+        <h3>Powai to BKC daily office commute: Safe shared transit options?</h3>
+        <p>Moving from Delhi to Mumbai next month. What are the safest and most reliable AC bus / shared transit routes between Powai and Bandra Kurla Complex?</p>
+        <div class="topic-footer">
+          <span class="replies-count">✓ 12 Verified Resident Answers</span>
+          <span>Last reply by Vikram J. (Daily Commuter)</span>
+        </div>
+      </div>
+
+      <!-- Thread 4 -->
+      <div class="topic-card" data-search="delhi dwarka sector 10 metro security police">
+        <div class="topic-header">
+          <span class="topic-city">Delhi NCR • Dwarka</span>
+          <span class="topic-author">Posted by Neha K. • 1 week ago</span>
+        </div>
+        <h3>Dwarka Sector 10 vs Sector 6 for evening walking & park safety</h3>
+        <p>Comparing society flats in Dwarka. Which sector has better police patrolling and active DDA park maintenance for senior citizens?</p>
+        <div class="topic-footer">
+          <span class="replies-count">✓ 5 Verified Resident Answers</span>
+          <span>Last reply by Rajesh G.</span>
+        </div>
+      </div>
+
+      <!-- Thread 5 -->
+      <div class="topic-card" data-search="solapur railway station hotels safe zone">
+        <div class="topic-header">
+          <span class="topic-city">Solapur • Station Road</span>
+          <span class="topic-author">Posted by Amit P. • 2 weeks ago</span>
+        </div>
+        <h3>Transit stay near Solapur Railway Station: Safe budget hotels with 24/7 check-in</h3>
+        <p>Looking for verified safe family lodging within 1.5 km of Solapur Railway Station with secure parking.</p>
+        <div class="topic-footer">
+          <span class="replies-count">✓ 4 Verified Resident Answers</span>
+          <span>Last reply by KYC Local Guide</span>
+        </div>
       </div>
     </div>
 
-    <div style="margin-top: 60px; color: var(--text-secondary); font-size: 0.9rem;">
-      <p>© 2026 KnowYourCity. Collaborative Urban Intelligence.</p>
+    <!-- Ask Question Modal -->
+    <div id="askModal" class="ask-modal" onclick="closeAskModal(event)">
+      <div class="ask-modal-content" onclick="event.stopPropagation()">
+        <h2 style="font-family:var(--font-heading); color:#fff; margin-bottom:16px;">Ask Neighborhood Community</h2>
+        <form id="askForm" onsubmit="submitQuestion(event)">
+          <div class="form-group">
+            <label>City & Locality</label>
+            <input type="text" id="qCity" placeholder="e.g. Pune, Baner" required />
+          </div>
+          <div class="form-group">
+            <label>Question Title</label>
+            <input type="text" id="qTitle" placeholder="e.g. How is the streetlighting on Main Road after 9 PM?" required />
+          </div>
+          <div class="form-group">
+            <label>Details / Context</label>
+            <textarea id="qBody" rows="4" placeholder="Mention your specific requirements (walking distance, PGs, family security)..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" id="qAuthor" placeholder="Rahul S." required />
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+            <button type="button" class="btn-ask" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="closeAskModalDirect()">Cancel</button>
+            <button type="submit" class="btn-ask">Post Question ✨</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-nav">
+      <div class="footer-links-row">
+        <a href="index.html">Home</a>
+        <a href="guides.html">City Guides</a>
+        <a href="reports.html">Safety Reports</a>
+        <a href="blog.html">Blog</a>
+        <a href="about.html">About Us</a>
+        <a href="contact.html">Contact Us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="cookie-policy.html">Cookie Policy</a>
+        <a href="disclaimer.html">Disclaimer</a>
+        <a href="terms.html">Terms & Conditions</a>
+      </div>
+      <p>© 2026 KnowYourCity. All rights reserved.</p>
     </div>
   </div>
+
+  <script>
+    function openAskModal() {
+      document.getElementById('askModal').classList.add('active');
+    }
+    function closeAskModal(e) {
+      if (e.target.id === 'askModal') closeAskModalDirect();
+    }
+    function closeAskModalDirect() {
+      document.getElementById('askModal').classList.remove('active');
+    }
+
+    function submitQuestion(e) {
+      e.preventDefault();
+      const city = document.getElementById('qCity').value;
+      const title = document.getElementById('qTitle').value;
+      const body = document.getElementById('qBody').value;
+      const author = document.getElementById('qAuthor').value;
+
+      const newCard = document.createElement('div');
+      newCard.className = 'topic-card';
+      newCard.setAttribute('data-search', `${city} ${title} ${body}`.toLowerCase());
+      newCard.innerHTML = `
+        <div class="topic-header">
+          <span class="topic-city">${city}</span>
+          <span class="topic-author">Posted by ${author} • Just now</span>
+        </div>
+        <h3>${title}</h3>
+        <p>${body}</p>
+        <div class="topic-footer">
+          <span class="replies-count" style="color:var(--accent-cyan)">💬 Active Community Discussion</span>
+          <span>Awaiting local replies</span>
+        </div>
+      `;
+
+      const list = document.getElementById('topicsList');
+      list.insertBefore(newCard, list.firstChild);
+
+      document.getElementById('askForm').reset();
+      closeAskModalDirect();
+      alert('Your question has been posted to the Know Your City community board!');
+    }
+
+    function searchTopics() {
+      const query = document.getElementById('forumSearch').value.toLowerCase();
+      const cards = document.querySelectorAll('.topic-card');
+      cards.forEach(card => {
+        const text = card.getAttribute('data-search') || '';
+        if (text.includes(query)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>

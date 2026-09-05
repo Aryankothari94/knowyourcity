@@ -4,28 +4,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Terms & Conditions — Know Your City</title>
-  <meta name="description" content="Terms and Conditions for using Know Your City platform — safe neighborhood discovery, advertising terms, and community guidelines." />
+  <title>Safety & Legal Disclaimer — Know Your City</title>
+  <meta name="description" content="Safety data limitations, OpenStreetMap source attribution, and emergency advisory for Know Your City." />
 
   <!-- SEO & Primary Meta Tags -->
-  <meta name="keywords" content="safe neighborhoods India, terms, city relocation guide, local area safety, user terms" />
+  <meta name="keywords" content="safe neighborhoods India, safety disclaimer, legal notice, emergency advisory, city relocation guide" />
   <meta name="author" content="Know Your City" />
-  <link rel="canonical" href="https://knowyourcitys.in/terms.html" />
+  <link rel="canonical" href="https://knowyourcitys.in/disclaimer.html" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://knowyourcitys.in/terms.html" />
-  <meta property="og:title" content="Terms & Conditions — Know Your City" />
-  <meta property="og:description" content="Terms and Conditions for using Know Your City platform — safe neighborhood discovery, advertising terms, and community guidelines." />
+  <meta property="og:url" content="https://knowyourcitys.in/disclaimer.html" />
+  <meta property="og:title" content="Safety & Legal Disclaimer — Know Your City" />
+  <meta property="og:description" content="Safety data limitations, OpenStreetMap source attribution, and emergency advisory for Know Your City." />
   <meta property="og:image" content="https://knowyourcitys.in/logo.png" />
   <meta property="og:site_name" content="Know Your City" />
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://knowyourcitys.in/terms.html" />
-  <meta property="twitter:title" content="Terms & Conditions — Know Your City" />
-  <meta property="twitter:description" content="Terms and Conditions for using Know Your City platform — safe neighborhood discovery for newcomers." />
-  <meta property="twitter:image" content="https://knowyourcitys.in/logo.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,6 +34,7 @@
       --text-secondary: #8899aa;
       --accent-cyan: #00e5ff;
       --accent-green: #00e676;
+      --accent-red: #ff5252;
       --font-body: 'Inter', sans-serif;
       --font-heading: 'Outfit', sans-serif;
     }
@@ -112,7 +106,7 @@
     }
     .nav-links a:hover, .nav-links a.active { color: var(--accent-cyan); }
 
-    .terms-container {
+    .disclaimer-container {
       position: relative;
       z-index: 1;
       max-width: 900px;
@@ -120,25 +114,25 @@
       padding: 120px 24px 80px;
     }
 
-    .terms-header {
+    .disclaimer-header {
       text-align: center;
       margin-bottom: 50px;
       animation: fadeInUp 0.6s ease;
     }
-    .terms-header .badge {
+    .disclaimer-header .badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 6px 16px;
-      background: rgba(0, 229, 255, 0.08);
-      border: 1px solid rgba(0, 229, 255, 0.2);
+      background: rgba(255, 82, 82, 0.1);
+      border: 1px solid rgba(255, 82, 82, 0.3);
       border-radius: 50px;
       font-size: 0.8rem;
       font-weight: 600;
-      color: var(--accent-cyan);
+      color: var(--accent-red);
       margin-bottom: 20px;
     }
-    .terms-header h1 {
+    .disclaimer-header h1 {
       font-family: var(--font-heading);
       font-size: 2.8rem;
       font-weight: 700;
@@ -146,17 +140,17 @@
       margin-bottom: 12px;
     }
     .gradient-text {
-      background: linear-gradient(135deg, #00e5ff, #00e676);
+      background: linear-gradient(135deg, #ff5252, #ffab40);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .terms-header .last-updated {
+    .disclaimer-header .last-updated {
       color: var(--text-secondary);
       font-size: 0.88rem;
     }
 
-    .terms-section {
+    .disclaimer-section {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 20px;
@@ -165,12 +159,12 @@
       backdrop-filter: blur(10px);
       transition: all 0.3s ease;
     }
-    .terms-section:hover {
-      border-color: rgba(0, 229, 255, 0.15);
+    .disclaimer-section:hover {
+      border-color: rgba(255, 82, 82, 0.2);
       background: rgba(255, 255, 255, 0.05);
     }
 
-    .terms-section h2 {
+    .disclaimer-section h2 {
       font-family: var(--font-heading);
       font-size: 1.4rem;
       font-weight: 700;
@@ -180,50 +174,56 @@
       align-items: center;
       gap: 12px;
     }
-    .terms-section h2 .num {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: rgba(0, 229, 255, 0.15);
-      color: var(--accent-cyan);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-    }
+    .disclaimer-section h2 .icon { font-size: 1.5rem; color: var(--accent-red); }
 
-    .terms-section p {
+    .disclaimer-section p {
       color: var(--text-secondary);
       font-size: 0.95rem;
       margin-bottom: 12px;
     }
-    .terms-section ul {
+    .disclaimer-section ul {
       list-style: none;
       padding: 0;
       margin: 12px 0;
     }
-    .terms-section ul li {
+    .disclaimer-section ul li {
       padding: 8px 0 8px 28px;
       position: relative;
       color: var(--text-secondary);
       font-size: 0.92rem;
     }
-    .terms-section ul li::before {
-      content: '✓';
+    .disclaimer-section ul li::before {
+      content: '⚠️';
       position: absolute;
-      left: 4px;
-      color: var(--accent-green);
-      font-size: 1rem;
+      left: 2px;
+      font-size: 0.9rem;
       top: 6px;
     }
 
-    .highlight-box {
-      background: rgba(0, 229, 255, 0.04);
-      border: 1px solid rgba(0, 229, 255, 0.15);
+    .alert-box {
+      background: rgba(255, 82, 82, 0.08);
+      border: 1px solid rgba(255, 82, 82, 0.25);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    .alert-box strong { color: #ff8a80; }
+
+    .emergency-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 16px 0;
+    }
+    .emergency-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
       padding: 16px;
-      margin: 14px 0;
+      text-align: center;
     }
+    .emergency-card h4 { color: #fff; font-size: 1rem; margin-bottom: 4px; }
+    .emergency-card .number { font-size: 1.4rem; font-weight: 800; color: var(--accent-cyan); font-family: var(--font-heading); }
 
     .footer-nav {
       margin-top: 60px;
@@ -255,9 +255,9 @@
     @media (max-width: 768px) {
       .site-nav { padding: 12px 16px; }
       .nav-links { display: none; }
-      .terms-container { padding: 90px 16px 60px; }
-      .terms-header h1 { font-size: 2rem; }
-      .terms-section { padding: 24px 20px; }
+      .emergency-grid { grid-template-columns: 1fr; }
+      .disclaimer-container { padding: 90px 16px 60px; }
+      .disclaimer-header h1 { font-size: 2rem; }
     }
   </style>
 </head>
@@ -285,70 +285,61 @@
     </ul>
   </nav>
 
-  <div class="terms-container">
-    <div class="terms-header">
-      <div class="badge">📜 Agreement of Terms</div>
-      <h1>Terms & <span class="gradient-text">Conditions</span></h1>
+  <div class="disclaimer-container">
+    <div class="disclaimer-header">
+      <div class="badge">⚖️ Legal Advisory & Safety Notice</div>
+      <h1>Safety & Data <span class="gradient-text">Disclaimer</span></h1>
       <p class="last-updated">Last updated: September 5, 2026</p>
     </div>
 
-    <!-- Section 1 -->
-    <div class="terms-section">
-      <h2><span class="num">1</span> Acceptance of Terms</h2>
-      <p>Welcome to <strong>Know Your City</strong> ("we", "our", or "us"), accessible at <a href="https://knowyourcitys.in" style="color:var(--accent-cyan)">knowyourcitys.in</a>. By accessing or using our website, APIs, and neighborhood intelligence tools, you agree to comply with and be bound by these Terms and Conditions.</p>
-      <div class="highlight-box">
-        <strong>📌 Note:</strong> If you do not agree with any part of these terms, you should discontinue use of the website immediately.
+    <div class="alert-box">
+      <strong>🚨 Emergency Notice:</strong> Know Your City is an informational research and neighborhood analysis tool. In case of an active emergency, danger, or medical crisis, please contact local emergency authorities immediately:
+      <div class="emergency-grid">
+        <div class="emergency-card">
+          <h4>Police Control</h4>
+          <div class="number">100 / 112</div>
+        </div>
+        <div class="emergency-card">
+          <h4>Ambulance</h4>
+          <div class="number">108 / 102</div>
+        </div>
+        <div class="emergency-card">
+          <h4>Women Helpline</h4>
+          <div class="number">1091</div>
+        </div>
       </div>
     </div>
 
-    <!-- Section 2 -->
-    <div class="terms-section">
-      <h2><span class="num">2</span> Service Description & Informational Purpose</h2>
-      <p>Know Your City provides urban safety scores, emergency infrastructure mapping, transit station directories, and relocation resources. All scores and maps are informational aids generated from open public records (OpenStreetMap, Wikipedia) and community feedback.</p>
-      <p>Our platform does not provide police emergency response or dispatch services. In emergencies, users must call national emergency numbers (100 / 112 / 108).</p>
+    <div class="disclaimer-section">
+      <h2><span class="icon material-symbols-outlined">info</span> 1. Informational Purposes Only</h2>
+      <p>The safety ratings, neighborhood indexes, lighting indicators, transit maps, and infrastructure density scores published on <strong>Know Your City</strong> (<a href="https://knowyourcitys.in" style="color:var(--accent-cyan)">knowyourcitys.in</a>) are provided strictly for general informational, educational, and relocation guidance purposes.</p>
+      <p>While we make every effort to ensure the accuracy and timeliness of our computational algorithms and datasets, we cannot and do not guarantee 100% real-time accuracy or absolute safety in any neighborhood.</p>
     </div>
 
-    <!-- Section 3 -->
-    <div class="terms-section">
-      <h2><span class="num">3</span> Advertisements & Monetization Disclosure</h2>
-      <p>To keep our city safety tools free and accessible to all users, Know Your City displays third-party advertisements via <strong>Google AdSense</strong> and related advertising networks.</p>
+    <div class="disclaimer-section">
+      <h2><span class="icon material-symbols-outlined">map</span> 2. Open Data & Third-Party Source Attribution</h2>
+      <p>Our algorithms synthesize geographic nodes from trusted third-party open datasets:</p>
       <ul>
-        <li>Advertisements are served by third-party ad networks using automated targeting algorithms.</li>
-        <li>We do not directly endorse the specific products or services advertised by third parties.</li>
-        <li>Users must not use automated ad-blocking bypasses or fraudulent clicking mechanisms.</li>
-        <li>For full details on advertising cookies and opt-out options, see our <a href="privacy.html" style="color:var(--accent-cyan)">Privacy Policy</a> and <a href="cookie-policy.html" style="color:var(--accent-cyan)">Cookie Policy</a>.</li>
+        <li><strong>OpenStreetMap (OSM):</strong> Licensed under the Open Data Commons Open Database License (ODbL). Node locations for police stations, clinics, street lighting, and transit hubs are community-mapped.</li>
+        <li><strong>Wikipedia API:</strong> City demographic, administrative, and cultural overviews are provided under the Creative Commons Attribution-ShareAlike License.</li>
       </ul>
+      <p>Know Your City is not responsible for omissions, temporary closures, or errors present in underlying open-source geographic datasets.</p>
     </div>
 
-    <!-- Section 4 -->
-    <div class="terms-section">
-      <h2><span class="num">4</span> User Accounts & Conduct</h2>
-      <p>When you create an account on Know Your City, you agree to:</p>
+    <div class="disclaimer-section">
+      <h2><span class="icon material-symbols-outlined">shield</span> 3. Limitation of Liability</h2>
+      <p>Under no circumstances shall Know Your City, its founders, operators, or contributors be held liable for any direct, indirect, incidental, or consequential damages resulting from:</p>
       <ul>
-        <li>Provide accurate and current information during registration.</li>
-        <li>Maintain the confidentiality of your account credentials.</li>
-        <li>Not post abusive, false, defamatory, or hateful content in community discussions or neighborhood reviews.</li>
-        <li>Not attempt to reverse engineer, scrape, or overload our infrastructure servers.</li>
+        <li>Decisions regarding rental leases, real estate purchases, or travel itineraries made based on our safety scores.</li>
+        <li>Unforeseen safety incidents occurring along suggested safe routes or in high-scoring zones.</li>
+        <li>Temporary technical disruptions, map tile outages, or server downtime.</li>
       </ul>
+      <p>Users are always encouraged to conduct in-person daytime and evening visits to prospective neighborhoods and speak with local residents.</p>
     </div>
 
-    <!-- Section 5 -->
-    <div class="terms-section">
-      <h2><span class="num">5</span> Intellectual Property Rights</h2>
-      <p>All proprietary code, branding, logos, design layouts, and proprietary algorithmic formulas on Know Your City are the property of Know Your City. Open geodata is licensed under OpenStreetMap ODbL.</p>
-    </div>
-
-    <!-- Section 6 -->
-    <div class="terms-section">
-      <h2><span class="num">6</span> Limitation of Liability</h2>
-      <p>To the maximum extent permitted by applicable law, Know Your City shall not be liable for any direct, indirect, incidental, or consequential damages arising from reliance on neighborhood safety scores, route recommendations, or transit data.</p>
-      <p>Please review our full <a href="disclaimer.html" style="color:var(--accent-cyan)">Safety & Legal Disclaimer</a>.</p>
-    </div>
-
-    <!-- Section 7 -->
-    <div class="terms-section">
-      <h2><span class="num">7</span> Governing Law & Jurisdiction</h2>
-      <p>These Terms shall be governed by and construed in accordance with the laws of India, without regard to its conflict of law provisions. Any legal disputes shall be subject to the exclusive jurisdiction of the courts of Maharashtra, India.</p>
+    <div class="disclaimer-section">
+      <h2><span class="icon material-symbols-outlined">mail</span> 4. Feedback & Corrections</h2>
+      <p>If you identify outdated infrastructure information, incorrect police station coordinates, or inaccurate hospital listings, please help us maintain community data accuracy by submitting an update via our <a href="contact.html" style="color:var(--accent-cyan)">Contact Page</a> or emailing <a href="mailto:support@knowyourcity.in" style="color:var(--accent-cyan)">support@knowyourcity.in</a>.</p>
     </div>
 
     <div class="footer-nav">
@@ -362,7 +353,7 @@
         <a href="contact.html">Contact Us</a>
         <a href="privacy.html">Privacy Policy</a>
         <a href="cookie-policy.html">Cookie Policy</a>
-        <a href="disclaimer.html">Disclaimer</a>
+        <a href="terms.html">Terms & Conditions</a>
       </div>
       <p>© 2026 KnowYourCity. All rights reserved.</p>
     </div>

@@ -4,28 +4,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Terms & Conditions — Know Your City</title>
-  <meta name="description" content="Terms and Conditions for using Know Your City platform — safe neighborhood discovery, advertising terms, and community guidelines." />
+  <title>Cookie Policy — Know Your City</title>
+  <meta name="description" content="Understand how Know Your City uses cookies, local storage, and third-party advertising cookies including Google AdSense." />
 
   <!-- SEO & Primary Meta Tags -->
-  <meta name="keywords" content="safe neighborhoods India, terms, city relocation guide, local area safety, user terms" />
+  <meta name="keywords" content="safe neighborhoods India, cookie policy, google adsense cookies, dart cookie, tracking technologies" />
   <meta name="author" content="Know Your City" />
-  <link rel="canonical" href="https://knowyourcitys.in/terms.html" />
+  <link rel="canonical" href="https://knowyourcitys.in/cookie-policy.html" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://knowyourcitys.in/terms.html" />
-  <meta property="og:title" content="Terms & Conditions — Know Your City" />
-  <meta property="og:description" content="Terms and Conditions for using Know Your City platform — safe neighborhood discovery, advertising terms, and community guidelines." />
+  <meta property="og:url" content="https://knowyourcitys.in/cookie-policy.html" />
+  <meta property="og:title" content="Cookie Policy — Know Your City" />
+  <meta property="og:description" content="Understand how Know Your City uses cookies, local storage, and third-party advertising cookies including Google AdSense." />
   <meta property="og:image" content="https://knowyourcitys.in/logo.png" />
   <meta property="og:site_name" content="Know Your City" />
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://knowyourcitys.in/terms.html" />
-  <meta property="twitter:title" content="Terms & Conditions — Know Your City" />
-  <meta property="twitter:description" content="Terms and Conditions for using Know Your City platform — safe neighborhood discovery for newcomers." />
-  <meta property="twitter:image" content="https://knowyourcitys.in/logo.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -112,7 +105,7 @@
     }
     .nav-links a:hover, .nav-links a.active { color: var(--accent-cyan); }
 
-    .terms-container {
+    .cookie-container {
       position: relative;
       z-index: 1;
       max-width: 900px;
@@ -120,12 +113,12 @@
       padding: 120px 24px 80px;
     }
 
-    .terms-header {
+    .cookie-header {
       text-align: center;
       margin-bottom: 50px;
       animation: fadeInUp 0.6s ease;
     }
-    .terms-header .badge {
+    .cookie-header .badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -138,7 +131,7 @@
       color: var(--accent-cyan);
       margin-bottom: 20px;
     }
-    .terms-header h1 {
+    .cookie-header h1 {
       font-family: var(--font-heading);
       font-size: 2.8rem;
       font-weight: 700;
@@ -151,12 +144,12 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .terms-header .last-updated {
+    .cookie-header .last-updated {
       color: var(--text-secondary);
       font-size: 0.88rem;
     }
 
-    .terms-section {
+    .cookie-section {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 20px;
@@ -165,12 +158,12 @@
       backdrop-filter: blur(10px);
       transition: all 0.3s ease;
     }
-    .terms-section:hover {
+    .cookie-section:hover {
       border-color: rgba(0, 229, 255, 0.15);
       background: rgba(255, 255, 255, 0.05);
     }
 
-    .terms-section h2 {
+    .cookie-section h2 {
       font-family: var(--font-heading);
       font-size: 1.4rem;
       font-weight: 700;
@@ -180,35 +173,25 @@
       align-items: center;
       gap: 12px;
     }
-    .terms-section h2 .num {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: rgba(0, 229, 255, 0.15);
-      color: var(--accent-cyan);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-    }
+    .cookie-section h2 .icon { font-size: 1.5rem; color: var(--accent-cyan); }
 
-    .terms-section p {
+    .cookie-section p {
       color: var(--text-secondary);
       font-size: 0.95rem;
       margin-bottom: 12px;
     }
-    .terms-section ul {
+    .cookie-section ul {
       list-style: none;
       padding: 0;
       margin: 12px 0;
     }
-    .terms-section ul li {
+    .cookie-section ul li {
       padding: 8px 0 8px 28px;
       position: relative;
       color: var(--text-secondary);
       font-size: 0.92rem;
     }
-    .terms-section ul li::before {
+    .cookie-section ul li::before {
       content: '✓';
       position: absolute;
       left: 4px;
@@ -217,13 +200,30 @@
       top: 6px;
     }
 
-    .highlight-box {
-      background: rgba(0, 229, 255, 0.04);
-      border: 1px solid rgba(0, 229, 255, 0.15);
-      border-radius: 12px;
-      padding: 16px;
-      margin: 14px 0;
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
     }
+    .data-table th, .data-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.9rem;
+    }
+    .data-table th {
+      color: var(--accent-cyan);
+      background: rgba(0, 229, 255, 0.05);
+      font-weight: 600;
+    }
+    .data-table td { color: var(--text-secondary); }
+
+    .external-link {
+      color: var(--accent-cyan);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .external-link:hover { color: var(--accent-green); }
 
     .footer-nav {
       margin-top: 60px;
@@ -255,9 +255,9 @@
     @media (max-width: 768px) {
       .site-nav { padding: 12px 16px; }
       .nav-links { display: none; }
-      .terms-container { padding: 90px 16px 60px; }
-      .terms-header h1 { font-size: 2rem; }
-      .terms-section { padding: 24px 20px; }
+      .cookie-container { padding: 90px 16px 60px; }
+      .cookie-header h1 { font-size: 2rem; }
+      .cookie-section { padding: 24px 20px; }
     }
   </style>
 </head>
@@ -285,70 +285,80 @@
     </ul>
   </nav>
 
-  <div class="terms-container">
-    <div class="terms-header">
-      <div class="badge">📜 Agreement of Terms</div>
-      <h1>Terms & <span class="gradient-text">Conditions</span></h1>
+  <div class="cookie-container">
+    <div class="cookie-header">
+      <div class="badge">🍪 Cookie Transparency</div>
+      <h1>Cookie & <span class="gradient-text">Tracking Policy</span></h1>
       <p class="last-updated">Last updated: September 5, 2026</p>
     </div>
 
-    <!-- Section 1 -->
-    <div class="terms-section">
-      <h2><span class="num">1</span> Acceptance of Terms</h2>
-      <p>Welcome to <strong>Know Your City</strong> ("we", "our", or "us"), accessible at <a href="https://knowyourcitys.in" style="color:var(--accent-cyan)">knowyourcitys.in</a>. By accessing or using our website, APIs, and neighborhood intelligence tools, you agree to comply with and be bound by these Terms and Conditions.</p>
-      <div class="highlight-box">
-        <strong>📌 Note:</strong> If you do not agree with any part of these terms, you should discontinue use of the website immediately.
-      </div>
+    <div class="cookie-section">
+      <h2><span class="icon material-symbols-outlined">help_center</span> 1. What Are Cookies?</h2>
+      <p>Cookies are small text files placed on your device (computer, tablet, or mobile) when you visit a website. They are widely used to make websites work properly, provide personalized functionality, remember your preferences, and deliver relevant advertisements.</p>
+      <p>At <strong>Know Your City</strong> (<a href="https://knowyourcitys.in" class="external-link">knowyourcitys.in</a>), we use cookies and browser local storage to provide you with seamless city navigation, safe route finding, and localized neighborhood insights.</p>
     </div>
 
-    <!-- Section 2 -->
-    <div class="terms-section">
-      <h2><span class="num">2</span> Service Description & Informational Purpose</h2>
-      <p>Know Your City provides urban safety scores, emergency infrastructure mapping, transit station directories, and relocation resources. All scores and maps are informational aids generated from open public records (OpenStreetMap, Wikipedia) and community feedback.</p>
-      <p>Our platform does not provide police emergency response or dispatch services. In emergencies, users must call national emergency numbers (100 / 112 / 108).</p>
+    <div class="cookie-section">
+      <h2><span class="icon material-symbols-outlined">category</span> 2. Categories of Cookies We Use</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Cookie Type</th>
+            <th>Purpose</th>
+            <th>Lifespan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Strictly Necessary</strong></td>
+            <td>User authentication session, security tokens, login state, and CSRF protection.</td>
+            <td>Session / 30 Days</td>
+          </tr>
+          <tr>
+            <td><strong>Functional & Preferences</strong></td>
+            <td>Saves selected city (e.g., Solapur, Mumbai), filter choices, map zoom level, and dark theme settings.</td>
+            <td>1 Year</td>
+          </tr>
+          <tr>
+            <td><strong>Analytics & Performance</strong></td>
+            <td>Aggregates anonymous metrics on feature usage, popular neighborhoods, and page speed diagnostics.</td>
+            <td>Up to 2 Years</td>
+          </tr>
+          <tr>
+            <td><strong>Google AdSense & Advertising</strong></td>
+            <td>Serves contextual and personalized ads via Google network, limits ad repetition, and measures ad performance.</td>
+            <td>Up to 13 Months</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Section 3 -->
-    <div class="terms-section">
-      <h2><span class="num">3</span> Advertisements & Monetization Disclosure</h2>
-      <p>To keep our city safety tools free and accessible to all users, Know Your City displays third-party advertisements via <strong>Google AdSense</strong> and related advertising networks.</p>
+    <div class="cookie-section">
+      <h2><span class="icon material-symbols-outlined">ads_click</span> 3. Google AdSense & Third-Party Advertising Cookies</h2>
+      <p>We partner with <strong>Google AdSense</strong> to display advertisements across our website. Google uses cookies, including the <strong>DoubleClick DART cookie</strong>, to serve relevant advertisements to users based on their prior visits to Know Your City and other internet sites.</p>
       <ul>
-        <li>Advertisements are served by third-party ad networks using automated targeting algorithms.</li>
-        <li>We do not directly endorse the specific products or services advertised by third parties.</li>
-        <li>Users must not use automated ad-blocking bypasses or fraudulent clicking mechanisms.</li>
-        <li>For full details on advertising cookies and opt-out options, see our <a href="privacy.html" style="color:var(--accent-cyan)">Privacy Policy</a> and <a href="cookie-policy.html" style="color:var(--accent-cyan)">Cookie Policy</a>.</li>
+        <li>Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this website or other websites.</li>
+        <li>Google's use of advertising cookies enables it and its partners to serve ads to users based on their visit to your sites and/or other sites on the Internet.</li>
+        <li>You can opt out of personalized advertising at any time by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" class="external-link">Google Ads Settings</a>.</li>
+        <li>You can also opt out of third-party vendor advertising cookies by visiting <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" class="external-link">aboutads.info/choices</a>.</li>
       </ul>
     </div>
 
-    <!-- Section 4 -->
-    <div class="terms-section">
-      <h2><span class="num">4</span> User Accounts & Conduct</h2>
-      <p>When you create an account on Know Your City, you agree to:</p>
+    <div class="cookie-section">
+      <h2><span class="icon material-symbols-outlined">tune</span> 4. How to Manage and Disable Cookies</h2>
+      <p>You have full control over cookies and can adjust your browser settings to refuse cookies or alert you when cookies are being sent:</p>
       <ul>
-        <li>Provide accurate and current information during registration.</li>
-        <li>Maintain the confidentiality of your account credentials.</li>
-        <li>Not post abusive, false, defamatory, or hateful content in community discussions or neighborhood reviews.</li>
-        <li>Not attempt to reverse engineer, scrape, or overload our infrastructure servers.</li>
+        <li><strong>Google Chrome:</strong> Settings → Privacy and Security → Third-party cookies.</li>
+        <li><strong>Mozilla Firefox:</strong> Settings → Privacy & Security → Cookies and Site Data.</li>
+        <li><strong>Apple Safari:</strong> Preferences → Privacy → Block all cookies.</li>
+        <li><strong>Microsoft Edge:</strong> Settings → Cookies and site permissions → Manage and delete cookies.</li>
       </ul>
+      <p><em>Note: Disabling strictly necessary cookies may affect your ability to log in or save personalized city safety alerts.</em></p>
     </div>
 
-    <!-- Section 5 -->
-    <div class="terms-section">
-      <h2><span class="num">5</span> Intellectual Property Rights</h2>
-      <p>All proprietary code, branding, logos, design layouts, and proprietary algorithmic formulas on Know Your City are the property of Know Your City. Open geodata is licensed under OpenStreetMap ODbL.</p>
-    </div>
-
-    <!-- Section 6 -->
-    <div class="terms-section">
-      <h2><span class="num">6</span> Limitation of Liability</h2>
-      <p>To the maximum extent permitted by applicable law, Know Your City shall not be liable for any direct, indirect, incidental, or consequential damages arising from reliance on neighborhood safety scores, route recommendations, or transit data.</p>
-      <p>Please review our full <a href="disclaimer.html" style="color:var(--accent-cyan)">Safety & Legal Disclaimer</a>.</p>
-    </div>
-
-    <!-- Section 7 -->
-    <div class="terms-section">
-      <h2><span class="num">7</span> Governing Law & Jurisdiction</h2>
-      <p>These Terms shall be governed by and construed in accordance with the laws of India, without regard to its conflict of law provisions. Any legal disputes shall be subject to the exclusive jurisdiction of the courts of Maharashtra, India.</p>
+    <div class="cookie-section">
+      <h2><span class="icon material-symbols-outlined">contact_support</span> 5. Inquiries & Contact</h2>
+      <p>If you have any questions regarding our Cookie Policy or data practices, please reach out to us at <a href="mailto:privacy@knowyourcity.in" class="external-link">privacy@knowyourcity.in</a> or visit our <a href="contact.html" class="external-link">Contact Page</a>.</p>
     </div>
 
     <div class="footer-nav">
@@ -361,8 +371,8 @@
         <a href="about.html">About Us</a>
         <a href="contact.html">Contact Us</a>
         <a href="privacy.html">Privacy Policy</a>
-        <a href="cookie-policy.html">Cookie Policy</a>
         <a href="disclaimer.html">Disclaimer</a>
+        <a href="terms.html">Terms & Conditions</a>
       </div>
       <p>© 2026 KnowYourCity. All rights reserved.</p>
     </div>

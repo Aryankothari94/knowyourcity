@@ -12,35 +12,35 @@ dns.setDefaultResultOrder('ipv4first');
 // Using port 587 (STARTTLS) — more reliable on cloud platforms like Render.
 // Port 465 (SSL) often fails due to IPv6 routing issues in cloud environments.
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,       // STARTTLS — upgrades connection after initial handshake
-    pool: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3'
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,       // STARTTLS — upgrades connection after initial handshake
+  pool: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false,
+    ciphers: 'SSLv3'
+  },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000
 });
 
 // Startup verification
 transporter.verify(function (error, success) {
-    if (error) console.error('❌ Contact SMTP Error:', error.message);
-    else console.log('✅ Contact SMTP Ready (port 587 STARTTLS)');
+  if (error) console.error('❌ Contact SMTP Error:', error.message);
+  else console.log('✅ Contact SMTP Ready (port 587 STARTTLS)');
 });
 
 // ── Smart Auto-Reply Generator ───────────────────────────────────────
 function generateAutoReply(name, subject, message) {
-    const subjectTemplates = {
-        support: {
-            heading: '🔍 Safety Data Inquiry — We\'re On It!',
-            body: `Thank you for reaching out about our safety data, ${name}!
+  const subjectTemplates = {
+    support: {
+      heading: '🔍 Safety Data Inquiry — We\'re On It!',
+      body: `Thank you for reaching out about our safety data, ${name}!
 
 We've received your inquiry and our team is reviewing it promptly.
 
@@ -55,10 +55,10 @@ Your message:
 "${message}"
 
 Our team will follow up within 24–48 hours with a tailored response.`
-        },
-        feedback: {
-            heading: '💬 Platform Feedback — Thank You!',
-            body: `Hi ${name}, your feedback means the world to us!
+    },
+    feedback: {
+      heading: '💬 Platform Feedback — Thank You!',
+      body: `Hi ${name}, your feedback means the world to us!
 
 We've recorded your thoughts and they go directly to our product team. Know Your City is built by people who care deeply about making city life easier for newcomers — and feedback like yours drives every improvement we make.
 
@@ -71,10 +71,10 @@ What happens next:
 • If you've suggested a feature, it gets added to our roadmap vote.
 
 🙌 As a thank-you, watch out for our upcoming "City Insider" newsletter — subscribers get early access to new features!`
-        },
-        city: {
-            heading: '🗺️ New City Mapping Request — Received!',
-            body: `Hi ${name}, exciting request!
+    },
+    city: {
+      heading: '🗺️ New City Mapping Request — Received!',
+      body: `Hi ${name}, exciting request!
 
 You've asked us to map a new city — and we love the ambition! Know Your City currently focuses on Pune, Maharashtra, but expanding is absolutely on our roadmap.
 
@@ -89,10 +89,10 @@ Here's how city mapping works:
 📍 If you have local connections or data sources for the city you mentioned, reply to this email — that could fast-track the process significantly!
 
 We'll add your request to our city expansion tracker and notify you when mapping begins.`
-        },
-        partnership: {
-            heading: '🤝 Partnership Opportunity — Let\'s Talk!',
-            body: `Hi ${name}, we're thrilled you see potential in partnering with Know Your City!
+    },
+    partnership: {
+      heading: '🤝 Partnership Opportunity — Let\'s Talk!',
+      body: `Hi ${name}, we're thrilled you see potential in partnering with Know Your City!
 
 We're always open to collaborations that help newcomers settle safely and confidently into city life.
 
@@ -109,10 +109,10 @@ Partnership opportunities we explore:
 Our founding team will personally review your proposal. Expect a response within 2–3 business days with a meeting link to explore synergies further.
 
 We look forward to building something meaningful together!`
-        },
-        default: {
-            heading: '📩 Message Received — Know Your City Team',
-            body: `Hi ${name}, thank you for getting in touch!
+    },
+    default: {
+      heading: '📩 Message Received — Know Your City Team',
+      body: `Hi ${name}, thank you for getting in touch!
 
 We've received your message and our team will review it shortly.
 
@@ -125,14 +125,14 @@ In the meantime, here are some helpful resources:
 • 🏥 Use our Hospital & Police Finder for emergency resources near you.
 
 We typically respond within 24–48 hours. If your matter is urgent, please email us directly at knowyourcity000@gmail.com.`
-        }
-    };
+    }
+  };
 
-    const template = subjectTemplates[subject] || subjectTemplates.default;
+  const template = subjectTemplates[subject] || subjectTemplates.default;
 
-    return {
-        subject: template.heading,
-        html: `
+  return {
+    subject: template.heading,
+    html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -195,61 +195,66 @@ We typically respond within 24–48 hours. If your matter is urgent, please emai
   </table>
 </body>
 </html>`
-    };
+  };
 }
 
 // ── POST /api/contact ────────────────────────────────────────────────
 router.post('/', async (req, res) => {
-    const { name, email, subject, message } = req.body;
+  const { name, email, subject, message } = req.body;
 
-    // Basic validation
-    if (!name || !email || !subject || !message) {
-        return res.status(400).json({ success: false, message: 'All fields are required.' });
-    }
+  // Basic validation
+  if (!name || !email || !subject || !message) {
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
 
-    let dbSaved = false;
-    let emailSent = false;
-    const errors = [];
+  let dbSaved = false;
+  let emailSent = false;
+  const errors = [];
 
-    // ── Step 1: Save to MongoDB (non-blocking — don't fail if DB is down) ──
-    try {
-        const newContact = new Contact({ name, email, subject, message, status: 'pending' });
-        await Promise.race([
-            newContact.save(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000))
-        ]);
-        dbSaved = true;
-        console.log(`✅ Contact saved to DB: ${email}`);
-    } catch (dbErr) {
-        console.error('⚠️  DB save failed (non-fatal):', dbErr.message);
-        errors.push('DB: ' + dbErr.message);
-    }
+  // ── Step 1: Save to MongoDB (non-blocking — don't fail if DB is down) ──
+  try {
+    const newContact = new Contact({ name, email, subject, message, status: 'pending' });
+    await Promise.race([
+      newContact.save(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000))
+    ]);
+    dbSaved = true;
+    console.log(`✅ Contact saved to DB: ${email}`);
+  } catch (dbErr) {
+    console.error('⚠️  DB save failed (non-fatal):', dbErr.message);
+    errors.push('DB: ' + dbErr.message);
+  }
 
-    // ── Step 2: Send auto-reply to user ──────────────────────────────
-    try {
-        const reply = generateAutoReply(name, subject, message);
-        await transporter.sendMail({
-            from: `"Know Your City" <${process.env.EMAIL_USER}>`,
-            to: email,
-            replyTo: process.env.EMAIL_USER,
-            subject: reply.subject,
-            html: reply.html
-        });
-        emailSent = true;
-        console.log(`✅ Auto-reply sent to: ${email}`);
-    } catch (mailErr) {
-        console.error('⚠️  Auto-reply email failed:', mailErr.message);
-        errors.push('Email: ' + mailErr.message);
-    }
+  // ── Step 2: Send auto-reply to user ──────────────────────────────
+  try {
+    const reply = generateAutoReply(name, subject, message);
+    await transporter.sendMail({
+      from: `"Know Your City" <${process.env.EMAIL_USER}>`,
+      to: email,
+      replyTo: process.env.EMAIL_USER,
+      subject: reply.subject,
+      html: reply.html
+    });
+    emailSent = true;
+    console.log(`✅ Auto-reply sent to: ${email}`);
+  } catch (mailErr) {
+    console.error('⚠️  Auto-reply email failed:', mailErr.message);
+    errors.push('Email: ' + mailErr.message);
+  }
 
-    // ── Step 3: Notify admin ─────────────────────────────────────────
-    try {
-        await transporter.sendMail({
-            from: `"Know Your City Contact Form" <${process.env.EMAIL_USER}>`,
-            to: process.env.EMAIL_USER,
-            replyTo: email,
-            subject: `[KYC Contact] ${subject} — ${name}`,
-            html: `
+  // ── Step 3: Notify admin ─────────────────────────────────────────
+  try {
+    // Use a Gmail plus-alias to ensure the email lands in the Inbox, not the Sent folder.
+    const adminEmail = process.env.EMAIL_USER.includes('@gmail.com')
+      ? process.env.EMAIL_USER.replace('@gmail.com', '+admin@gmail.com')
+      : process.env.EMAIL_USER;
+
+    await transporter.sendMail({
+      from: `"Know Your City Contact Form" <${process.env.EMAIL_USER}>`,
+      to: adminEmail,
+      replyTo: email,
+      subject: `[KYC Contact] ${subject} — ${name}`,
+      html: `
               <div style="font-family:Arial,sans-serif;padding:20px;background:#f5f5f5;">
                 <h2 style="color:#1a1a2e;">New Contact Form Submission</h2>
                 <table style="width:100%;background:#fff;border-radius:8px;padding:20px;border-collapse:collapse;">
@@ -262,29 +267,29 @@ router.post('/', async (req, res) => {
                 </table>
               </div>
             `
-        });
-        console.log(`✅ Admin notified`);
-    } catch (adminErr) {
-        console.error('⚠️  Admin notification failed:', adminErr.message);
-    }
+    });
+    console.log(`✅ Admin notified`);
+  } catch (adminErr) {
+    console.error('⚠️  Admin notification failed:', adminErr.message);
+  }
 
-    // ── Respond to client ────────────────────────────────────────────
-    // Return success if at least the email was sent, even if DB failed
-    if (emailSent || dbSaved) {
-        return res.status(200).json({
-            success: true,
-            message: 'Your message has been received! Check your inbox for our response.',
-            dbSaved,
-            emailSent
-        });
-    } else {
-        const errorDetail = errors.length > 0 ? ` (Last error: ${errors[errors.length-1]})` : '';
-        return res.status(500).json({
-            success: false,
-            message: `We could not process your request right now. ${errorDetail}`,
-            diagnostic: 'Check your EMAIL_PASS in Render Environment Variables.'
-        });
-    }
+  // ── Respond to client ────────────────────────────────────────────
+  // Return success if at least the email was sent, even if DB failed
+  if (emailSent || dbSaved) {
+    return res.status(200).json({
+      success: true,
+      message: 'Your message has been received! Check your inbox for our response.',
+      dbSaved,
+      emailSent
+    });
+  } else {
+    const errorDetail = errors.length > 0 ? ` (Last error: ${errors[errors.length - 1]})` : '';
+    return res.status(500).json({
+      success: false,
+      message: `We could not process your request right now. ${errorDetail}`,
+      diagnostic: 'Check your EMAIL_PASS in Render Environment Variables.'
+    });
+  }
 });
 
 module.exports = router;
