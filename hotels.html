@@ -724,14 +724,14 @@
                     document.getElementById('loadingSpinner').style.display = 'none';
                     if (data[0] && data[0].name && data[0].price) { allHotels = data; applyFilters(); }
                     else { fetchHotels(_lat, _lng, _city, 25000); }
-                  }, function() { fetchHotels(_lat, _lng, _city, 25000); });
+                  }, function() { fetchHotels(_lat, _lng, _city, 25000); }, 1500);
                 }
               } else {
                 waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
                   document.getElementById('loadingSpinner').style.display = 'none';
                   if (data[0] && data[0].name && data[0].price) { allHotels = data; applyFilters(); }
                   else { fetchHotels(_lat, _lng, _city, 25000); }
-                }, function() { fetchHotels(_lat, _lng, _city, 25000); });
+                }, function() { fetchHotels(_lat, _lng, _city, 25000); }, 1500);
               }
             } catch (e) { fetchHotels(_lat, _lng, _city, 25000); }
         });
@@ -939,61 +939,13 @@
             document.getElementById('resultsCount').textContent = "0 Hotels Found";
         }
 
-        // Updated applyFilters: automatically enforce high safety and family-friendly hotels
-function applyFilters() {
-    try {
-        const priceVal  = document.getElementById('priceFilter').value;
-        const typeVal   = document.getElementById('typeFilter').value;
-        const ratingVal = document.getElementById('ratingFilter').value;
-        // Auto enforce high safety if user hasn't selected a safety filter
-        let safetyVal = document.getElementById('safetyFilter').value;
-        if (safetyVal === 'all') safetyVal = 'high';
-        const sortVal   = document.getElementById('sortFilter').value;
-
-        const checkboxes = document.querySelectorAll('#essentialsDrop input:checked');
-        let selectedEssentials = Array.from(checkboxes).map(cb => cb.value);
-        // Ensure "Family" is always included for family‑friendly results
-        if (!selectedEssentials.includes('Family')) selectedEssentials.push('Family');
-
-        let filtered = allHotels.filter(h => {
-            const matchesPrice = priceVal === 'all' ||
-                (priceVal === 'budget' && h.price <= 2000) ||
-                (priceVal === 'mid' && h.price > 2000 && h.price <= 5000) ||
-                (priceVal === 'luxury' && h.price > 5000);
-
-            const matchesType = typeVal === 'all' || h.type === typeVal || (typeVal === 'hotel' && h.type === 'motel');
-            const matchesRating = ratingVal === 'all' || h.rating >= parseFloat(ratingVal);
-
-            const matchesSafety = safetyVal === 'all' ||
-                (safetyVal === 'high' && h.safety >= 4.5) ||
-                (safetyVal === 'medium' && h.safety >= 3.8 && h.safety < 4.5) ||
-                (safetyVal === 'low' && h.safety < 3.8);
-
-            const matchesEssentials = selectedEssentials.every(e => (h.essentials || []).includes(e));
-            return matchesPrice && matchesType && matchesRating && matchesSafety && matchesEssentials;
-        });
-
-        // Sort: default highest rating, but honor user selection
-        filtered.sort((a, b) => {
-            if (sortVal === 'safety')   return b.safety - a.safety;
-            if (sortVal === 'price')    return a.price - b.price;
-            if (sortVal === 'distance') return (a.distance || 0) - (b.distance || 0);
-            return b.rating - a.rating;
-        });
-
-        renderGrid(filtered);
-        if (map) updateMap(filtered);
-    } catch (err) {
-        console.error('[applyFilters] Error:', err);
-        document.getElementById('loadingSpinner').style.display = 'none';
-    }
-}
+        function applyFilters() {
             try {
-                const priceVal  = document.getElementById('priceFilter').value;
-                const typeVal   = document.getElementById('typeFilter').value;
-                const ratingVal = document.getElementById('ratingFilter').value;
-                const safetyVal = document.getElementById('safetyFilter').value;
-                const sortVal   = document.getElementById('sortFilter').value;
+                const priceVal  = document.getElementById('priceFilter')?.value || 'all';
+                const typeVal   = document.getElementById('typeFilter')?.value || 'all';
+                const ratingVal = document.getElementById('ratingFilter')?.value || 'all';
+                const safetyVal = document.getElementById('safetyFilter')?.value || 'all';
+                const sortVal   = document.getElementById('sortFilter')?.value || 'all';
 
                 const checkboxes = document.querySelectorAll('#essentialsDrop input:checked');
                 const selectedEssentials = Array.from(checkboxes).map(cb => cb.value);
@@ -1012,12 +964,11 @@ function applyFilters() {
                         (safetyVal === 'medium' && h.safety >= 3.8 && h.safety < 4.5) ||
                         (safetyVal === 'low'    && h.safety < 3.8);
 
-                    const matchesEssentials = selectedEssentials.every(e => (h.essentials || []).includes(e));
+                    const matchesEssentials = selectedEssentials.length === 0 || selectedEssentials.every(e => (h.essentials || []).includes(e));
 
                     return matchesPrice && matchesType && matchesRating && matchesSafety && matchesEssentials;
                 });
 
-                // Sort: Rating high-to-low by default
                 filtered.sort((a, b) => {
                     if (sortVal === 'safety')   return b.safety - a.safety;
                     if (sortVal === 'price')    return a.price - b.price;
@@ -1029,66 +980,24 @@ function applyFilters() {
                 if (map) updateMap(filtered);
             } catch (err) {
                 console.error('[applyFilters] Error:', err);
-                // Still hide spinner so user sees something
-                document.getElementById('loadingSpinner').style.display = 'none';
+                const spinner = document.getElementById('loadingSpinner');
+                if (spinner) spinner.style.display = 'none';
             }
         }
 
-        // Updated renderGrid: include hotel image with placeholder fallback and safety badge
-function renderGrid(hotels) {
-    const grid = document.getElementById('hotelsGrid');
-    const countEl = document.getElementById('resultsCount');
-    grid.innerHTML = '';
-    countEl.textContent = `${hotels.length} Top‑Rated Stays Found`;
-
-    if (hotels.length === 0) {
-        document.getElementById('emptyState').style.display = 'block';
-        return;
-    }
-    document.getElementById('emptyState').style.display = 'none';
-
-    hotels.forEach(h => {
-        const card = document.createElement('div');
-        card.className = 'result-card glass-card clickable-card';
-        card.style.padding = '0';
-        card.style.overflow = 'hidden';
-
-        // Image (use real URL if provided, otherwise Unsplash placeholder)
-        const img = document.createElement('img');
-        img.src = h.image || `https://source.unsplash.com/400x300/?hotel,${encodeURIComponent(h.name)}`;
-        img.alt = h.name;
-        img.style.width = '100%';
-        img.style.height = '200px';
-        img.style.objectFit = 'cover';
-        card.appendChild(img);
-
-        const safetyClass = h.safety >= 4.5 ? '' : (h.safety >= 3.8 ? 'medium' : 'low');
-        let typeLabel = h.type ? (h.type.charAt(0).toUpperCase() + h.type.slice(1).replace('_', ' ')) : 'Hotel';
-        if (h.type === 'resort') typeLabel = 'Luxury Resort';
-
-        const content = document.createElement('div');
-        content.className = 'card-content';
-        content.innerHTML = `
-            <h3 class="hotel-name">${h.name}</h3>
-            <p class="hotel-type">${typeLabel}</p>
-            <p class="hotel-price">₹${h.price}</p>
-            <p class="hotel-rating">⭐ ${h.rating.toFixed(1)}</p>
-            <p class="hotel-safety ${safetyClass}">Safety: ${h.safety}</p>
-        `;
-        card.appendChild(content);
-        grid.appendChild(card);
-    });
-}
+        function renderGrid(hotels) {
             const grid = document.getElementById('hotelsGrid');
             const countEl = document.getElementById('resultsCount');
-            grid.innerHTML = '';
-            countEl.textContent = `${hotels.length} Top-Rated Stays Found`;
+            if (grid) grid.innerHTML = '';
+            if (countEl) countEl.textContent = `${hotels.length} Top-Rated Stays Found`;
 
-            if (hotels.length === 0) {
-                document.getElementById('emptyState').style.display = 'block';
+            if (!hotels || hotels.length === 0) {
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) emptyState.style.display = 'block';
                 return;
             }
-            document.getElementById('emptyState').style.display = 'none';
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState) emptyState.style.display = 'none';
 
             hotels.forEach(h => {
                 const card = document.createElement('div');

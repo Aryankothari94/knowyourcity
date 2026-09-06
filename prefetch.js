@@ -17,70 +17,67 @@ window.KYCPrefetch = window.KYCPrefetch || { _running: false };
     'https://overpass.kumi.systems/api/interpreter'
   ];
 
-  // Feature definitions: key, Overpass query builder, cache key builder
   const FEATURES = [
     {
       name: 'Hospitals',
       cacheKey: (lat, lng) => `kyc_cache_hospitals_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["amenity"="hospital"](around:25000,${lat},${lng});way["amenity"="hospital"](around:25000,${lat},${lng});node["amenity"="clinic"](around:15000,${lat},${lng});way["amenity"="clinic"](around:15000,${lat},${lng}););out center tags 500;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["amenity"="hospital"](around:8000,${lat},${lng});node["amenity"="clinic"](around:5000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Schools',
       cacheKey: (lat, lng) => `kyc_cache_schools_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["amenity"="school"](around:25000,${lat},${lng});way["amenity"="school"](around:25000,${lat},${lng});node["amenity"="college"](around:25000,${lat},${lng});way["amenity"="college"](around:25000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["amenity"="school"](around:8000,${lat},${lng});node["amenity"="college"](around:8000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Parks',
       cacheKey: (lat, lng) => `kyc_cache_parks_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["leisure"="park"](around:25000,${lat},${lng});way["leisure"="park"](around:25000,${lat},${lng});node["leisure"="garden"](around:15000,${lat},${lng});way["leisure"="garden"](around:15000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["leisure"="park"](around:8000,${lat},${lng});node["leisure"="garden"](around:5000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Police',
       cacheKey: (lat, lng) => `kyc_cache_police_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["amenity"="police"](around:25000,${lat},${lng});way["amenity"="police"](around:25000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["amenity"="police"](around:8000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Metro',
       cacheKey: (lat, lng) => `kyc_cache_metro_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["railway"="station"](around:25000,${lat},${lng});node["station"="subway"](around:25000,${lat},${lng});way["railway"="station"](around:25000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["railway"="station"](around:8000,${lat},${lng});node["station"="subway"](around:8000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'PG & Hostels',
       cacheKey: (lat, lng) => `kyc_cache_pghostel_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["tourism"~"hostel|guest_house"](around:25000,${lat},${lng});way["tourism"~"hostel|guest_house"](around:25000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["tourism"~"hostel|guest_house"](around:8000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Restaurants',
       cacheKey: (lat, lng) => `kyc_cache_restaurants_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:30];(node["amenity"~"restaurant|food_court|fast_food"](around:10000,${lat},${lng});way["amenity"~"restaurant|food_court|fast_food"](around:10000,${lat},${lng}););out center tags 500;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["amenity"~"restaurant|food_court|fast_food"](around:6000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Cafes',
       cacheKey: (lat, lng) => `kyc_cache_cafes_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["amenity"~"cafe|tea_room"](around:10000,${lat},${lng});way["amenity"~"cafe|tea_room"](around:10000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["amenity"~"cafe|tea_room"](around:6000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Hotels',
       cacheKey: (lat, lng) => `kyc_cache_hotels_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["tourism"="hotel"](around:25000,${lat},${lng});way["tourism"="hotel"](around:25000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["tourism"="hotel"](around:8000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'Safe Zone',
       cacheKey: (lat, lng) => `kyc_cache_safezone_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(node["tourism"~"attraction|museum"](around:20000,${lat},${lng});way["tourism"~"attraction|museum"](around:20000,${lat},${lng}););out center tags 300;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["tourism"~"attraction|museum"](around:8000,${lat},${lng}););out center tags 40;`
     },
     {
       name: 'City Areas',
       cacheKey: (lat, lng) => `kyc_cache_areas_${Math.round(lat * 100)}_${Math.round(lng * 100)}`,
-      query: (lat, lng) => `[out:json][timeout:25];(nwr["place"~"suburb|city_district|neighbourhood|locality|village"](around:20000,${lat},${lng}););out center;`
+      query: (lat, lng) => `[out:json][timeout:8];(node["place"~"suburb|neighbourhood|locality"](around:10000,${lat},${lng}););out center tags 40;`
     }
   ];
 
-  // ─── Fetch with mirror racing ───
   async function fetchFromOverpass(query) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-
+    const timeout = setTimeout(() => controller.abort(), 4000);
     try {
       const result = await Promise.any(OVERPASS_MIRRORS.map(mirror =>
         fetch(mirror, {
@@ -103,7 +100,6 @@ window.KYCPrefetch = window.KYCPrefetch || { _running: false };
     }
   }
 
-  // ─── Check if cache is still valid ───
   function isCacheValid(key) {
     try {
       const raw = localStorage.getItem(key);
@@ -115,16 +111,11 @@ window.KYCPrefetch = window.KYCPrefetch || { _running: false };
     }
   }
 
-  // ─── Prefetch a single feature ───
   async function prefetchFeature(feature, lat, lng) {
     const cacheKey = feature.cacheKey(lat, lng);
-
-    // Skip if already cached
     if (isCacheValid(cacheKey)) {
-      console.log(`⚡ [Prefetch] ${feature.name} — cached, skipping`);
       return { name: feature.name, status: 'cached' };
     }
-
     try {
       const data = await fetchFromOverpass(feature.query(lat, lng));
       if (data && data.elements && data.elements.length > 0) {
@@ -132,21 +123,12 @@ window.KYCPrefetch = window.KYCPrefetch || { _running: false };
           data: data.elements,
           timestamp: Date.now()
         }));
-        // Notify any waiting feature pages that this cache key is ready
         window.dispatchEvent(new CustomEvent('kyc_prefetch_ready', { detail: { cacheKey } }));
-        console.log(`✅ [Prefetch] ${feature.name} — ${data.elements.length} items cached`);
         return { name: feature.name, status: 'fetched', count: data.elements.length };
-      } else {
-        console.warn(`⚠️ [Prefetch] ${feature.name} — no data found`);
-        return { name: feature.name, status: 'empty' };
       }
-    } catch (e) {
-      console.warn(`❌ [Prefetch] ${feature.name} — failed`, e);
-      return { name: feature.name, status: 'error' };
-    }
-  }
-
-  // ─── Status indicator UI ───
+    } catch (e) {}
+    return { name: feature.name, status: 'skipped' };
+  }  // ─── Status indicator UI ───
   function showPrefetchStatus(message, isComplete) {
     let indicator = document.getElementById('kycPrefetchIndicator');
     if (!indicator) {

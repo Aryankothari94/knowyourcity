@@ -198,6 +198,34 @@ We typically respond within 24–48 hours. If your matter is urgent, please emai
   };
 }
 
+// ── GET /api/contact/public-feedback ─────────────────────────────────
+// Returns the latest 5 unique (by name) feedback submissions — publicly accessible
+router.get('/public-feedback', async (req, res) => {
+  try {
+    // Fetch the latest 20 feedback entries so we can de-duplicate by name
+    const raw = await Contact.find({ subject: 'feedback' })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .select('name message createdAt');
+
+    // De-duplicate: keep only the first occurrence of each unique (lowercased) name
+    const seen = new Set();
+    const unique = [];
+    for (const entry of raw) {
+      const key = entry.name.trim().toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(entry);
+        if (unique.length >= 5) break;
+      }
+    }
+
+    res.status(200).json({ success: true, feedbacks: unique });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Could not load feedback.' });
+  }
+});
+
 // ── POST /api/contact ────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   const { name, email, subject, message } = req.body;

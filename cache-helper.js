@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    KYC Cache Helper — waitForCacheOrFetch
    Used by all feature pages to:
    1. Instantly render from localStorage cache if present
@@ -8,7 +8,7 @@
 
 window.waitForCacheOrFetch = function (cacheKey, cacheTTL, onCacheHit, onTimeout, maxWaitMs) {
   cacheTTL  = cacheTTL  || 30 * 60 * 1000;
-  maxWaitMs = maxWaitMs || 20000;
+  maxWaitMs = maxWaitMs || 2500;
 
   var resolved = false;
   var start    = Date.now();

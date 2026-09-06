@@ -2609,63 +2609,7 @@
         </div>
         <div class="testimonials-carousel glass-card reveal" id="testimonialCarousel">
           <div class="testimonials-track" id="testimonialTrack">
-            <!-- Testimonial 1 -->
-            <div class="testimonial-card">
-              <p class="testimonial-quote">
-                Moving to a new city with two kids was terrifying. Know Your City showed us Green Valley — now we live
-                in
-                the safest neighborhood with the best schools nearby. Absolute lifesaver!
-              </p>
-              <div class="testimonial-author">
-                <div class="author-avatar">PR</div>
-                <div class="author-info">
-                  <h4>Priya Rajput</h4>
-                  <p>Moved from Delhi to Pune</p>
-                </div>
-              </div>
-            </div>
-            <!-- Testimonial 2 -->
-            <div class="testimonial-card">
-              <p class="testimonial-quote">
-                As a solo female professional relocating for work, safety was my top priority. The detailed area ratings
-                gave me the confidence to choose the right neighborhood. Highly recommend!
-              </p>
-              <div class="testimonial-author">
-                <div class="author-avatar">SM</div>
-                <div class="author-info">
-                  <h4>Sarah Mitchell</h4>
-                  <p>Moved from London to Bangalore</p>
-                </div>
-              </div>
-            </div>
-            <!-- Testimonial 3 -->
-            <div class="testimonial-card">
-              <p class="testimonial-quote">
-                I was clueless about which areas had good transport links. Know Your City mapped everything out
-                beautifully. Found a place near the metro with parks — couldn't be happier!
-              </p>
-              <div class="testimonial-author">
-                <div class="author-avatar">AK</div>
-                <div class="author-info">
-                  <h4>Arjun Kapoor</h4>
-                  <p>Moved from Mumbai to Hyderabad</p>
-                </div>
-              </div>
-            </div>
-            <!-- Testimonial 4 -->
-            <div class="testimonial-card">
-              <p class="testimonial-quote">
-                The local tips section was a goldmine! Found the best markets, hospitals, and even a community center.
-                It's like having a local friend guide you through the city.
-              </p>
-              <div class="testimonial-author">
-                <div class="author-avatar">RD</div>
-                <div class="author-info">
-                  <h4>Rahul Desai</h4>
-                  <p>Moved from Surat to Chennai</p>
-                </div>
-              </div>
-            </div>
+        <!-- Testimonials are injected dynamically by JS -->
           </div>
           <button class="carousel-nav-btn prev-btn" id="testimonialPrev" aria-label="Previous">❮</button>
           <button class="carousel-nav-btn next-btn" id="testimonialNext" aria-label="Next">❯</button>
@@ -2909,9 +2853,36 @@
         box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
         transform: scale(1.2);
       }
+
+      /* Skeleton loader for testimonials */
+      .testimonial-skeleton {
+        min-width: 100%;
+        box-sizing: border-box;
+        padding: 30px 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      .skeleton-line {
+        height: 14px;
+        border-radius: 8px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
     </style>
 
     <script>
+      // ── API base URL ──────────────────────────────────────────────────────
+      const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:10000/api'
+        : 'https://knowyourcity.onrender.com/api';
+
       // ===== AUTO-SLIDING TESTIMONIALS CAROUSEL =====
       (function initTestimonialCarousel() {
         const track = document.getElementById('testimonialTrack');
@@ -2976,12 +2947,105 @@
         if (nextBtn) nextBtn.onclick = nextSlide;
 
         buildDots();
-        // startAutoSlide() removed to prevent recurring UI jitter/refresh effect
-        // startAutoSlide();
 
         // Expose globally so feedback form can trigger dot rebuild
         window._testimonialCarousel = { buildDots, goToSlide, startAutoSlide, getTrack: () => track };
       })();
+
+      // ===== HELPER: Build a testimonial card element =====
+      function buildTestimonialCard(name, message, subText, accentGradient) {
+        const nameParts = name.trim().split(' ');
+        const initials = nameParts.length >= 2
+          ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
+          : name.substring(0, 2).toUpperCase();
+
+        const avatarStyle = accentGradient
+          ? `style="background: linear-gradient(135deg, #00e5ff, #00e676); color:#0a0b1a;"`
+          : '';
+
+        const card = document.createElement('div');
+        card.className = 'testimonial-card';
+        card.dataset.nameKey = name.trim().toLowerCase();
+        card.innerHTML = `
+          <p class="testimonial-quote">${message}</p>
+          <div class="testimonial-author">
+            <div class="author-avatar" ${avatarStyle}>${initials}</div>
+            <div class="author-info">
+              <h4>${name}</h4>
+              <p>${subText}</p>
+            </div>
+          </div>`;
+        return card;
+      }
+
+      // ===== LOAD REAL FEEDBACK FROM SERVER INTO TESTIMONIALS =====
+      (async function loadFeedbackTestimonials() {
+        const track = document.getElementById('testimonialTrack');
+        if (!track) return;
+
+        // Show a skeleton loader while fetching
+        const skeleton = document.createElement('div');
+        skeleton.className = 'testimonial-skeleton';
+        skeleton.innerHTML = `
+          <div class="skeleton-line" style="width:80%;"></div>
+          <div class="skeleton-line" style="width:65%;"></div>
+          <div class="skeleton-line" style="width:70%;"></div>`;
+        track.appendChild(skeleton);
+
+        try {
+          const res = await fetch(`${API_BASE}/contact/public-feedback`);
+          const data = await res.json();
+
+          // Remove skeleton
+          skeleton.remove();
+
+          if (data.success && data.feedbacks && data.feedbacks.length > 0) {
+            // Clear existing static/placeholder cards
+            track.innerHTML = '';
+
+            // Inject the latest feedbacks (up to 5, newest first)
+            const toShow = data.feedbacks.slice(0, 5);
+            toShow.forEach(fb => {
+              // Parse "Moved from X to Y. <message>" format stored by the feedback form
+              let displayMsg = fb.message;
+              let subText = 'Know Your City User';
+              const movedMatch = fb.message.match(/^Moved from (.+?) to (.+?)\.\s*/);
+              if (movedMatch) {
+                subText = `Moved from ${movedMatch[1]} to ${movedMatch[2]}`;
+                displayMsg = fb.message.replace(movedMatch[0], '').trim();
+              }
+              if (!displayMsg) displayMsg = fb.message;
+
+              const card = buildTestimonialCard(fb.name, displayMsg, subText, false);
+              track.appendChild(card);
+            });
+          } else {
+            // No real feedback yet — show friendly default cards
+            skeleton.remove();
+            injectDefaultTestimonials(track);
+          }
+        } catch (err) {
+          skeleton.remove();
+          injectDefaultTestimonials(track);
+        }
+
+        // Rebuild dots after injection
+        if (window._testimonialCarousel) {
+          window._testimonialCarousel.buildDots();
+          window._testimonialCarousel.goToSlide(0);
+        }
+      })();
+
+      function injectDefaultTestimonials(track) {
+        track.innerHTML = '';
+        const defaults = [
+          { name: 'Priya Rajput', msg: 'Moving to a new city with two kids was terrifying. Know Your City showed us Green Valley — now we live in the safest neighborhood with the best schools nearby. Absolute lifesaver!', sub: 'Moved from Delhi to Pune' },
+          { name: 'Sarah Mitchell', msg: 'As a solo female professional relocating for work, safety was my top priority. The detailed area ratings gave me the confidence to choose the right neighborhood. Highly recommend!', sub: 'Moved from London to Bangalore' },
+          { name: 'Arjun Kapoor', msg: "I was clueless about which areas had good transport links. Know Your City mapped everything out beautifully. Found a place near the metro with parks — couldn't be happier!", sub: 'Moved from Mumbai to Hyderabad' },
+          { name: 'Rahul Desai', msg: "The local tips section was a goldmine! Found the best markets, hospitals, and even a community center. It's like having a local friend guide you through the city.", sub: 'Moved from Surat to Chennai' },
+        ];
+        defaults.forEach(d => track.appendChild(buildTestimonialCard(d.name, d.msg, d.sub, false)));
+      }
 
       // ===== FEEDBACK FORM SUBMISSION =====
       document.getElementById('feedbackForm').addEventListener('submit', function (e) {
@@ -2993,52 +3057,60 @@
         const message = document.getElementById('fbMessage').value.trim();
         if (!cityFrom || !cityTo || !message || !userName) return;
 
-        // Generate initials from the user's name
-        const nameParts = userName.split(' ');
-        const initials = nameParts.length >= 2 ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase() : userName.substring(0, 2).toUpperCase();
+        const nameKey = userName.trim().toLowerCase();
+        const track = window._testimonialCarousel?.getTrack();
 
-        // Generate a testimonial-style response
-        const responses = [
-          `Know Your City made my move from ${cityFrom} to ${cityTo} incredibly smooth. ${message} I'd recommend this platform to anyone planning a relocation!`,
-          `When I relocated from ${cityFrom} to ${cityTo}, I was nervous about safety. ${message} This tool gave me the confidence I needed.`,
-          `Moving from ${cityFrom} to ${cityTo} was a big step. ${message} Thanks to Know Your City, I found the perfect neighborhood!`
-        ];
-        const chosenResponse = responses[Math.floor(Math.random() * responses.length)];
+        // Prevent duplicate entries by the same name already in the carousel
+        if (track) {
+          const existing = track.querySelector(`.testimonial-card[data-name-key="${nameKey}"]`);
+          if (existing) {
+            // Just navigate to their existing card
+            const allCards = Array.from(track.querySelectorAll('.testimonial-card'));
+            const idx = allCards.indexOf(existing);
+            window._testimonialCarousel.goToSlide(idx);
+            window._testimonialCarousel.startAutoSlide();
+            // Still show success UI
+            this.style.display = 'none';
+            document.getElementById('feedbackSuccess').style.display = 'block';
+            setTimeout(() => {
+              this.reset();
+              this.style.display = 'block';
+              document.getElementById('feedbackSuccess').style.display = 'none';
+            }, 4000);
+            return;
+          }
+        }
 
-        // Build a new testimonial card
-        const card = document.createElement('div');
-        card.className = 'testimonial-card';
-        card.innerHTML = `
-        <p class="testimonial-quote">${chosenResponse}</p>
-        <div class="testimonial-author">
-          <div class="author-avatar" style="background: linear-gradient(135deg, #00e5ff, #00e676); color:#0a0b1a;">${initials}</div>
-          <div class="author-info">
-            <h4>${userName}</h4>
-            <p>Moved from ${cityFrom} to ${cityTo}</p>
-          </div>
-        </div>
-      `;
+        // Build the new testimonial card (newest feedback shown first)
+        const displayMsg = message;
+        const subText = `Moved from ${cityFrom} to ${cityTo}`;
+        const card = buildTestimonialCard(userName, displayMsg, subText, true);
 
-        // ── Step 2: Send to Server so Admin can see it ──
+        // ── Save to Server ──
         fetch(`${API_BASE}/contact`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: userName,
-            email: 'not-provided@kyc.com', // Testimonials don't collect email, using placeholder
+            email: 'not-provided@kyc.com',
             subject: 'feedback',
             message: `Moved from ${cityFrom} to ${cityTo}. ${message}`
           })
         }).catch(err => console.error('Feedback save failed:', err));
 
-        // Inject into testimonials track
-        const track = window._testimonialCarousel?.getTrack();
+        // ── Inject into carousel (prepend = newest first, cap at 5) ──
         if (track) {
-          track.appendChild(card);
-          window._testimonialCarousel.buildDots();
-          // Navigate to the newly added slide
+          // Prepend so the new feedback is slide 0
+          track.insertBefore(card, track.firstChild);
+
+          // Keep max 5 cards — remove oldest if over
           const allCards = track.querySelectorAll('.testimonial-card');
-          window._testimonialCarousel.goToSlide(allCards.length - 1);
+          if (allCards.length > 5) {
+            track.removeChild(allCards[allCards.length - 1]);
+          }
+
+          window._testimonialCarousel.buildDots();
+          window._testimonialCarousel.goToSlide(0);
           window._testimonialCarousel.startAutoSlide();
         }
 
