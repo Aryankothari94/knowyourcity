@@ -581,13 +581,13 @@
 
 
       function renderSchools(schools, city) {
-          
-
+          document.getElementById('loadingSpinner').style.display = 'none';
           document.getElementById('resultsCount').textContent = `${schools.length} Schools & Colleges Found`;
           document.getElementById('resultsMeta').textContent = `Within 25km of ${city} • Maximum Data Mode • Sorted by Rating`;
           document.getElementById('resultsGrid').style.display = 'grid';
 
           const grid = document.getElementById('resultsGrid');
+          grid.innerHTML = '';
           schools.forEach((school, i) => {
             const card = document.createElement('div');
             card.className = 'result-card glass-card clickable-card';

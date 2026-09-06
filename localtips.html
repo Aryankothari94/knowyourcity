@@ -185,9 +185,10 @@
       }, 2000);
       // ----------------------------
 
-      const lat = parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-      const lng = parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-      const city = localStorage.getItem('kyc_userCity') || 'Your Area';
+      const params = new URLSearchParams(window.location.search);
+      const lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
+      const lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
+      const city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
       document.getElementById('cityName').textContent = city;
 
       const CACHE_KEY = `kyc_cache_localtips_${city.replace(/\s/g,'_')}`;
@@ -212,7 +213,13 @@
         // Get country info via reverse geocode
         let country = 'India', state = '';
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`, { headers: { 'Accept-Language': 'en' } });
+          const controller = new AbortController();
+          const tid = setTimeout(() => controller.abort(), 2500);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`, {
+            headers: { 'Accept-Language': 'en' },
+            signal: controller.signal
+          });
+          clearTimeout(tid);
           const data = await res.json();
           country = data.address?.country || 'India';
           state = data.address?.state || '';
@@ -222,8 +229,8 @@
         let wikiInfo = { summary: '', image: '', population: '', area: '', elevation: '', timezone: '' };
         try {
           const controller = new AbortController();
-          const tid = setTimeout(() => controller.abort(), 8000);
-          const wRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(city)}`, { signal: controller.signal });
+          const tid = setTimeout(() => controller.abort(), 2500);
+          const wRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(city.split(',')[0].trim())}`, { signal: controller.signal });
           clearTimeout(tid);
           if (wRes.ok) {
             const wData = await wRes.json();

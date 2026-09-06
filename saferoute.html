@@ -438,41 +438,40 @@
     let cachedCityAreas = [];
     async function fetchCityAreas(city) {
       cachedCityAreas = [];
+      const cleanCity = city.split(',')[0].trim();
+      const defaultLandmarks = [
+        { name: `${cleanCity} Central Railway Station`, sub: `Main Transit Terminal, ${cleanCity}`, full: `${cleanCity} Central Railway Station, India`, icon: '🚉' },
+        { name: `${cleanCity} Inter-State Bus Stand`, sub: `Central Bus Depot, ${cleanCity}`, full: `${cleanCity} Bus Stand, India`, icon: '🚌' },
+        { name: `${cleanCity} Metro Central Junction`, sub: `Metro Line 1 Hub, ${cleanCity}`, full: `${cleanCity} Metro Station, India`, icon: '🚇' },
+        { name: `${cleanCity} City Center Mall`, sub: `Commercial District, ${cleanCity}`, full: `${cleanCity} Mall, India`, icon: '🏬' },
+        { name: `${cleanCity} Civil Hospital`, sub: `Healthcare Zone, ${cleanCity}`, full: `${cleanCity} Hospital, India`, icon: '🏥' },
+        { name: `${cleanCity} Municipal Botanical Park`, sub: `Public Green Space, ${cleanCity}`, full: `${cleanCity} Park, India`, icon: '🌳' },
+        { name: `${cleanCity} Main Market Bazaar`, sub: `Central Shopping Enclave, ${cleanCity}`, full: `${cleanCity} Market, India`, icon: '🛒' },
+        { name: `${cleanCity} University Campus`, sub: `Educational Area, ${cleanCity}`, full: `${cleanCity} University, India`, icon: '🎓' }
+      ];
       try {
-        const searches = [
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('railway station ' + city)}&limit=3&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('bus stand ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('metro station ' + city)}&limit=3&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('market ' + city)}&limit=3&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('mall ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('hospital ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('airport ' + city)}&limit=1&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('park ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('temple ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('university ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('stadium ' + city)}&limit=1&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('chowk ' + city)}&limit=2&countrycodes=in`, {headers:{'Accept-Language':'en'}}),
-        ];
-        const results = await Promise.all(searches);
-        const allData = await Promise.all(results.map(r => r.json()));
-        const categoryIcons = ['🚉','🚌','🚇','🛒','🏬','🏥','✈️','🌳','🛕','🎓','🏟️','🔵'];
-        const seen = new Set();
-        let items = [];
-        allData.forEach((arr, catIdx) => {
-          arr.forEach(d => {
-            const name = d.display_name.split(',')[0];
-            if (seen.has(name)) return;
-            seen.add(name);
-            items.push({
-              name,
-              sub: d.display_name.split(',').slice(1,3).join(',').trim(),
-              full: d.display_name,
-              icon: categoryIcons[catIdx] || '📍'
-            });
-          });
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 2500);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanCity)}&limit=10&countrycodes=in`, {
+          headers: { 'Accept-Language': 'en' },
+          signal: controller.signal
         });
-        cachedCityAreas = items.slice(0, 20);
-      } catch(e) { console.warn('Failed to fetch city areas:', e.message); }
+        clearTimeout(tid);
+        if (res.ok) {
+          const data = await res.json();
+          const items = data.map((d, i) => ({
+            name: d.display_name.split(',')[0],
+            sub: d.display_name.split(',').slice(1, 3).join(', ').trim(),
+            full: d.display_name,
+            icon: i === 0 ? '📍' : (i % 2 === 0 ? '🏬' : '🌳')
+          }));
+          cachedCityAreas = [...items, ...defaultLandmarks];
+        } else {
+          cachedCityAreas = defaultLandmarks;
+        }
+      } catch(e) {
+        cachedCityAreas = defaultLandmarks;
+      }
     }
 
     function showCityAreaSuggestions(inputId, listId) {
