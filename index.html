@@ -2878,10 +2878,11 @@
     </style>
 
     <script>
-      // ── API base URL ──────────────────────────────────────────────────────
-      const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      // ── API base URL ────────
+      window.API_BASE = window.API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:10000/api'
-        : 'https://knowyourcity.onrender.com/api';
+        : 'https://knowyourcity.onrender.com/api');
+      var API_BASE = window.API_BASE;
 
       // ===== AUTO-SLIDING TESTIMONIALS CAROUSEL =====
       (function initTestimonialCarousel() {
@@ -3625,7 +3626,7 @@
     })();
   </script>
   <script src="prefetch.js"></script>
-  <script src="script.js?v=6"></script>
+  <!-- script.js already loaded above -->
   <!-- Global Access Dropdowns (Shared by Desktop & Mobile) -->
   <div class="location-dropdown" id="locationDropdown" onclick="event.stopPropagation()">
     <div class="location-dropdown-header">

@@ -3,12 +3,13 @@
    Animations, Carousel, Nav, Scroll Effects
    ============================================ */
 
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+window.API_BASE = window.API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:10000/api'
-  : 'https://knowyourcity.onrender.com/api';
+  : 'https://knowyourcity.onrender.com/api');
+var API_BASE = window.API_BASE;
 
-// Production Domain Constant
-const PRODUCTION_DOMAIN = 'www.knowyourcitys.in';
+window.PRODUCTION_DOMAIN = window.PRODUCTION_DOMAIN || 'www.knowyourcitys.in';
+var PRODUCTION_DOMAIN = window.PRODUCTION_DOMAIN;
 
 document.addEventListener('DOMContentLoaded', () => {
   // ===== GOOGLE AUTH INITIALIZATION =====
