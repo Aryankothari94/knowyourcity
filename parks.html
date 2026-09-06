@@ -438,7 +438,7 @@
         if (raw) {
           const { data, timestamp } = JSON.parse(raw);
           if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
-            document.getElementById('loadingSpinner').style.display = 'none';
+            // spinner handled in renderParks
             if (data[0].name && data[0].distance !== undefined) {
               renderParks(data, city);
             } else {
@@ -465,14 +465,14 @@
             }
           } else {
             waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
-              document.getElementById('loadingSpinner').style.display = 'none';
+                // spinner handled in renderParks
               if (data[0] && data[0].name && data[0].distance !== undefined) { renderParks(data, city); }
               else { fetchParks(lat, lng); }
             }, function() { fetchParks(lat, lng); });
           }
         } else {
           waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
-            document.getElementById('loadingSpinner').style.display = 'none';
+            // spinner handled in renderParks
             if (data[0] && data[0].name && data[0].distance !== undefined) { renderParks(data, city); }
             else { fetchParks(lat, lng); }
           }, function() { fetchParks(lat, lng); });
