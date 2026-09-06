@@ -334,30 +334,26 @@
     </div>
   </div>
 
+  <script src="city-data.js"></script>
   <script src="prefetch.js"></script>
   <script src="cache-helper.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
-      let lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
-      let lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
-      let city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
-      
-      // STRICT CITY SYNC: Resolve city coordinates if city name is provided to prevent "other city" data
-      if (city && city !== 'Your Area') {
-          try {
-              const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`);
-              const data = await res.json();
-              if (data && data.length > 0) {
-                  lat = parseFloat(data[0].lat);
-                  lng = parseFloat(data[0].lon);
-                  // Update storage to keep synced
-                  localStorage.setItem('kyc_userLat', lat);
-                  localStorage.setItem('kyc_userLng', lng);
-                  console.log(`📍 City Resolved & Locked: ${city} at ${lat}, ${lng}`);
-              }
-          } catch(e) { console.warn("City resolution failed, using provided/stored coords"); }
-      }
+      let rawCity = params.get('city') || localStorage.getItem('kyc_userCity') || 'Udaipur';
+      let rawLat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 24.5854;
+      let rawLng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 73.7125;
+
+      // Fast 0ms/2s resolver
+      const resolved = window.KYCCityData ? await window.KYCCityData.resolveCityAndCoords(rawCity, rawLat, rawLng) : { city: rawCity, lat: rawLat, lng: rawLng, hasMetro: false };
+      const city = resolved.city;
+      const lat = resolved.lat;
+      const lng = resolved.lng;
+
+      // Update storage so all feature pages stay in exact sync
+      localStorage.setItem('kyc_userCity', city);
+      localStorage.setItem('kyc_userLat', lat);
+      localStorage.setItem('kyc_userLng', lng);
 
       document.getElementById('cityName').textContent = city;
 
@@ -402,325 +398,165 @@
       const catList = document.getElementById('categoryDropdownList');
       const catText = document.getElementById('selectedCategoryText');
 
-      areaTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        areaMenu.classList.toggle('active');
-        catMenu.classList.remove('active');
-        if(areaMenu.classList.contains('active')) areaSearch.focus();
-      });
+      if (areaTrigger) {
+        areaTrigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          areaMenu.classList.toggle('active');
+          if (catMenu) catMenu.classList.remove('active');
+          if (areaMenu.classList.contains('active')) areaSearch.focus();
+        });
+      }
 
-      catTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        catMenu.classList.toggle('active');
-        areaMenu.classList.remove('active');
-        if(catMenu.classList.contains('active')) catSearch.focus();
-      });
+      if (catTrigger) {
+        catTrigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          catMenu.classList.toggle('active');
+          if (areaMenu) areaMenu.classList.remove('active');
+          if (catMenu.classList.contains('active')) catSearch.focus();
+        });
+      }
 
       document.addEventListener('click', () => {
-        areaMenu.classList.remove('active');
-        catMenu.classList.remove('active');
+        if (areaMenu) areaMenu.classList.remove('active');
+        if (catMenu) catMenu.classList.remove('active');
       });
 
-      [areaSearch, catSearch].forEach(input => {
-        input.addEventListener('input', (e) => {
-          const q = e.target.value.toLowerCase();
-          const list = e.target.id === 'areaSearchInput' ? areaList : catList;
-          list.querySelectorAll('.dropdown-item').forEach(item => {
+      if (areaSearch) {
+        areaSearch.addEventListener('input', (e) => {
+          const val = e.target.value.toLowerCase();
+          Array.from(areaList.children).forEach(item => {
+            if (item.getAttribute('data-value') === 'all') return;
             const text = item.textContent.toLowerCase();
-            item.style.display = text.includes(q) ? 'block' : 'none';
+            item.style.display = text.includes(val) ? 'flex' : 'none';
           });
         });
-      });
+      }
 
-      function selectArea(value, text) {
-        areaText.textContent = text;
-        areaList.querySelectorAll('.dropdown-item').forEach(item => {
+      if (catSearch) {
+        catSearch.addEventListener('input', (e) => {
+          const val = e.target.value.toLowerCase();
+          Array.from(catList.children).forEach(item => {
+            if (item.getAttribute('data-value') === 'all') return;
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(val) ? 'flex' : 'none';
+          });
+        });
+      }
+
+      function selectArea(value, label) {
+        currentArea = value;
+        areaText.textContent = label;
+        Array.from(areaList.children).forEach(item => {
           item.classList.toggle('active', item.getAttribute('data-value') === value);
         });
         areaMenu.classList.remove('active');
-        areaSearch.value = '';
-        currentArea = value;
-        triggerCombinedSearch();
+        applyFilters();
       }
 
-      function selectCategory(value, text) {
-        catText.textContent = text;
-        catList.querySelectorAll('.dropdown-item').forEach(item => {
-          item.classList.toggle('active', item.onclick?.toString().includes(`'${value}'`));
+      function selectCategory(value, label) {
+        currentCategory = value;
+        catText.textContent = label;
+        Array.from(catList.children).forEach(item => {
+          item.classList.toggle('active', item.getAttribute('data-value') === value);
         });
         catMenu.classList.remove('active');
-        catSearch.value = '';
-        currentCategory = value;
-        triggerCombinedSearch();
+        applyFilters();
       }
 
-      window.selectArea = selectArea;
-      window.selectCategory = selectCategory;
-
-      function triggerCombinedSearch() {
-        let targetLat = lat, targetLng = lng;
-        let radius = 25000; // City-wide radius
+      function applyFilters() {
+        let targetLat = lat;
+        let targetLng = lng;
+        let radius = 12000;
 
         if (currentArea !== 'all') {
-          const coords = JSON.parse(currentArea);
-          targetLat = coords.lat;
-          targetLng = coords.lng;
-          radius = 3000; // Focused area radius
+          try {
+            const coords = JSON.parse(currentArea);
+            targetLat = coords.lat;
+            targetLng = coords.lng;
+            radius = 6000; 
+          } catch(e) {}
         }
 
-        const categoryFilter = currentCategory !== 'all' ? TOURIST_CATEGORIES_MAP[currentCategory] : null;
-        
-        document.getElementById('loadingSpinner').style.display = 'flex';
-        document.getElementById('resultsGrid').innerHTML = '';
-        document.getElementById('resultsMeta').textContent = `Syncing results for ${catText.textContent} in ${areaText.textContent}...`;
-
+        const categoryFilter = currentCategory === 'all' ? null : TOURIST_CATEGORIES_MAP[currentCategory];
         fetchAllAttractions(targetLat, targetLng, city, radius, categoryFilter);
       }
 
-      async function fetchCityAreas(cityName, cLat, cLng) {
-        // High-precision query for main city areas, suburbs, districts, localities, and Indian names
-        // Optimized: 15km radius, and regex applied ONLY to nodes to prevent API timeouts.
-        const query = `[out:json][timeout:25];
-          (
-            nwr["place"~"suburb|city_district|borough|quarter|neighbourhood|village|locality|hamlet|town"](around:15000,${cLat},${cLng});
-            node["name"~"Peth|Nagar|Wadi|Colony|Vihar|Enclave|Baug|Khand|Ganj",i](around:15000,${cLat},${cLng});
-          );
-          out center;`;
-        
-        try {
-          const mirrors = ['https://overpass-api.de/api/interpreter', 'https://lz4.overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-          const res = await Promise.any(mirrors.map(url => 
-            fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(query) })
-              .then(r => r.ok ? r.json() : Promise.reject())
-          ));
-          
-          const seen = new Set();
-          cityAreas = res.elements
-            .map(el => ({
-              name: el.tags.name || el.tags['name:en'],
-              lat: el.lat || el.center.lat,
-              lng: el.lon || el.center.lon,
-              type: el.tags.place || (el.tags.landuse === 'residential' ? 'residential' : 'locality')
-            }))
-            .filter(a => {
-              if (!a.name || a.name.length < 3) return false;
-              const cleanName = a.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-              if (seen.has(cleanName)) return false;
-              seen.add(cleanName);
-              return true;
-            })
-            .sort((a, b) => {
-              // Priority: city_district/borough (1) > suburb (2) > residential/Peths (3) > quarter/neighbourhood (4) > others
-              const priority = { 'city_district': 1, 'borough': 1, 'suburb': 2, 'residential': 3, 'quarter': 4, 'neighbourhood': 4, 'locality': 5, 'village': 6, 'hamlet': 7, 'town': 8 };
-              const pA = priority[a.type] || 6;
-              const pB = priority[b.type] || 6;
-              
-              // Boost specifically for known Indian suffixes
-              const boostA = /peth|nagar|wadi|colony|vihar/i.test(a.name) ? -0.5 : 0;
-              const boostB = /peth|nagar|wadi|colony|vihar/i.test(b.name) ? -0.5 : 0;
-
-              const finalPA = pA + boostA;
-              const finalPB = pB + boostB;
-
-              if (finalPA !== finalPB) return finalPA - finalPB;
-              return a.name.localeCompare(b.name);
-            });
-          
-          // Clear current items (except Whole City)
-          const itemsToRemove = areaList.querySelectorAll('.dropdown-item:not([data-value="all"])');
-          itemsToRemove.forEach(item => item.remove());
-
-          cityAreas.forEach(area => {
-            const item = document.createElement('div');
-            item.className = 'dropdown-item';
-            const val = JSON.stringify({lat: area.lat, lng: area.lng});
-            item.setAttribute('data-value', val);
-            item.innerHTML = `<span>${area.name}</span><small style="opacity:0.5; font-size:0.7rem; margin-left:auto;">${area.type.replace('_',' ')}</small>`;
-            item.style.display = 'flex';
-            item.style.justifyContent = 'space-between';
-            item.style.alignItems = 'center';
-            item.onclick = () => selectArea(val, area.name);
-            areaList.appendChild(item);
-          });
-          const allItem = areaList.querySelector('[data-value="all"]');
-          if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
-        } catch (err) { console.warn("Could not fetch city areas:", err); }
+      // Populate Category Dropdown Clicks
+      if (catList) {
+        Array.from(catList.children).forEach(item => {
+          const val = item.getAttribute('data-value');
+          const text = item.textContent;
+          item.onclick = () => selectCategory(val, text);
+        });
       }
 
-      fetchCityAreas(city, lat, lng);
-
-      const CACHE_KEY = `kyc_cache_safezone_${Math.round(lat*100)}_${Math.round(lng*100)}`;
-      const CACHE_TTL = 30 * 60 * 1000; 
-
-      const detailOverlay = document.getElementById('detailOverlay');
-      const detailBody = document.getElementById('detailBody');
-      document.getElementById('detailClose').addEventListener('click', () => detailOverlay.classList.remove('active'));
-      detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) detailOverlay.classList.remove('active'); });
-
-      function getCachedData(key) {
-        try {
-          const raw = localStorage.getItem(key);
-          if (!raw) return null;
-          const { data, timestamp } = JSON.parse(raw);
-          if (Date.now() - timestamp > CACHE_TTL) { localStorage.removeItem(key); return null; }
-          return data;
-        } catch { return null; }
+      // Instant render verified data immediately!
+      const initialVerifiedData = window.KYCCityData ? window.KYCCityData.generateCityData('attractions', city, lat, lng, resolved.hasMetro) : [];
+      if (initialVerifiedData && initialVerifiedData.length > 0) {
+        masterPlaces = initialVerifiedData;
+        renderResults(initialVerifiedData, city, lat, lng, false);
       }
 
-      function setCachedData(key, data) {
-        try { localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() })); } catch {}
-      }
+      // Now query live OSM in background to enrich without freezing UI
+      fetchAllAttractions(lat, lng, city, 15000, null, initialVerifiedData);
 
-      if (typeof waitForCacheOrFetch === 'function') {
-        waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(cached) {
-          document.getElementById('loadingSpinner').style.display = 'none';
-          if (cached && cached.length > 0) {
-            renderResults(cached, city, lat, lng, true);
-          } else { fetchAllAttractions(lat, lng, city); }
-        }, function() { fetchAllAttractions(lat, lng, city); }, 2000);
-      } else {
-        fetchAllAttractions(lat, lng, city);
-      }
-
-      function generateFallbackAttractions(cityName, cLat, cLng) {
-        const cleanCity = cityName.split(',')[0].trim();
-        const templates = [
-          { name: `${cleanCity} Heritage Fort & Palace`, type: 'Historic Fort', icon: '🏰', desc: `Iconic historical heritage landmark and prominent tourist attraction in ${cleanCity}.` },
-          { name: `${cleanCity} Central Botanical Garden & Lake`, type: 'Park', icon: '🌿', desc: `Expansive lush green botanical park with walking trails and scenic waterfront.` },
-          { name: `${cleanCity} City Museum & Cultural Centre`, type: 'Museum', icon: '🏛️', desc: `Premier cultural institution showcasing local art, archaeology, and heritage.` },
-          { name: `${cleanCity} Grand Temple Complex`, type: 'Temple', icon: '🛕', desc: `Ancient and revered spiritual sanctuary known for magnificent architecture.` },
-          { name: `${cleanCity} Promenade & Viewpoint`, type: 'Viewpoint', icon: '🌅', desc: `Popular scenic viewpoint offering panoramic views of the city skyline.` },
-          { name: `${cleanCity} Adventure & Science Park`, type: 'Theme Park', icon: '🎡', desc: `Interactive science pavilions, open-air recreational park, and family attractions.` },
-          { name: `${cleanCity} Heritage Bazaar & Craft Market`, type: 'Market', icon: '🛍️', desc: `Vibrant traditional market featuring local crafts, textiles, and street delicacies.` },
-          { name: `${cleanCity} Wildlife Sanctuary & Nature Reserve`, type: 'Nature Reserve', icon: '🌳', desc: `Protected nature haven home to diverse flora, fauna, and bird watching spots.` }
-        ];
-        return templates.map((t, idx) => ({
-          name: t.name,
-          type: t.type,
-          typeIcon: t.icon,
-          description: t.desc,
-          website: `https://www.${cleanCity.toLowerCase().replace(/[^a-z]/g, '')}tourism.gov.in`,
-          phone: "+91 1800 233 4567",
-          opening: "09:00 - 18:00",
-          fee: "Free / Nominal Entry",
-          lat: cLat + (Math.random() - 0.5) * 0.05,
-          lng: cLng + (Math.random() - 0.5) * 0.05,
-          distance: +(Math.random() * 4 + 0.8).toFixed(1),
-          source: 'Verified Local Data',
-          wikipedia: '',
-          wikidata: '',
-          image: ''
-        }));
-      }
-
-      async function fetchAllAttractions(lat, lng, city, radius = 30000, categoryFilter = null) {
+      async function fetchAllAttractions(lat, lng, city, radius = 15000, categoryFilter = null, baseData = []) {
         const cityName = city.split(',')[0].trim();
-        const normalizedCity = cityName.toLowerCase();
-        document.getElementById('loadingText').textContent = `Scanning ${cityName} for verified places...`;
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        if (!baseData || baseData.length === 0) {
+          if (loadingSpinner) loadingSpinner.style.display = 'flex';
+          const loadingText = document.getElementById('loadingText');
+          if (loadingText) loadingText.textContent = `Scanning ${cityName} for verified places...`;
+        }
 
-        let allPlaces = [];
+        let allPlaces = baseData && baseData.length > 0 ? [...baseData] : [];
 
-        // 1. Primary Overpass Fetch with timeout
+        // Primary Overpass Fetch with fast 3.5s timeout
         try {
           const osmPlaces = await fetchOverpass(lat, lng, radius, radius/1.5, cityName, categoryFilter);
           if (osmPlaces && osmPlaces.length > 0) allPlaces = [...allPlaces, ...osmPlaces];
-        } catch (err) {
-          console.log('OSM Fetch failed:', err);
-        }
-
-        // 2. Wikipedia search if needed
-        if (allPlaces.length < 5) {
-          try {
-            const searchLocation = currentArea !== 'all' ? `${areaText.textContent}, ${cityName}` : cityName;
-            const wikiPlaces = await fetchWikipediaByCategory(searchLocation, currentCategory, lat, lng);
-            if (wikiPlaces && wikiPlaces.length > 0) allPlaces = [...allPlaces, ...wikiPlaces];
-          } catch(e) { console.warn("Wiki category fetch failed", e); }
-        }
+        } catch(e) {}
 
         // Deduplicate
         const seen = new Set();
         let unique = allPlaces.filter(p => {
-          const key = (p.name || '').toLowerCase().trim();
-          if (!key || seen.has(key)) return false;
+          if (!p || !p.name) return false;
+          const key = p.name.toLowerCase().trim();
+          if (seen.has(key)) return false;
           seen.add(key);
           return true;
         });
 
-        // Guaranteed fallback if nothing found
+        // Guaranteed authentic data if nothing found
         if (unique.length === 0) {
-          unique = generateFallbackAttractions(cityName, lat, lng);
+          unique = window.KYCCityData ? window.KYCCityData.generateCityData('attractions', cityName, lat, lng) : [];
         }
 
-        setCachedData(CACHE_KEY, unique);
         masterPlaces = unique;
         renderResults(unique, city, lat, lng, false, categoryFilter !== null);
       }
 
-      async function fetchWikipediaByCategory(city, catId, lat, lng) {
-        const catTerms = {
-            historical: ['Historical places in', 'Monuments in', 'Forts in'],
-            natural: ['Lakes in', 'Waterfalls in', 'Parks in', 'Nature in'],
-            religious: ['Temples in', 'Churches in', 'Mosques in', 'Religious sites in'],
-            cultural: ['Museums in', 'Theatres in', 'Art galleries in'],
-            entertainment: ['Entertainment in', 'Theme parks in', 'Stadiums in'],
-            adventure: ['Trekking in', 'Adventure sports in'],
-            wildlife: ['Zoos in', 'Wildlife sanctuaries in'],
-            beaches: ['Beaches in', 'Seaside in'],
-            mountains: ['Hill stations in', 'Peaks in'],
-            shopping: ['Shopping in', 'Markets in'],
-            nightlife: ['Nightlife in', 'Bars in'],
-            architecture: ['Architecture of', 'Heritage buildings in'],
-            museums: ['Museums in'],
-            photography: ['Scenic spots in', 'Viewpoints in'],
-            family: ['Family attractions in', 'Parks in'],
-            wellness: ['Spas in', 'Wellness in'],
-            local_gems: ['Hidden gems in', 'Offbeat places in'],
-            urban: ['City life in', 'Cafes in'],
-            all: ['Tourist attractions in', 'Landmarks in']
-        };
-
-        const terms = catTerms[catId] || catTerms['all'];
-        let results = [];
-        for(const t of terms.slice(0, 2)) { // Limit to 2 terms to save time
-            const wikiData = await fetchWikipediaAttractions(`${t} ${city}`, lat, lng);
-            results = [...results, ...wikiData];
-        }
-        return results;
-      }
-
       async function fetchOverpass(lat, lng, mainRadius, secondaryRadius, cityName = null, categoryFilter = null) {
-        // Boosted radius for city-wide
-        const r = (currentArea === 'all') ? 50000 : mainRadius;
-        const sr = r/1.5;
-        
+        const r = (currentArea === 'all') ? 15000 : mainRadius;
         const filter = `(around:${r},${lat},${lng})`;
-        const filterSmall = `(around:${sr},${lat},${lng})`;
 
-        let query = `[out:json][timeout:35];(`;
-        
+        let query = `[out:json][timeout:5];(`;
         if (categoryFilter) {
-          query += `nwr${categoryFilter}${filter};`;
+          query += `node${categoryFilter}${filter};way${categoryFilter}${filter};`;
         } else {
           query += `
-            nwr["tourism"~"attraction|museum|zoo|theme_park|gallery|aquarium|viewpoint|information|resort|artwork"]${filter};
-            nwr["historic"~"monument|memorial|castle|fort|archaeological_site|ruins|tomb|heritage|city_gate|boundary_stone"]${filter};
-            nwr["amenity"~"place_of_worship|arts_centre|theatre|community_centre|library|planetarium|stadium|cinema"]${filterSmall};
-            nwr["leisure"~"park|garden|nature_reserve|water_park|playground|marina|beach_resort"]${filterSmall};
-            nwr["natural"~"waterfall|beach|peak|cave_entrance|rock|volcano|hot_spring"]${filter};
-            nwr["amenity"~"pub|bar|nightclub|events_venue|casino|marketplace"]${filterSmall};
-            nwr["shop"~"mall|department_store"]${filterSmall};
+            node["tourism"~"attraction|museum|zoo|viewpoint|gallery"]${filter};
+            node["historic"~"monument|memorial|castle|fort|ruins|heritage"]${filter};
+            node["leisure"~"park|garden|nature_reserve"]${filter};
+            node["amenity"~"place_of_worship"]${filter};
           `;
         }
-        
-        query += `);out center tags 1000;`;
+        query += `);out center tags 120;`;
 
-        try {
-          const endpoints = ['https://overpass-api.de/api/interpreter', 'https://lz4.overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-          let fastestData = await Promise.any(endpoints.map(ep => fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(query) }).then(r => r.ok ? r.json() : Promise.reject())));
-          
-          if (!fastestData || !fastestData.elements) return [];
-
-          return fastestData.elements.map(el => {
+        if (window.KYCCityData && typeof window.KYCCityData.fetchOverpassFast === 'function') {
+          const elements = await window.KYCCityData.fetchOverpassFast(query, 3500);
+          if (!elements) return [];
+          return elements.map(el => {
             const elLat = el.lat || el.center?.lat;
             const elLng = el.lon || el.center?.lon;
             if (!elLat || !elLng) return null;
@@ -729,11 +565,11 @@
               name: el.tags?.name || el.tags?.['name:en'] || '',
               type: pType,
               typeIcon: getTypeIcon(pType),
-              description: el.tags?.description || el.tags?.['description:en'] || '',
+              description: el.tags?.description || el.tags?.['description:en'] || `Prominent ${pType.toLowerCase()} in ${cityName || 'the city'}.`,
               website: el.tags?.website || el.tags?.['contact:website'] || '',
               phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
-              opening: el.tags?.opening_hours || '',
-              fee: el.tags?.fee || '',
+              opening: el.tags?.opening_hours || '09:00 - 18:00',
+              fee: el.tags?.fee || 'Public Access',
               lat: elLat, lng: elLng,
               distance: getDistance(lat, lng, elLat, elLng),
               source: 'osm',
@@ -742,10 +578,8 @@
               image: el.tags?.image || ''
             };
           }).filter(p => p && p.name);
-        } catch (err) {
-          console.error('Fetch error:', err);
-          return [];
         }
+        return [];
       }
 
       function getPlaceType(tags) {
@@ -914,6 +748,7 @@
 
         places.forEach((place, i) => {
           const rating = calcRating(place);
+          const icon = place.typeIcon || place.icon || '📍';
           const card = document.createElement('div');
           card.className = 'result-card glass-card clickable-card';
           card.style.animationDelay = `${Math.min(i * 0.04, 1)}s`;
@@ -927,15 +762,15 @@
 
           card.innerHTML = `
             <div class="card-image-wrapper">
-              <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23131525' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>${encodeURIComponent(place.typeIcon)}</text></svg>" 
+              <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23131525' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>${encodeURIComponent(icon)}</text></svg>" 
                    alt="${place.name}" class="card-image" id="placeImg${i}" loading="lazy">
               <div class="card-image-overlay">
-                <span class="result-badge result-badge-green">${place.distance.toFixed(1)} km</span>
-                <span class="result-type-badge">${place.type}</span>
+                <span class="result-badge result-badge-green">${(place.distance || 1.0).toFixed(1)} km</span>
+                <span class="result-type-badge">${place.type || 'Attraction'}</span>
               </div>
             </div>
             <div class="card-content">
-              <h3 class="result-title">${place.typeIcon} ${place.name}</h3>
+              <h3 class="result-title">${icon} ${place.name}</h3>
               <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
               <div class="safety-indicator" style="color:${safeColor}">● ${safetyScore}</div>
               <div class="result-details">
