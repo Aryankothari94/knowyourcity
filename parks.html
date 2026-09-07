@@ -327,13 +327,12 @@
           clearInterval(loadingInterval);
         }
       }, 2000);
-      // ----------------------------
 
       const params = new URLSearchParams(window.location.search);
       let lat = parseFloat(params.get('lat')) || parseFloat(localStorage.getItem('kyc_userLat')) || 19.0760;
       let lng = parseFloat(params.get('lng')) || parseFloat(localStorage.getItem('kyc_userLng')) || 72.8777;
       let city = params.get('city') || localStorage.getItem('kyc_userCity') || 'Your Area';
-      
+
       document.getElementById('cityName').textContent = city;
 
       let currentArea = 'all';
@@ -344,11 +343,13 @@
       const areaSearch = document.getElementById('areaSearchInput');
       const areaList = document.getElementById('areaDropdownList');
       const areaText = document.getElementById('selectedAreaText');
+      const detailOverlay = document.getElementById('detailOverlay');
+      const detailBody = document.getElementById('detailBody');
 
       areaTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
         areaMenu.classList.toggle('active');
-        if(areaMenu.classList.contains('active')) areaSearch.focus();
+        if (areaMenu.classList.contains('active')) areaSearch.focus();
       });
 
       document.addEventListener('click', () => {
@@ -377,18 +378,15 @@
       function triggerFilter() {
         let targetLat = lat, targetLng = lng;
         let radius = 15000;
-
         if (currentArea !== 'all') {
           const coords = JSON.parse(currentArea);
           targetLat = coords.lat;
           targetLng = coords.lng;
-          radius = 5000; 
+          radius = 5000;
         }
-
         document.getElementById('loadingSpinner').style.display = 'flex';
         document.getElementById('resultsGrid').innerHTML = '';
         document.getElementById('resultsMeta').textContent = `Filtering for parks in ${areaText.textContent}...`;
-        
         fetchParks(targetLat, targetLng, radius);
       }
 
@@ -410,12 +408,12 @@
             lng: el.lon || el.center.lon,
             type: el.tags.place
           })).filter(a => a.name && !seen.has(a.name) && seen.add(a.name))
-          .sort((a,b) => a.name.localeCompare(b.name));
+            .sort((a, b) => a.name.localeCompare(b.name));
 
           areas.forEach(area => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
-            const val = JSON.stringify({lat: area.lat, lng: area.lng});
+            const val = JSON.stringify({ lat: area.lat, lng: area.lng });
             item.setAttribute('data-value', val);
             item.innerHTML = `<span>${area.name}</span><small style="opacity:0.5; font-size:0.7rem; margin-left:auto;">${area.type}</small>`;
             item.style.display = 'flex';
@@ -423,80 +421,18 @@
             areaList.appendChild(item);
           });
           const allItem = areaList.querySelector('[data-value="all"]');
-          if(allItem) allItem.onclick = () => selectArea('all', 'Whole City');
-        } catch(e) {}
+          if (allItem) allItem.onclick = () => selectArea('all', 'Whole City');
+        } catch (e) {}
       }
 
-      const CACHE_KEY = `kyc_cache_parks_${Math.round(lat*100)}_${Math.round(lng*100)}`;
+      const CACHE_KEY = `kyc_cache_parks_${Math.round(lat * 100)}_${Math.round(lng * 100)}`;
       const CACHE_TTL = 30 * 60 * 1000;
 
       fetchCityAreas(lat, lng);
 
-      // Instant cache check
-      try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (raw) {
-          const { data, timestamp } = JSON.parse(raw);
-          if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
-            // spinner handled in renderParks
-            if (data[0].name && data[0].distance !== undefined) {
-              renderParks(data, city);
-            } else {
-              const parks = data.map(el => {
-                const elLat = el.lat || el.center?.lat;
-                const elLng = el.lon || el.center?.lon;
-                return {
-                  name: el.tags?.name || el.tags?.['name:en'] || '',
-                  type: el.tags?.leisure === 'garden' ? 'Garden' : 'Park',
-                  opening: el.tags?.opening_hours || '',
-                  access: el.tags?.access || 'public',
-                  fee: el.tags?.fee || '',
-                  dog: el.tags?.dog || '',
-                  lit: el.tags?.lit || '',
-                  operator: el.tags?.operator || '',
-                  description: el.tags?.description || el.tags?.['description:en'] || '',
-                  wikipedia: el.tags?.wikipedia || '',
-                  wikidata: el.tags?.wikidata || '',
-                  lat: elLat, lng: elLng,
-                  distance: getDistance(lat, lng, elLat, elLng)
-                };
-              }).filter(p => p.name).sort((a, b) => a.distance - b.distance);
-              renderParks(parks, city);
-            }
-          } else {
-            waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
-                // spinner handled in renderParks
-              if (data[0] && data[0].name && data[0].distance !== undefined) { renderParks(data, city); }
-              else { fetchParks(lat, lng); }
-            }, function() { fetchParks(lat, lng); });
-          }
-        } else {
-          waitForCacheOrFetch(CACHE_KEY, CACHE_TTL, function(data) {
-            // spinner handled in renderParks
-            if (data[0] && data[0].name && data[0].distance !== undefined) { renderParks(data, city); }
-            else { fetchParks(lat, lng); }
-          }, function() { fetchParks(lat, lng); });
-        }
-      } catch (e) { fetchParks(lat, lng); }
-
-      async function fetchParks(targetLat, targetLng, radius = 15000) {
-        const query = `
-          [out:json][timeout:25];
-          (
-            node["leisure"="park"](around:15000,${lat},${lng});
-            way["leisure"="park"](around:15000,${lat},${lng});
-            node["leisure"="garden"](around:15000,${lat},${lng});
-            way["leisure"="garden"](around:15000,${lat},${lng});
-            node["leisure"="nature_reserve"](around:15000,${lat},${lng});
-            way["leisure"="nature_reserve"](around:15000,${lat},${lng});
-            node["leisure"="playground"](around:10000,${lat},${lng});
-            way["leisure"="playground"](around:10000,${lat},${lng});
-          );
-          out center tags 150;
-        `;
-                try {
-          let data = null;
-          const endpoints = [
+      // ------------------------------------------------------------------
+      // Generate fallback parks when API returns nothing
+      // ------------------------------------------------------------------
       function generateFallbackParks(cityName, cLat, cLng) {
         const cleanCity = cityName.split(',')[0].trim();
         const templates = [
@@ -504,7 +440,7 @@
           { name: `${cleanCity} Eco Park & Lake`, type: 'Park', surface: 'Paved & Lawn', access: 'Public', lit: 'yes' },
           { name: `Green Meadows Leisure Park`, type: 'Park', surface: 'Grass', access: 'Public', lit: 'yes' },
           { name: `Civic Rose Garden & Promenade`, type: 'Garden', surface: 'Pavers', access: 'Public', lit: 'yes' },
-          { name: `${cleanCity} Sports & Jogging Track Ground`, type: 'Playground', surface: 'Synthetic & Clay', access: 'Public', lit: 'yes' },
+          { name: `${cleanCity} Sports & Jogging Track`, type: 'Playground', surface: 'Synthetic & Clay', access: 'Public', lit: 'yes' },
           { name: `Sunset View Nature Enclave`, type: 'Nature Reserve', surface: 'Natural Trail', access: 'Public', lit: 'yes' }
         ];
         return templates.map((t, idx) => ({
@@ -513,132 +449,159 @@
           surface: t.surface,
           access: t.access,
           website: `https://www.${cleanCity.toLowerCase().replace(/[^a-z]/g, '')}parks.org`,
-          phone: "+91 98765 43210",
-          opening: "05:30 - 21:00",
+          phone: '+91 98765 43210',
+          opening: '05:30 - 21:00',
           description: `Popular public green space and recreational park in ${cleanCity}.`,
-          wikipedia: "", wikidata: "", fee: "Free", dog: "yes", lit: t.lit, operator: `${cleanCity} Municipal Corp`,
+          wikipedia: '', wikidata: '', fee: 'Free', dog: 'yes', lit: t.lit, operator: `${cleanCity} Municipal Corp`,
           lat: cLat + (Math.random() - 0.5) * 0.04,
           lng: cLng + (Math.random() - 0.5) * 0.04,
           distance: +(Math.random() * 3 + 0.5).toFixed(1)
         }));
       }
 
-      async function fetchParks(targetLat, targetLng, radius = 15000) {
+      // ------------------------------------------------------------------
+      // Main fetch function — queries Overpass with multiple endpoints
+      // ------------------------------------------------------------------
+      async function fetchParks(targetLat, targetLng, radius) {
+        radius = radius || 15000;
         const query = `
-          [out:json][timeout:15];
+          [out:json][timeout:25];
           (
             node["leisure"="park"](around:${radius},${targetLat},${targetLng});
             way["leisure"="park"](around:${radius},${targetLat},${targetLng});
             node["leisure"="garden"](around:${radius},${targetLat},${targetLng});
             way["leisure"="garden"](around:${radius},${targetLat},${targetLng});
             node["leisure"="nature_reserve"](around:${radius},${targetLat},${targetLng});
+            way["leisure"="nature_reserve"](around:${radius},${targetLat},${targetLng});
             node["leisure"="playground"](around:${radius},${targetLat},${targetLng});
+            way["leisure"="playground"](around:${radius},${targetLat},${targetLng});
           );
-          out center tags 100;
+          out center tags 150;
         `;
+
+        const endpoints = [
+          'https://overpass-api.de/api/interpreter',
+          'https://lz4.overpass-api.de/api/interpreter',
+          'https://overpass.kumi.systems/api/interpreter'
+        ];
+
+        let data = null;
         try {
-          let data = null;
-          const endpoints = [
-            'https://overpass-api.de/api/interpreter',
-            'https://lz4.overpass-api.de/api/interpreter',
-            'https://overpass.kumi.systems/api/interpreter'
-          ];
-          
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3500);
-            const fetchPromises = endpoints.map(ep => 
-              fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(query), signal: controller.signal })
-                .then(r => r.ok ? r.json() : Promise.reject())
-            );
-            data = await Promise.any(fetchPromises);
-            clearTimeout(timeoutId);
-          } catch(e) {}
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
+          const fetchPromises = endpoints.map(ep =>
+            fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(query), signal: controller.signal })
+              .then(r => r.ok ? r.json() : Promise.reject('not ok'))
+          );
+          data = await Promise.any(fetchPromises);
+          clearTimeout(timeoutId);
+        } catch (e) {}
 
-          let parks = [];
-          if (data && data.elements && data.elements.length > 0) {
-            const typeMap = { park: 'Park', garden: 'Garden', nature_reserve: 'Nature Reserve', playground: 'Playground' };
-            parks = data.elements.map(el => {
-              const elLat = el.lat || el.center?.lat;
-              const elLng = el.lon || el.center?.lon;
-              return {
-                name: el.tags?.name || el.tags?.['name:en'] || '',
-                type: typeMap[el.tags?.leisure] || 'Park',
-                surface: el.tags?.surface || '',
-                access: el.tags?.access || 'Public',
-                website: el.tags?.website || el.tags?.['contact:website'] || '',
-                phone: el.tags?.phone || '',
-                opening: el.tags?.opening_hours || '',
-                description: el.tags?.description || el.tags?.['description:en'] || '',
-                wikipedia: el.tags?.wikipedia || '',
-                wikidata: el.tags?.wikidata || '',
-                fee: el.tags?.fee || '',
-                dog: el.tags?.dog || '',
-                lit: el.tags?.lit || '',
-                operator: el.tags?.operator || '',
-                lat: elLat, lng: elLng,
-                distance: getDistance(targetLat, targetLng, elLat, elLng)
-              };
-            }).filter(p => p.name).sort((a, b) => a.distance - b.distance);
-          }
-
-          if (parks.length === 0) {
-            parks = generateFallbackParks(city, targetLat, targetLng);
-          }
-
-          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: parks, timestamp: Date.now() })); } catch {}
-          renderParks(parks, city);
-        } catch (err) {
-          renderParks(generateFallbackParks(city, targetLat, targetLng), city);
+        let parks = [];
+        if (data && data.elements && data.elements.length > 0) {
+          const typeMap = { park: 'Park', garden: 'Garden', nature_reserve: 'Nature Reserve', playground: 'Playground' };
+          parks = data.elements.map(el => {
+            const elLat = el.lat || el.center?.lat;
+            const elLng = el.lon || el.center?.lon;
+            return {
+              name: el.tags?.name || el.tags?.['name:en'] || '',
+              type: typeMap[el.tags?.leisure] || 'Park',
+              surface: el.tags?.surface || '',
+              access: el.tags?.access || 'Public',
+              website: el.tags?.website || el.tags?.['contact:website'] || '',
+              phone: el.tags?.phone || '',
+              opening: el.tags?.opening_hours || '',
+              description: el.tags?.description || el.tags?.['description:en'] || '',
+              wikipedia: el.tags?.wikipedia || '',
+              wikidata: el.tags?.wikidata || '',
+              fee: el.tags?.fee || '',
+              dog: el.tags?.dog || '',
+              lit: el.tags?.lit || '',
+              operator: el.tags?.operator || '',
+              lat: elLat, lng: elLng,
+              distance: getDistance(targetLat, targetLng, elLat, elLng)
+            };
+          }).filter(p => p.name && p.lat && p.lng).sort((a, b) => a.distance - b.distance);
         }
+
+        if (parks.length === 0) {
+          parks = generateFallbackParks(city, targetLat, targetLng);
+        }
+
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: parks, timestamp: Date.now() })); } catch {}
+        renderParks(parks, city);
       }
 
+      // ------------------------------------------------------------------
+      // Startup — try cache first, then fetch live
+      // ------------------------------------------------------------------
+      (function init() {
+        try {
+          const raw = localStorage.getItem(CACHE_KEY);
+          if (raw) {
+            const { data, timestamp } = JSON.parse(raw);
+            if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+              // Cache hit — render immediately
+              if (data[0] && data[0].name && data[0].distance !== undefined) {
+                renderParks(data, city);
+                return;
+              }
+            }
+          }
+        } catch (e) {}
+        // No valid cache — fetch live
+        fetchParks(lat, lng, 15000);
+      })();
+
+      // ------------------------------------------------------------------
+      // Render
+      // ------------------------------------------------------------------
       function renderParks(parks, city) {
-          document.getElementById('loadingSpinner').style.display = 'none';
-          document.getElementById('emptyState').style.display = 'none';
-          document.getElementById('resultsCount').textContent = `${parks.length} Parks & Gardens Found`;
-          document.getElementById('resultsMeta').textContent = `Within 15km of ${city} • Sorted by distance`;
-          document.getElementById('resultsGrid').style.display = 'grid';
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('resultsCount').textContent = `${parks.length} Parks & Gardens Found`;
+        document.getElementById('resultsMeta').textContent = `Within 15km of ${city} • Sorted by distance`;
+        document.getElementById('resultsGrid').style.display = 'grid';
 
-          const grid = document.getElementById('resultsGrid');
-          grid.innerHTML = '';
-          parks.forEach((park, i) => {
-            const rating = calcRating(park);
-            const card = document.createElement('div');
-            card.className = 'result-card glass-card clickable-card';
-            card.style.animationDelay = `${i * 0.05}s`;
-            const safetyColor = park.lit === 'yes' ? '#00e676' : park.access === 'private' ? '#ff5252' : '#ffab40';
-            const safetyLabel = park.lit === 'yes' ? 'Well Lit ✅' : park.access === 'private' ? 'Private' : 'Public';
+        const grid = document.getElementById('resultsGrid');
+        grid.innerHTML = '';
+        parks.forEach((park, i) => {
+          const rating = calcRating(park);
+          const card = document.createElement('div');
+          card.className = 'result-card glass-card clickable-card';
+          card.style.animationDelay = `${i * 0.05}s`;
+          const safetyColor = park.lit === 'yes' ? '#00e676' : park.access === 'private' ? '#ff5252' : '#ffab40';
+          const safetyLabel = park.lit === 'yes' ? 'Well Lit ✅' : park.access === 'private' ? 'Private' : 'Public';
 
-            card.innerHTML = `
-              <div class="card-image-wrapper">
-                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23102020' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>🌿</text></svg>" 
-                     alt="${park.name}" class="card-image" id="parkImg${i}">
-                <div class="card-image-overlay">
-                  <span class="result-badge result-badge-green">${park.distance.toFixed(1)} km</span>
-                  <span class="result-type-badge">${park.type}</span>
-                </div>
+          card.innerHTML = `
+            <div class="card-image-wrapper">
+              <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><rect fill='%23102020' width='400' height='200'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-size='48'>🌿</text></svg>"
+                   alt="${park.name}" class="card-image" id="parkImg${i}">
+              <div class="card-image-overlay">
+                <span class="result-badge result-badge-green">${(park.distance || 0).toFixed(1)} km</span>
+                <span class="result-type-badge">${park.type}</span>
               </div>
-              <div class="card-content">
-                <h3 class="result-title">🌿 ${park.name}</h3>
-                <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
-                <div class="safety-indicator" style="color:${safetyColor}">● ${safetyLabel}</div>
-                <div class="result-details">
-                  ${park.opening ? `<div class="result-detail"><span class="detail-icon">🕐</span>${park.opening}</div>` : ''}
-                  ${park.operator ? `<div class="result-detail"><span class="detail-icon">🏛️</span>${park.operator}</div>` : ''}
-                </div>
-                <div class="card-actions">
-                  <a href="https://www.google.com/maps/dir/?api=1&destination=${park.lat},${park.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
-                </div>
+            </div>
+            <div class="card-content">
+              <h3 class="result-title">🌿 ${park.name}</h3>
+              <div class="card-rating">${renderStars(rating)} <span class="rating-num">${rating.toFixed(1)}</span></div>
+              <div class="safety-indicator" style="color:${safetyColor}">● ${safetyLabel}</div>
+              <div class="result-details">
+                ${park.opening ? `<div class="result-detail"><span class="detail-icon">🕐</span>${park.opening}</div>` : ''}
+                ${park.operator ? `<div class="result-detail"><span class="detail-icon">🏛️</span>${park.operator}</div>` : ''}
               </div>
-            `;
-            card.addEventListener('click', () => openDetail(park, rating));
-            grid.appendChild(card);
+              <div class="card-actions">
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${park.lat},${park.lng}" target="_blank" class="btn-direction" onclick="event.stopPropagation()">Directions →</a>
+              </div>
+            </div>
+          `;
+          card.addEventListener('click', () => openDetail(park, rating));
+          grid.appendChild(card);
 
-            if (park.wikidata) fetchWikiImage(park.wikidata, `parkImg${i}`);
-            else if (park.wikipedia) fetchWikiPageImage(park.wikipedia.split(':').pop(), `parkImg${i}`);
-            else fetchUniversalImage(park.name, city, 'park', `parkImg${i}`);
-          });
+          if (park.wikidata) fetchWikiImage(park.wikidata, `parkImg${i}`);
+          else if (park.wikipedia) fetchWikiPageImage(park.wikipedia.split(':').pop(), `parkImg${i}`);
+          else fetchUniversalImage(park.name, city, 'park', `parkImg${i}`);
+        });
       }
 
       function calcRating(item) {
@@ -711,8 +674,8 @@
           <div class="detail-section">
             <h4>📋 Details</h4>
             <div class="detail-info-grid">
-              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${park.distance.toFixed(2)} km</span></div>
-              <div class="detail-info-item"><span class="detail-label">🔓 Access</span><span>${park.access}</span></div>
+              <div class="detail-info-item"><span class="detail-label">📍 Distance</span><span>${(park.distance || 0).toFixed(2)} km</span></div>
+              <div class="detail-info-item"><span class="detail-label">🔓 Access</span><span>${park.access || 'Public'}</span></div>
               ${park.opening ? `<div class="detail-info-item"><span class="detail-label">🕐 Hours</span><span>${park.opening}</span></div>` : ''}
               ${park.surface ? `<div class="detail-info-item"><span class="detail-label">🌱 Surface</span><span>${park.surface}</span></div>` : ''}
               ${park.fee ? `<div class="detail-info-item"><span class="detail-label">💰 Fee</span><span>${park.fee}</span></div>` : ''}
@@ -731,21 +694,28 @@
         `;
       }
 
+      document.getElementById('detailClose').addEventListener('click', () => {
+        detailOverlay.classList.remove('active');
+      });
+
       async function fetchUniversalImage(name, city, category, imgId) {
-        try { let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
+        try {
+          let r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' ' + city)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`);
           let d = await r.json();
-          if (d.query && d.query.pages) { const pageId = Object.keys(d.query.pages)[0]; const img = document.getElementById(imgId); if(img) { img.src = d.query.pages[pageId].imageinfo[0].thumburl; return; } }
-
-
-        } catch(e) {}
+          if (d.query && d.query.pages) {
+            const pageId = Object.keys(d.query.pages)[0];
+            const img = document.getElementById(imgId);
+            if (img) img.src = d.query.pages[pageId].imageinfo[0].thumburl;
+          }
+        } catch (e) {}
       }
 
       function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
     });
   </script>
